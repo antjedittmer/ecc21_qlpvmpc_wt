@@ -1,4 +1,4 @@
-function [A,B, Arho, Brho] = ABqLd_WT(DT,rho,Rotor_Lambda,Rotor_Pitch,Rotor_cQ,C)
+function [Av,Bv] = ABqLd_WT(DT,rhoP,Rotor_Lambda,Rotor_Pitch,Rotor_cQ)
 % ABqLd calculates system (A) and input (B) matrix for quasiLPV
 % representation from ABgL and augments the states with integrating
 % disturbances.
@@ -11,39 +11,30 @@ function [A,B, Arho, Brho] = ABqLd_WT(DT,rho,Rotor_Lambda,Rotor_Pitch,Rotor_cQ,C
 
 % Pablo S.G. Cisneros, Herbert Werner, ICS TUHH
 
-%% Call ABqL
-nx = size(C,2); % Number of states: 4 or 5 (with beta)
-[Arho,Brho] = ABqL_WT(rho,Rotor_Lambda,Rotor_Pitch,Rotor_cQ,nx);
-%[Arho,Brho] = ABqL_WT_KMC(rho,Rotor_Lambda,Rotor_Pitch,Rotor_cQ,nx);
-
-%% Calculate new matrices
-ny = size(C,1);
-nu = size(Brho,2);
-
-% [ydot, xdotdot] = A * [y, xdot] + B * udot
-A = [zeros(ny,ny) C; zeros(nx, ny) Arho];
-B = [zeros(ny,nu); Brho];
-
-% Discretize matrices
-AwithV = A;
-BwithV = B;
+[Arho,Brho] = ABqL_WT(rhoP,Rotor_Lambda,Rotor_Pitch,Rotor_cQ);
+% [Arho, Brho, ~, ~, dTrdomega, Tr, dTrdV] = ABqL_WT_KMC(rhoP,Rotor_Lambda,Rotor_Pitch,Rotor_cQ);
 
 %% Calculate discrete forms of A,B
-A2 = AwithV*AwithV;
-A3 = AwithV*A2;
-Apre = (1.0/24.0)*DT^4*A3+(1.0/6.0)*DT^3*A2+0.5*DT^2*AwithV+DT*eye(size(AwithV));
+A2 = Arho*Arho;
+A3 = Arho*A2;
+Apre = (1.0/24.0)*DT^4*A3+(1.0/6.0)*DT^3*A2+0.5*DT^2*Arho+DT*eye(size(Arho));
 
 %% Finish calculation of A,B
-A = Apre*AwithV + eye(size(AwithV));
-B = Apre*BwithV*1/DT;
- 
-% Carray1 = [eye(ny),zeros(ny,nx)];
-% Darray1 = zeros(ny,nu);
-% SYSD = c2d(ss(AwithV,BwithV,Carray1,Darray1),DT,'zoh');
-% figure;
-% impulse(SYSD); hold on;
-% 
-% SYSD1 = ss(A,B,Carray1,Darray1,DT);
-% impulse(SYSD1,'r--');
+Ak = Apre*Arho + eye(size(Arho));
+Bk = Apre*Brho;
+
+%% Calculate new matrices augmented system
+ny = 2; %
+nx = size(Arho,1);
+nd = 1;
+
+A = [eye(2) diag([97,1])* Ak(3:4,:);
+    zeros(size(Ak,1),ny), Ak];
+B = [diag([97,1])* Bk(3:4,2:3); Bk(:,2:3)];
+Bv1 = [diag([97,1])* Bk(3:4,1); Bk(:,1)];
+
+Av = [A,Bv1; [zeros(nd,(nx+ny)) 0*eye(nd)]];
+Bv = [B; zeros(nd, size(B,2))];
+
 
 end

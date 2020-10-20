@@ -1,4 +1,4 @@
-function [L,S,H,g] = HSqLd_WT(N,q,R_,p,xk,Xk,DT,ref,us,lambdaVec,pitchVec,cQ,C1,rhoP,U)
+function [L,S,H,g] = HSqLd_WT(N,q,R_,p,xk,Xk,DT,ref,us,lambdaVec,pitchVec,cQ,rhoP,U)
 % HSqLd calculate matrices L, S, H and g for Lemke's algorithm
 %
 % Inputs: * N: number of samples optimization (N = 40)
@@ -12,11 +12,11 @@ function [L,S,H,g] = HSqLd_WT(N,q,R_,p,xk,Xk,DT,ref,us,lambdaVec,pitchVec,cQ,C1,
 %
 % Outputs: * L: stacked matrix L for state trajectory Xk = L x_k + S U_k
 %          * S: stacked matrix S for state trajectory
-%          * H: Hessian: H = 2*(S'*Q*S+R_)
+%          * H: H essian: H = 2*(S'*Q*S+R_)
 %          * g: Derivative dJk/dUk: g = 2*S'*Q*(L*xk-ref) - 2*(R_*Usp);
 
 % Pablo S.G. Cisneros, Herbert Werner, ICS TUHH
-nx = 6; %length(xk);  
+nx = length(xk);  
 ni = 2; %;
 Ng = 97;
  
@@ -25,7 +25,7 @@ p2 = [rhoP(2); U(1:ni:end) + rhoP(2)]; %rho2: beta [rad] + betaDot: % p2 = [xk(3
 p3 = repmat(rhoP(3), size(p1,1),1); %V:  % p3 = [xk(4);Xk(4:nx:end)]; % V
 
 %%%%%%%%% Build L, S matrices Xk = L*xk+S*Uk%%
-[Aj,Bj] = ABqLd_WT(DT,[p1(1),p2(1),p3(1)],lambdaVec,pitchVec,cQ,C1);
+[Aj,Bj] = ABqLd_WT(DT,[p1(1),p2(1),p3(1)],lambdaVec,pitchVec,cQ);
 
 L = zeros(nx*N,nx);
 S = zeros(nx*N,ni*N);
@@ -33,7 +33,7 @@ L(1:nx,1:nx) = Aj;
 S(1:nx,1:ni) = Bj;
 
 for idx = 1:N-1
-    [Aj,Bj] = ABqLd_WT(DT,[p1(idx+1),p2(idx+1),p3(idx+1)],lambdaVec,pitchVec,cQ,C1);  
+    [Aj,Bj] = ABqLd_WT(DT,[p1(idx+1),p2(idx+1),p3(idx+1)],lambdaVec,pitchVec,cQ);  
     L(idx*nx+1:(idx+1)*nx,1:nx) = Aj*L((idx-1)*nx+1:idx*nx,1:nx);
     S(idx*nx+1:(idx+1)*nx,1:(idx+1)*ni) = [Aj*S((idx-1)*nx+1:idx*nx,1:idx*ni),Bj];
 end

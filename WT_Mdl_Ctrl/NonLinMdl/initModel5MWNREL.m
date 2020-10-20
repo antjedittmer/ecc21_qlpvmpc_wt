@@ -1,4 +1,4 @@
-clear; clc; close all
+% clear; clc; close all
 
 % load 'NREL5MW_linearised_reduced'
 % load 'NREL5MW_linearised'
