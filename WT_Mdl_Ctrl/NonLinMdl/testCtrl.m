@@ -24,7 +24,7 @@ LUT_torque = [5.0870    7.9450   11.4300   15.5300   20.2400   25.5200   31.3500
 % States: ThetaS, omegaR, omegaG, Tg
 % In: beta_ref, Tg_ref;
 % Scheduling param rho: V, beta_ref, omegaG/Ng (as approximation of omegaR)
-Vbar = 4;
+Vbar = 10;
 rb = 63; % m blade radius
 G = 97;
 omegabar = interp1(LUT_V,LUT_omega,Vbar);
@@ -35,17 +35,22 @@ schedParam = [omegabar, beta_bar/180* pi, Vbar];
 r(1) = interp1(LUT_V,LUT_omega,Vbar) * Ng; %
 r(2) = interp1(LUT_V,LUT_torque,Vbar) * 1000;
 
-xk = [r(1), r(2), zeros(1,4)]';
+xk = [r(1), r(2), zeros(1,4),0]';
 nu = 2;
 
 N = 40;
 Xko = kron(ones(N,1),xk);
+Xko(14:7:end)= 0;
 mu_old = zeros(2*N*nu,1);
 Rotor_cQ = Rotor_cQ(:,1:size(Rotor_Lambda,1)); lambdaVec = Rotor_Lambda;
 pitchVec = Rotor_Pitch;
 
 U = zeros(2*N,1);
 cQ = Rotor_cQ;
+
+idxWind_11to14 = vectAmpWind > 10 &  14 > vectAmpWind;
+vectAmpWind_11to14 = vectAmpWind(idxWind_11to14);
+time_11to14 = 0:DT: DT*length(vectAmpWind_11to14)-DT;
 
 % Test function
 [u,Xko,Unew,mu,us,tictoc]= qLPVMPC_WECS_matlab(r,xk,Xko,mu_old,lambdaVec,pitchVec,cQ,schedParam,U,DT);
@@ -61,7 +66,7 @@ fprintf('Estimated states next step: '); fprintf('%2.3f ', Xko((1:6) +6)); fprin
 % Initialize vectors and matrices for simulation
 Nsim = 10;
 U = zeros(2*N,1);
-xDdot_Ve = NaN(Nsim+1,6);
+xDdot_Ve = NaN(Nsim+1,length(xk));
 uvec = NaN(Nsim+1,2);
 Uvec = NaN(Nsim+1,80);
 
@@ -95,7 +100,7 @@ fprintf('Reference value from Simulink r: '); fprintf('%2.3f ',r); fprintf('\n')
 % Initialize vectors and matrices for simulation
 Nsim = 10;
 U = zeros(2*N,1);
-xDdot_Ve = NaN(Nsim+1,6);
+xDdot_Ve = NaN(Nsim+1,7);
 uvec = NaN(Nsim+1,2);
 Uvec = NaN(Nsim+1,80);
 
@@ -166,30 +171,52 @@ hold off
 
 
 %% Load data from OL simulation
-load('OutDataTestOL_LPV', 'xDot06','OutDataTestOL_LPV','xk06', 'u','uDot','A','B');
+load('OutDataTestOL_LPV_windChange_200sec', 'A', 'B', 'u', 'uDot', 'wind', 'xDot06', 'xk06', 'xkLPV');% 'xDot06','OutDataTestOL_LPV','xk06', 'u','uDot','A','B');
 
 % Plot input
 time = OutTable.Time(1: length(uDot));
 figure; 
-subplot(4,1,1); plot(time, uDot(:,1)); axis tight; grid on; 
-ylabel('betaDot [rad/s]')
+subplot(4,1,4); plot(time, uDot(:,2)); axis tight; grid on; 
+ylabel('\Delta \beta [rad]'); xlabel('time (s)')
 title('Simulink OL Input u_{dot}')
-subplot(4,1,2); plot(time, u(:,1)); axis tight; grid on; 
-ylabel('beta [rad]')
-subplot(4,1,3); plot(time, uDot(:,2)); axis tight; grid on;
-ylabel('TgDot_{ref} [Nm/s]'), 
-subplot(4,1,4); plot(time, u(:,2)); axis tight; grid on;
-ylabel('Tg_{ref} [Nm]'), xlabel('Time')
-
+subplot(4,1,3); plot(time, u(:,2)); axis tight; grid on; 
+ylabel('pitch \beta [rad]')
+subplot(4,1,2); plot(time, uDot(:,3)); axis tight; grid on;
+ylabel('\Delta Tg_{ref} [Nm]'), 
+subplot(4,1,1); plot(time, u(:,3)); axis tight; grid on;
+ylabel('torque Tg_{ref} [Nm]'), 
 print('input_udot_u_OL', '-dpng');
 
+P_g = xk06(:,1) .* xk06(:,2)/10^6;
+
+figure; 
+subplot(4,1,1); plot(time, wind); axis tight; grid on; 
+ylabel('wind [m/s]'); %xlabel('time (s)')
+title('Windsweep Variable-speed Variable-pitch Wind Turbine');
+subplot(4,1,2); plot(time,u(:,3)); axis tight; grid on;
+ylabel('torque Tg_{ref} [Nm]'); 
+subplot(4,1,3); plot(time, u(:,2)*180/pi); axis tight; grid on; 
+ylabel('pitch \beta [deg]')
+subplot(4,1,4); plot(time, P_g); axis tight; grid on; 
+ylabel('power P_g [MW]')
+xlabel('time [s]');
+
+posDefault = get(gcf, 'position');
+set(gcf, 'position', [posDefault(1:3),posDefault(4)*1.25]);
+
+set(findall(gcf,'-property','FontSize'),'FontSize',11)
+print('windsweep_u_y_OL', '-dpng');
+
+
 % Table for state plots
+idxTime =  1 : min([length(time), length(xkLPV), length(xDot06)]);
 xCellTable = {'omega_g', 'T_g', 'ThetaDot_s','omegaDot_r',...
 'omegaDot_g','TDot_g'};
 tableTestLPVxDot06 = array2table(xDot06,'VariableNames', xCellTable);
-tableTestLPV = array2table(OutDataTestOL_LPV,'VariableNames', xCellTable);
-% tableTestLPVxDot06 = array2table(xDot06,'VariableNames', xCellTable);
-% tableTestLPV = array2table(OutDataTestOL_LPV,'VariableNames', xCellTable);
+tableTestLPV = array2table(xkLPV,'VariableNames', xCellTable);
+tableTestLPVxDot06 = tableTestLPVxDot06(idxTime,:);
+tableTestLPV = tableTestLPV(idxTime,:);
+
 
 
 % Output of linear model

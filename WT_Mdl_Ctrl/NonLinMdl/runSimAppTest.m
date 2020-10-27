@@ -1,9 +1,9 @@
 clear; clc; close all;  bdclose all; 
-addpath(fullfile(fileparts(pwd),'datain'));
-%simMdlname = 'FAST_4TO24mpers_Bianchi';
-simMdlname = 'FAST_4TO24mpers_Bianchi_Eqn'; %'FAST_4TO24mpers_SimApp'
-%simMdelname = 'FAST_4TO24mpers_SimApp'; %
-%simMdelname = 'FAST_4TO24mpers_Bianchi_TorqueCtrl';
+
+addpath(fullfile(fileparts(pwd),'dataIn'));
+simMdlname1 = 'FAST_4TO24mpers_SimApp'; %
+simMdlname2 = 'FAST_4TO24mpers_Bianchi'; %'FAST_4TO24mpers_SimApp'
+% simMdelname = 'FAST_4TO24mpers_Bianchi_TorqueCtrl';
 
 load('workSpace.mat')
 load('OutDataSweep.mat');
@@ -21,16 +21,24 @@ idxWind = contains(OutList, 'Wind');
 vectWind = OutTable{:,idxWind};
 vectAmpWind = sqrt(sum((vectWind.^2),2));
 
+idxWind_11to14 = vectAmpWind > 10 &  14 > vectAmpWind;
+vectAmpWind_11to14 = vectAmpWind(idxWind_11to14);
+time_11to14 = 0:DT: DT*length(vectAmpWind_11to14)-DT;
+
+
 param;
 initModel5MWNREL;
 initModel5MWNRELBianchi;
-
-open_system(simMdlname);
-sim(simMdlname);
-
-varnames = {'Wind', 'RotSpeed', 'GenPwr', 'BldPitch1', 'GenTq', ...
+varnames = {'Wind', 'RotSpeed', 'GenPwr', 'BlPitch1', 'GenTq', ...
     'NcIMUTAxs', 'NcIMUTAys'}; %%'Tower FA acc', 'Tower SS acc'};
-OutTableTest = array2table(OutDataTest,'VariableNames',varnames);
+
+open_system(simMdlname1);
+sim(simMdlname1);
+OutTableTest1 = array2table(OutDataTest,'VariableNames',varnames);
+
+open_system(simMdlname2);
+sim(simMdlname2);
+OutTableTest2 = array2table(OutDataTest,'VariableNames',varnames);
 
 %% Get actuator block to test influence
 %actuatorBlock =  find_system(simMdelname,'Name','Actuators');
@@ -44,15 +52,16 @@ OutList = OutTable.Properties.VariableNames;
 vectAmpWindTest = sqrt(sum((vectWind.^2),2));
 
 % Get color map for 'title legends'
-testCaseStr = 'RotSpeed/TowerAcc';
+testCaseStr = 'Wind Sweep';
 cl = colormap('lines');
-titleStr = ['Test Case ',testCaseStr,': {\color[rgb]{',num2str(cl(1,:)),'} FAST ',...
-    '\color[rgb]{',num2str(cl(2,:)),'} Simulink} '];
+titleStr = [testCaseStr,': Mdl1: Rot+Twr {\color[rgb]{',num2str(cl(1,:)),'}Mdl2: Rot,Twr,Bld+Act ',...
+    '\color[rgb]{',num2str(cl(2,:)),'}FAST} '];
+
 
 %% Create output plots
 figNo1 = 1; figNo2 = 2;
 
-idxTime = 1: min(length(idxTime), height(OutTableTest));
+idxTime = 1: min([length(idxTime), height(OutTableTest1),height(OutTableTest2)]);
 time = OutTable.Time(idxTime);
 
 defaultLineWidth = get(groot,'defaultLineLineWidth');
@@ -60,48 +69,53 @@ set(groot,'defaultLineLineWidth',1);
 
 figure(figNo1);
 axPlot(1) = subplot(3,1,1);
-plot(time,vectAmpWind(idxTime),time,OutTableTest.Wind(idxTime),'--'); 
+plot(time,vectAmpWind(idxTime),time,OutTableTest1.Wind(idxTime),'--'); 
 axis tight; grid on;
-ylabel('Wind Amplitude (m/s)')
+ylabel('wind [m/s]')
 title(titleStr);
 
 axPlot(2) = subplot(3,1,2);
-plot(time,OutTable.RotSpeed(idxTime),time,OutTableTest.RotSpeed(idxTime),'--');
+plot(time,OutTableTest2.RotSpeed(idxTime), time,OutTable.RotSpeed(idxTime),time,OutTableTest1.RotSpeed(idxTime),'k--');
 axis tight; grid on;
-ylabel('RotSpeed (rpm)')
+ylabel('RotSpd \omega_r [rpm]')
 
 axPlot(3) = subplot(3,1,3);
-plot(time,OutTable.GenPwr(idxTime)/1000,time,OutTableTest.GenPwr(idxTime)/1000,'--');
+plot(time,OutTableTest2.GenPwr(idxTime)/1000,time,OutTable.GenPwr(idxTime)/1000,time,OutTableTest1.GenPwr(idxTime)/1000,'k--');
 axis tight; grid on;
-ylabel('GenPwr (MW)')
-xlabel('Time (s)')
+ylabel('GenPwr P_g [MW]')
+xlabel('time [s]')
 linkaxes(axPlot,'x');
+set(findall(gcf,'-property','FontSize'),'FontSize',11)
+print('cmpTimeDomain_Wind', '-dpng');
 
 
 figure(figNo2)
-axPlot2(1) = subplot(4,1,1);
-plot(time,OutTable.BldPitch1(idxTime),'.', time,OutTableTest.BldPitch1(idxTime),'--'); 
+axPlot2(1) = subplot(3,1,1);
+plot(time,OutTableTest2.BlPitch1(idxTime),time,OutTable.BlPitch1(idxTime),time,OutTableTest1.BlPitch1(idxTime),'k--'); 
 axis tight; grid on;
-ylabel('BldPitch1 (rad)')
+ylabel('BldPitch1 \beta [rad]')
 title(titleStr);
 
-axPlot2(2) = subplot(4,1,2);
-plot(time,OutTable.GenTq(idxTime),time,OutTableTest.GenTq(idxTime)/10^3);
+axPlot2(2) = subplot(3,1,2);
+plot(time,OutTableTest2.GenTq(idxTime)/10^3,time,OutTable.GenTq(idxTime),time,OutTableTest1.GenTq(idxTime)/10^3,'k--');
 axis tight; grid on;
-ylabel('GenTq (Nm)') 
+ylabel('GenTq \omega_g [Nm]') 
 
-axPlot2(3) = subplot(4,1,3);
-plot(time,OutTable.NcIMUTAxs(idxTime),time,OutTableTest.NcIMUTAxs(idxTime),'--');
+axPlot2(3) = subplot(3,1,3);
+plot(time,OutTableTest2.NcIMUTAxs(idxTime),time,OutTable.NcIMUTAxs(idxTime),time,OutTableTest1.NcIMUTAxs(idxTime),'k--');
 axis tight; grid on;
-ylabel('Tower FA (m/s)')
+ylabel('Twr_{FA} y_t[m/s^2]')
+xlabel('time [s]')
+set(findall(gcf,'-property','FontSize'),'FontSize',11)
+print('cmpTimeDomain_BlPitchTqTwr', '-dpng');
 
-axPlot2(4) = subplot(4,1,4);
-plot(time,OutTable.NcIMUTAys(idxTime),time,OutTableTest.NcIMUTAys(idxTime),'--');
-axis tight; grid on;
-ylabel('Tower SS (m/s)')
-xlabel('Time (s)')
-linkaxes(axPlot2,'x');
-set(groot,'defaultLineLineWidth',defaultLineWidth);
+% axPlot2(4) = subplot(4,1,4);
+% plot(time,OutTableTest2.NcIMUTAys(idxTime),time,OutTable.NcIMUTAys(idxTime),time,OutTableTest1.NcIMUTAys(idxTime),'k--');
+% axis tight; grid on;
+% ylabel('Twr_{SW} x_t (m/s^2)')
+% xlabel('time (s)')
+% linkaxes(axPlot2,'x');
+% set(groot,'defaultLineLineWidth',defaultLineWidth);
 
 %% Get incremental torque characteristic TheadG = B
 vectAmpWind(idxTime);

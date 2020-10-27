@@ -46,53 +46,36 @@ tau_g = 0.01; % for pitch actuator and airspeed
 %% Lambda 
 Lambda_bar = omegabar*rb/Vbar;
 dlambdadomega= rb/Vbar;
-%dlambdadV= - omegabar*rb/Vbar^2;
-
-% Rotor_Lambda2 = Rotor_Lambda(1): mean(diff(Rotor_Lambda))/2: Rotor_Lambda(end);
-% Rotor_Pitch2 = Rotor_Pitch(1): mean(diff(Rotor_Pitch))/2: Rotor_Pitch(end);
-% [Xq,Yq] = meshgrid(Rotor_Lambda2,Rotor_Pitch2);
-[Xq,Yq] = meshgrid(Rotor_Lambda, Rotor_Pitch);
-Cq = interp2(Rotor_Lambda,Rotor_Pitch,Rotor_cQ,Xq,Yq,'spline');
+dlambdadV= - omegabar*rb/Vbar^2;
 
 %% Compute gradients %%[Cpdlambda,Cpdbeta] = gradient(Cp,mean(diff(Xq(1,:))),mean(diff(Yq(:,1))));
-[Cqdlambda,CqdbetaDeg] = gradient(Cq,mean(diff(Xq(1,:))),mean(diff(Yq(:,1)))); %dcQ/dbetaDeg * dbetaDeg/dbetaRad *betaRAd
-Cqdbeta = CqdbetaDeg; % *180/pi;
+[Cqdlambda,CqdbetaDeg] = gradient(Rotor_cQ,mean(diff(Rotor_Lambda)),mean(diff(Rotor_Pitch))); %dcQ/dbetaDeg * dbetaDeg/dbetaRad *betaRAd
+Cqdbeta = CqdbetaDeg*180/pi;
 
 %% Grid points
 dCqdlambdab = interp2(Rotor_Lambda,Rotor_Pitch,Cqdlambda,Lambda_bar,beta_bar,'spline');
 dCqdbetab = interp2(Rotor_Lambda,Rotor_Pitch,Cqdbeta,Lambda_bar,beta_bar,'spline');
+Cqb = interp2(Rotor_Lambda,Rotor_Pitch,Rotor_cQ,Lambda_bar,beta_bar,'spline');
 
 %% Tr=0.5*pi*rb^3*Cq*v^2
 dTrdomega = 0.5*rho*pi*rb^3*(dCqdlambdab*dlambdadomega)*Vbar^2;% br = dTr/domega
 dTrdbeta = 0.5*rho*pi*rb^3*dCqdbetab*Vbar^2;%Krb = dTr/dbeta
+dTrdV =  2*0.5*rho*pi*rb^3*Vbar*Cqb + ...
+    0.5*rho*pi*rb^3*Vbar^2*dCqdlambdab*dlambdadV;
 
 %% Create system matrix A:
 % States: [Theta_s [rad], omega_r [rad/s], omega_g [rad/s], T_g [Nm]]
 % States for model
 % xA = [y, xdot] with y = [omegaG, Tg, beta, V]
 % x = [ThetaS, OmegaR, OmegaG, Tg, beta, V]
-% u = [V,beta_ref,TgRef]; Input: V [m/s], beta [rad], T_g_ref [Nm] (in HSS)
 Aeval = [[0,1,-1,0] ;
     [-Ks/Jr, (-Bs + dTrdomega)/Jr, Bs/Jr,0];
     Ks/Jgr, Bs/Jgr, -Bs/Jgr, - Ng/Jgr; %0.37*Ng/Jgr;
     zeros(1,3), -1/tau_g];
 
-% Cqb = interp2(Rotor_Lambda,Rotor_Pitch,Cq,Lambda_bar,beta_bar,'spline');
-% Tg =  0.5*rho*pi*rb^3 * Vbar^2 * Cqb;
-% TgDiff  = dTrdomega * omegabar;
-% fprintf('Tg %2.3e, TgDiff %2.3e, Diff %2.3e\n', Tg, TgDiff, Tg- TgDiff);
-
-
 %% Create input matrix B
 % Input orig model: V [m/s], beta [rad], T_g_ref [Nm]
 % -> vel model: Vdot [m/s^2]  betaDot [rad/s], T_g_refDot [Nm/s]
-% Assumption Vdot = 0
-% Output: omega_g [rad/s], T_g [Nm]
-% For orig model:
-% Beval = [zeros(1,3); dTrdV/Jr, dTrdbeta/Jr,0; zeros(1,3);  0, 0, 1/tau_g];
-Beval = [zeros(1,2);
-    dTrdbeta/Jr,0;
-    zeros(1,2);
-    0, 1/tau_g];
+Beval = [zeros(1,3); dTrdV/Jr, dTrdbeta/Jr,0; zeros(1,3);  0, 0, 1/tau_g];
 
 end

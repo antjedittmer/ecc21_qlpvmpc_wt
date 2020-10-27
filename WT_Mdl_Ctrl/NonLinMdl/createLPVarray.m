@@ -36,6 +36,7 @@ for index = 1:length(Lin.V)
 end
 
 %% Create ss aray
+nxA = nx +ny; %number states augmented plant 
 Carray = eye(nxA);
 Carray1 = [eye(ny),zeros(ny,nx)];
 Darray = zeros(nxA,nu);
