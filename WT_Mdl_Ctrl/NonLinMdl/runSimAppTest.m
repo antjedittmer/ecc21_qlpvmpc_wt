@@ -1,6 +1,7 @@
 clear; clc; close all;  bdclose all; 
 addpath(fullfile(fileparts(pwd),'datain'));
-simMdlname = 'FAST_4TO24mpers_Bianchi'; %'FAST_4TO24mpers_SimApp'
+%simMdlname = 'FAST_4TO24mpers_Bianchi';
+simMdlname = 'FAST_4TO24mpers_Bianchi_Eqn'; %'FAST_4TO24mpers_SimApp'
 %simMdelname = 'FAST_4TO24mpers_SimApp'; %
 %simMdelname = 'FAST_4TO24mpers_Bianchi_TorqueCtrl';
 

@@ -1,8 +1,9 @@
 %% get values
 clear;
 close all;
+addpath(fullfile(fileparts(pwd),'dataIn'));
 initModel5MWNRELBianchi;
-addpath(fullfile(fileparts(pwd),'datain'));
+
 load('workSpace.mat')
 load('OutDataSweep.mat');
 OutTable = array2table(OutData,'VariableNames', OutList);
@@ -119,16 +120,25 @@ titleStr2 = ['State Estimates Matlab Simulation, const speed ',num2str(Vbar)];
 nrPlot1 = 3;
 plotInputStateTrajectories(Uvec,xDdot_Ve,time, titleStr1, titleStr2,nrPlot1);
 
+%% Same plots for Simulink simulations
+load('OutDataTestCL_LPV_06', 'xDot06','OutDataTestOL_LPV','xk06', 'u','uDot','A','B','UVecSim','XVecSim','u_uss','tictoc_LPVMPC','q_','r_','p');
+nrPlot1 = 5;
+Uvec =  UVecSim; 
+xDdot_Ve = xk06;
+Nsim = length(u_uss);
+time = OutTable.Time(1: Nsim);
+plotInputStateTrajectories(Uvec,xDdot_Ve,time, titleStr1, titleStr2,nrPlot1);
+
 %% Plot results from closed loop simulation
-load('OutDataTestCL_LPV_01', 'xDot06','OutDataTestOL_LPV','xk06', 'u','uDot','A','B','UVecSim','XVecSim','u_uss','tictoc_LPVMPC','q_','r_','p');
+%load('OutDataTestCL_LPV_01', 'xDot06','OutDataTestOL_LPV','xk06', 'u','uDot','A','B','UVecSim','XVecSim','u_uss','tictoc_LPVMPC','q_','r_','p');
 u_uss_plot = squeeze(u_uss);
 u_uss_plot = diag([180/pi,1,180/pi,1]) *  u_uss_plot';
 u1Cell  = {'beta[deg]','T_g [Nm]'};
-Nsim = length(u_uss_plot);
-time = OutTable.Time(1: length(u_uss_plot));
+
 wind = vectAmpWind;
 timeEnd = Nsim;
-
+Nsim = length(u_uss);
+time = OutTable.Time(1: length(u_uss));
 
 qVec = deblank(sprintf('%d ',q_));
 rVec = deblank(sprintf('%d ', r_));
@@ -178,6 +188,9 @@ xCellTable = {'omega_g', 'T_g', 'ThetaDot_s','omegaDot_r',...
 'omegaDot_g','TDot_g'};
 tableTestLPVxDot06 = array2table(xDot06,'VariableNames', xCellTable);
 tableTestLPV = array2table(OutDataTestOL_LPV,'VariableNames', xCellTable);
+% tableTestLPVxDot06 = array2table(xDot06,'VariableNames', xCellTable);
+% tableTestLPV = array2table(OutDataTestOL_LPV,'VariableNames', xCellTable);
+
 
 % Output of linear model
 figure; 
@@ -198,12 +211,12 @@ print('output_y_OL', '-dpng');
 figure; 
 subplot(2,1,1); 
 plot(time, tableTestLPVxDot06.omega_g, time, tableTestLPV.omega_g,'--',...
-    time,xk06(:,1),'k:')
+    time,xk06(:,1),'k-.')
 axis tight; grid on;
 ylabel('GenSpeed omegaG [rad/s]')
 title('Output LPV model: Generator Speed \omega_g and Torque T_g')
 subplot(2,1,2); 
-plot(time, tableTestLPVxDot06.T_g, time, tableTestLPV.T_g,'--',time, xk06(:,2),'k:')
+plot(time, tableTestLPVxDot06.T_g, time, tableTestLPV.T_g,'--',time, xk06(:,2),'k-.')
 legend('Discrete LPV x(t+\Delta t)','Discrete LPV x(t)', 'Nonlinear x(t)')
 axis tight; grid on;
 ylabel('GenTorque T_G [Nm]')

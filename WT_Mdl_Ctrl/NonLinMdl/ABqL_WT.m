@@ -1,4 +1,4 @@
-function [Aeval,Beval] = ABqL_WT(rhoP,Rotor_Lambda,Rotor_Pitch,Rotor_cQ,nx)
+function [Aeval,Beval] = ABqL_WT(rhoP,Rotor_Lambda,Rotor_Pitch,Rotor_cQ)
 % ABqL calculates system (A) and input (B) matrix for quasiLPV
 % representation for ve
 %
@@ -36,29 +36,31 @@ end
 rho = 1.2250;
 rb = 63; % m blade radius
 Ng = 97; %Gearbox ratio
-Jr = 115926 + 3 * 11.776e6; %kg*m^2 Inertia of the rotor (Hub inertia + 3 blades
+Jr = (115926 + 3 * 11.776e6) *1; %kg*m^2 Inertia of the rotor (Hub inertia + 3 blades
 Jg = 534.116;% * Ng^2; %kg*m^2 Inertia of the generator (HSS)
 Jgr = Jg * Ng^2; % Inertia of the generator in LSS
 Ks = 867637000; %Nm/rad Stiffness of the transmission
 Bs = 6215000;  %Nm/rad/sec        %Damping of the transmission
-tau_g = 0.1; % for pitch actuator and airspeed
+tau_g = 0.01; % for pitch actuator and airspeed
 
 %% Lambda 
 Lambda_bar = omegabar*rb/Vbar;
 dlambdadomega= rb/Vbar;
 %dlambdadV= - omegabar*rb/Vbar^2;
 
+% Rotor_Lambda2 = Rotor_Lambda(1): mean(diff(Rotor_Lambda))/2: Rotor_Lambda(end);
+% Rotor_Pitch2 = Rotor_Pitch(1): mean(diff(Rotor_Pitch))/2: Rotor_Pitch(end);
+% [Xq,Yq] = meshgrid(Rotor_Lambda2,Rotor_Pitch2);
 [Xq,Yq] = meshgrid(Rotor_Lambda, Rotor_Pitch);
 Cq = interp2(Rotor_Lambda,Rotor_Pitch,Rotor_cQ,Xq,Yq,'spline');
 
 %% Compute gradients %%[Cpdlambda,Cpdbeta] = gradient(Cp,mean(diff(Xq(1,:))),mean(diff(Yq(:,1))));
 [Cqdlambda,CqdbetaDeg] = gradient(Cq,mean(diff(Xq(1,:))),mean(diff(Yq(:,1)))); %dcQ/dbetaDeg * dbetaDeg/dbetaRad *betaRAd
-Cqdbeta = CqdbetaDeg * 1; %180/pi;
+Cqdbeta = CqdbetaDeg; % *180/pi;
 
 %% Grid points
 dCqdlambdab = interp2(Rotor_Lambda,Rotor_Pitch,Cqdlambda,Lambda_bar,beta_bar,'spline');
 dCqdbetab = interp2(Rotor_Lambda,Rotor_Pitch,Cqdbeta,Lambda_bar,beta_bar,'spline');
-% Cqb = interp2(Rotor_Lambda,Rotor_Pitch,Cq,Lambda_bar,beta_bar,'cubic');
 
 %% Tr=0.5*pi*rb^3*Cq*v^2
 dTrdomega = 0.5*rho*pi*rb^3*(dCqdlambdab*dlambdadomega)*Vbar^2;% br = dTr/domega
@@ -72,8 +74,14 @@ dTrdbeta = 0.5*rho*pi*rb^3*dCqdbetab*Vbar^2;%Krb = dTr/dbeta
 % u = [V,beta_ref,TgRef]; Input: V [m/s], beta [rad], T_g_ref [Nm] (in HSS)
 Aeval = [[0,1,-1,0] ;
     [-Ks/Jr, (-Bs + dTrdomega)/Jr, Bs/Jr,0];
-    Ks/Jgr, Bs/Jgr, -Bs/Jgr, 0.37*Ng/Jgr; %- Ng/Jgr
+    Ks/Jgr, Bs/Jgr, -Bs/Jgr, - Ng/Jgr; %0.37*Ng/Jgr;
     zeros(1,3), -1/tau_g];
+
+% Cqb = interp2(Rotor_Lambda,Rotor_Pitch,Cq,Lambda_bar,beta_bar,'spline');
+% Tg =  0.5*rho*pi*rb^3 * Vbar^2 * Cqb;
+% TgDiff  = dTrdomega * omegabar;
+% fprintf('Tg %2.3e, TgDiff %2.3e, Diff %2.3e\n', Tg, TgDiff, Tg- TgDiff);
+
 
 %% Create input matrix B
 % Input orig model: V [m/s], beta [rad], T_g_ref [Nm]
@@ -86,29 +94,5 @@ Beval = [zeros(1,2);
     dTrdbeta/Jr,0;
     zeros(1,2);
     0, 1/tau_g];
-
-%% Add beta as a state with betadot = -1/tau beta + 1/tau beta
-% Add beta as state
-if nx == 5
-    AwithBeta = [Aeval, Beval(:,1); [zeros(1,size(Aeval,2)),-1/tau]]; %
-    
-    %Inputs: Torque [N/m], pitch angle beta [rad], wind speed V [m/s]
-    BwithBeta = Beval; %zeros(1,size(B,2))];
-    BwithBeta(:,1) = 0;
-    BwithBeta = [BwithBeta; zeros(1,size(Beval,2))]; % For new state V
-    BwithBeta(end,1) = 1/tau; % For new state V
-    
-    Aeval = AwithBeta;
-    Beval = BwithBeta;
-end
-
-% add v as state
-% AwithV = [AwithBeta, BwithBeta(:,1); [zeros(1,size(AwithBeta,2)),-1/tau_g]];
-% BwithV = BwithBeta; %zeros(1,size(B,2))];
-% BwithV(:,1) = 0;
-% BwithV = [BwithV; zeros(1,size(BwithV,2))]; % For new state V
-% BwithV(end,1) = 1/tau_g; % For new state V
-% AwithV = Aeval;
-% BwithV = Beval;
 
 end

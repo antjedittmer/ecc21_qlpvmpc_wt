@@ -1,4 +1,4 @@
-function [A,B, Arho, Brho] = ABqLd_WT(DT,rho,Rotor_Lambda,Rotor_Pitch,Rotor_cQ,C)
+function [A,B] = ABqLd_WT(DT,rho,Rotor_Lambda,Rotor_Pitch,Rotor_cQ,C)
 % ABqLd calculates system (A) and input (B) matrix for quasiLPV
 % representation from ABgL and augments the states with integrating
 % disturbances.
@@ -12,34 +12,32 @@ function [A,B, Arho, Brho] = ABqLd_WT(DT,rho,Rotor_Lambda,Rotor_Pitch,Rotor_cQ,C
 % Pablo S.G. Cisneros, Herbert Werner, ICS TUHH
 
 %% Call ABqL
-nx = size(C,2); % Number of states: 4 or 5 (with beta)
-[Arho,Brho] = ABqL_WT(rho,Rotor_Lambda,Rotor_Pitch,Rotor_cQ,nx);
-%[Arho,Brho] = ABqL_WT_KMC(rho,Rotor_Lambda,Rotor_Pitch,Rotor_cQ,nx);
-
-%% Calculate new matrices
-ny = size(C,1);
-nu = size(Brho,2);
-
-% [ydot, xdotdot] = A * [y, xdot] + B * udot
-A = [zeros(ny,ny) C; zeros(nx, ny) Arho];
-B = [zeros(ny,nu); Brho];
-
-% Discretize matrices
-AwithV = A;
-BwithV = B;
+[Arho,Brho] = ABqL_WT(rho,Rotor_Lambda,Rotor_Pitch,Rotor_cQ);
 
 %% Calculate discrete forms of A,B
-A2 = AwithV*AwithV;
-A3 = AwithV*A2;
-Apre = (1.0/24.0)*DT^4*A3+(1.0/6.0)*DT^3*A2+0.5*DT^2*AwithV+DT*eye(size(AwithV));
+A2 = Arho*Arho;
+A3 = Arho*A2;
+Apre = (1.0/24.0)*DT^4*A3+(1.0/6.0)*DT^3*A2+0.5*DT^2*Arho+DT*eye(size(Arho));
 
 %% Finish calculation of A,B
-A = Apre*AwithV + eye(size(AwithV));
-B = Apre*BwithV*1/DT;
+Ak = Apre*Arho + eye(size(Arho));
+Bk = Apre*Brho;
+
+%% Calculate new matrices augmented system
+ny = 2;
+% nu = size(Brho,2);
+
+A = [eye(2) diag([97,1])* Ak(3:4,:);
+    zeros(size(Ak,1),ny), Ak];
+B = [diag([97,1])* Bk(3:4,:); Bk];
+
+% [ydot, xdotdot] = A * [y, xdot] + B * udot
+% A = [zeros(ny) C *1/DT; zeros(nx, ny) Arho];
+% B = [zeros(ny,nu); Brho];
  
-% Carray1 = [eye(ny),zeros(ny,nx)];
-% Darray1 = zeros(ny,nu);
-% SYSD = c2d(ss(AwithV,BwithV,Carray1,Darray1),DT,'zoh');
+% nx = 4; Carray = [zeros(ny,ny),eye(ny)];
+% Darray1 = zeros(ny);
+% SYSD = c2d(ss(Arho,Brho,Carray,Darray1),DT,'zoh');
 % figure;
 % impulse(SYSD); hold on;
 % 
