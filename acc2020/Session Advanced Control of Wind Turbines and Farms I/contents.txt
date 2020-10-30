@@ -1,0 +1,7 @@
+Wind Farm Wake-Steering Exploration During Grid Curtailment (I)
+Distributed Learning for Wind Farm Optimization with Gaussian Processes (I)
+A Distributed Reinforcement Learning Yaw Control Approach for Wind Farm Energy Capture Maximization (I)
+Mobile Sensing for Wind Field Estimation in Wind Farms (I)
+Adaptive Fault Accommodation of Pitch Actuator Stuck Type of Fault in Floating Offshore Wind Turbines: A Subspace Predictive Repetitive Control Approach (I)
+Signed-Distance Fuzzy Logic Controller Adaptation Mechanism based MRAS Observer for Direct-Drive PMSG Wind Turbines Sensorless Control
+
