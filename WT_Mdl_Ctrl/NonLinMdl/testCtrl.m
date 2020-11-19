@@ -9,11 +9,13 @@ addpath(genpath('C:\Projects\FASTTool'));
 initModel5MWNREL;
 initModel5MWNRELBianchi;
 
+% set local fst file
+FAST_InputFileName = fullfile(pwd,'inputfiles', 'FAST.fst');
+
 onlyInit = 1;
 selectSteadyState = 0; % 0: OpenLoop FAST, 1: PI CL FAST, 2:PI CL Simulink
 
 load('workSpace.mat')
-
 load('OutDataSweep.mat','OutData');
 %load('OutDataWind18NTM.mat','OutData');
 %load('OutDataWind11To14NTM.mat','OutData');
