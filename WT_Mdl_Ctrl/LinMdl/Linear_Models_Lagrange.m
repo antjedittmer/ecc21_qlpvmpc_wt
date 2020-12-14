@@ -37,10 +37,10 @@ mt = 347460 + 240000;%347460;%kg Mass of the tower and nacelle
 mb = 17740; %kg Mass of each blade
 Jr = 115926 + 3 * 11.776e6; %kg*m^2 Inertia of the rotor (Hub inertia + 3 blades
 Jg = 534.116;% * Ng^2; %kg*m^2 Inertia of the generator
-wnt = 2.1; %2.1 ; %2.9003; %Natural frequency of tower
-wnb = 2.0205; %Natural frequency of blade
+wnt = 0.32 * 2 *pi; %2.1 ; %2.9003; %Natural frequency of tower
+wnb = 0.67 * 2 *pi; %Natural frequency of blade %2.0205
 zetat = 0.01; %damping ratio of tower
-zetab = 0.00477465;%damping ratio of blade
+zetab = 0.00477465 *100;%damping ratio of blade
 
 % K=wn^2
 Kt = wnt^2 * mt; % Stiffness of the tower s^2 + B/Ms + K/m
@@ -234,8 +234,8 @@ for index = 1 %[1,length(Lin.V)]%1 : length(Lin.V) %[1,length(Lin.V)] % [1,2,len
        1/kappa, 0,0;...
        0,1/tau,0];
     C = [A(4,:);...
-        0     rb     zeros(1,7);...
-        zeros(1,5),     1     zeros(1,3)];
+        0     rb * 10     zeros(1,7);... %rb
+        zeros(1,5),     1     zeros(1,3)]; 
     D = [B(4,:);zeros(2,3)];
         
     %% Create a state-space model
@@ -256,7 +256,7 @@ for index = 1 %[1,length(Lin.V)]%1 : length(Lin.V) %[1,length(Lin.V)] % [1,2,len
         ff.Position = [520   267   560   531];
         ff.Color = 'white'; ff.Visible = plotVisible;
         
-        bodemag(sys,'k'); hold on; grid on;
+        bodemag(sys,'m'); hold on; grid on;
             
         for indexModels=1:lenModelNames
             sysm =  sysmCell{indexModels};

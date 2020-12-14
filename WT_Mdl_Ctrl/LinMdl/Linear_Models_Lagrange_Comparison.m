@@ -1,9 +1,9 @@
-function Linear_Models_Lagrange_Comparison(speedVec,useTUDelftParam,figFolder, useActuatorStates,figNoAdd)
+function wecs = Linear_Models_Lagrange_Comparison(speedVec,useTUDelftParam,figFolder, useActuatorStates,figNoAdd)
 
 %% Set defaults
 if nargin == 0
-    speedVec = [1,2,3,9,10,22];
-    useTUDelftParam = 1;
+    speedVec = [1,10,22];
+    useTUDelftParam = 0;
     figFolder = 'FigureLagrange_201015_comp';
     useActuatorStates = 0;
     figNoAdd = 0;
@@ -15,9 +15,41 @@ end
 % addpath C:\Werk_Data\Software\hline_vline;
 % load 'NREL5MW_linearised_reduced' % Not available
 addpath(fullfile(fileparts(pwd),'dataIn'));
-load('NREL5MW_linearised','sysm', 'Lin', 'sysm_MBC')
+%load('NREL5MW_linearised','sysm', 'Lin', 'sysm_MBC')
+% load('NREL5MW_linearised_4to25','sysm', 'Lin')
 load('NREL5MW_CPdata_new3','Rotor_Lamda', 'Rotor_Pitch', ...
     'Rotor_cQ', 'Rotor_cT');
+
+%% Initialize name of models and load into workspace
+idxModelNames = 1:3 %1:2; %1:5
+modelNames =[ {'NREL5MW_linearised'}; %{'NREL5MW_linearised_4to25'};
+    {'NREL5MW_linearised_Gen_Fa_Flap1'};
+    {'NREL5MW_linearised_Gen_Fa_SS_Flap1'};
+    {'NREL5MW_linearised_Gen_DriveTrain_Fa_SS_Flap1'}; {'NREL5MW_linearised'} ];
+modelNames = modelNames(idxModelNames);
+
+modelsL = [{'FAST 30 states'};
+    {'FAST 10 states'};
+    {'Fast Rot+FA+SW+1^{st} flap mode (12 states)'};
+    {'Fast Rot+drive train+FA+SW+1^{st} flap mode (14 states)'};
+    {'Fast Rot+FA (4 states)'}];
+
+modelsL = modelsL(idxModelNames);
+
+lenModelNames = length(modelNames);
+sysmCell = cell(lenModelNames,1);
+sysmCell_MBC = cell(lenModelNames,1);
+
+idxModels = 1;
+
+load(modelNames{idxModels},'sysm','Lin'); %'sysm_MBC');
+sysmCell{idxModels} = sysm;
+for idxModels = 2 : lenModelNames
+    load(modelNames{idxModels},'sysm','sysm_MBC');
+    sysmCell{idxModels} = sysm;
+    sysmCell_MBC{idxModels} = sysm_MBC;
+end
+
 
 %% Plot parameters
 % yt is the axial displacement of the nacelle, $\zeta$ is the angular blade displacement
@@ -41,82 +73,79 @@ if ~isfolder(figFolder)
 end
 
 %% Define parameters
-% 5MW FAST WIND TURBINE (NREL/TP-500-38060) Definition of a 5-MW Reference Wind Turbine for Offshore
-% System Development
+% 5MW FAST WIND TURBINE (NREL/TP-500-38060) Definition of a 5-MW Reference 
+% Wind Turbine for Offshore System Development
 % Cut-In, Rated, Cut-Out Wind Speed 3 m/s, 11.4 m/s, 25 m/s
 % Cut-In, Rated Rotor Speed 6.9 rpm, 12.1 rpm
-%wr,wg in rad/s, Tg in kN, Pg in kW,
-Ng = 97; %Gearbox ratio
-mt = 347460 + 240000;%347460;%kg Mass of the tower and nacelle
-mb = 17740; %kg Mass of each blade
-Jr = 115926 + 3 * 11.776e6; %kg*m^2 Inertia of the rotor (Hub inertia + 3 blades
-Jg = 534.116;% * Ng^2; %kg*m^2 Inertia of the generator
-J = Jr; %4.2e7;
-wnt = 2.9003; %2.1 ; %2.9003; %Natural frequency of tower
-wnb = 2.0205; %Natural frequency of blade
-zetat = 0.01; %damping ratio of tower
-zetab = 0.00477465;%damping ratio of blade
+% wr,wg in rad/s, Tg in kN, Pg in kW,
+wecs.Ng = 97; %Gearbox ratio
+wecs.mh =  56780; % hub mass
+wecs.mb = 17740; %kg Mass of each blade
+wecs.mn = 240000; % Nacellle mass
+wecs.mtower = 347460;%347460;%kg Mass of the tower and nacelle
+wecs.mt = 0.25*wecs.mtower+wecs.mn+wecs.mh+3*wecs.mb;
+wecs.H =  87.6;
+
+wecs.Jr = 115926 + 3 * 11.776e6; %kg*m^2 Inertia of the rotor (Hub inertia + 3 blades
+wecs.Jrg = 534.116;% * Ng^2; %kg*m^2 Inertia of the generator
+f0 = 0.324;
+f0sw = 0.3120;
+wecs.wnb = 0.6993 * 2*pi; %2.0205; %Natural frequency of blade
+wecs.wnt = f0 * 2*pi; % wecs.wnb; 0.3240
+wecs.zetat = 1/100; %damping ratio of tower (Table 6.2)
+wecs.zetab = 0.477465;% damping ratio of blade /100
 % K=wn^2
 
-if ~useTUDelftParam
-    Kt = wnt^2 * mt; % Stiffness of the tower s^2 + B/Ms + K/m
-    Bt = 2*zetat*wnt *mt; % Damping of the tower
-end
-Kb = wnb^2 * mb; %Stiffness of each blade
-Bb = 2*zetab*wnb *mb ; %Damping of the blade
-Ks = 867637000; %Nm/rad Stiffness of the transmission
+%if ~useTUDelftParam
+wecs.Kt = wecs.wnt^2 * wecs.mt; % Stiffness of the tower s^2 + B/Ms + K/m
+wecs.Bt = 2 *wecs.zetat * wecs.wnt *wecs.mt; % tower 2*6421;
+%end
+wecs.Kb = wecs.wnb^2 * wecs.mb; %Stiffness of each blade
+wecs.Bb = 2 *wecs.zetab*wecs.wnb *wecs.mb ; %Damping of the blade
+wecs.Ks = 867637000; %Nm/rad Stiffness of the transmission
 % 2*zeta*wn=B
-Bs = 6215000;  %Nm/rad/sec        %Damping of the transmission
+wecs.Bs = 6215000;  %Nm/rad/sec        %Damping of the transmission
 
-N = 3;%Number of blades
-rb = 63; % m blade radius
+wecs.N = 3;%Number of blades
+wecs.rb = 63; % m blade radius
 rho = 1.225; % Air density (kg/m^3)
 % Bg = 0.9; % Tg= Bg(wg - wz). Unused because we use Tg as input
 tau = 0.1; % for pitch actuator
 kappa = 0.01;
 
+% Tower equivalent mass, MT 438,000 kg
+% Tower equivalent damping, CT 6421 wecs.N s/m
+% Tower equivalent stiffness, KT 1,846,000 wecs.N/m
+
 %% Parameters for tower model
-kfa = 1; %should this be a plus or a min?
-Mfa = 4.38e5; % mt+N*mb: 400680
-Cfa = 2*6421;
-Kfa = 1.846e6;
-
-% mb =(Mfa - mt)/N;
-if useTUDelftParam
-    mt = Mfa;
-    Kt = Kfa;
-    Bt = Cfa; % 2*zetat*wnt *mt
-else
-    mt = Mfa;
-    Kfa = Kt;
-    Cfa = Bt; % 2*zetat*wnt *mt
-end
-
-kss = 0.1;
-Mss = mt;
-Css = Cfa;
-Kss = Kfa;
+% wecs.mt = 4.38e5; % mt+wecs.N*mb: 400680
+% wecs.Bt = 12842; %2*6421;
+% wecs.Kt = 1.846e6;
+wecs.Kt = wecs.Kt;
+wecs.Bt = wecs.Bt; %wecs.Bt;
+Kss = wecs.Kt;
+% wecs.wnt = sqrt(wecs.Kt/wecs.mt); 
 
 %% Lagrange's Model matrices
-M =[mt+N*mb N*mb*rb 0 0;
-    N*mb*rb N*mb*rb^2 0 0;
-    0 0 Jr 0;
-    0 0 0 Jg*Ng^2];
+M =[wecs.mt wecs.N*wecs.mb*wecs.rb 0 0; % M(1,1) mt+wecs.N*mb  -> mt (already includes blades)
+    wecs.N*wecs.mb*wecs.rb wecs.N*wecs.mb*wecs.rb^2 0 0;
+    0 0 wecs.Jr 0;
+    0 0 0 wecs.Jrg*wecs.Ng^2];
 
-Ce = [Bt 0 0 0;
-    0 N*Bb*rb^2 0 0;
-    0 0 Bs -Bs;
-    0 0 -Bs Bs];
+Ce = [wecs.Bt 0 0 0;
+    0 wecs.N*wecs.Bb*wecs.rb^2 0 0;
+    0 0 wecs.Bs -wecs.Bs;
+    0 0 -wecs.Bs wecs.Bs];
 
-K = [Kt 0 0;
-    0 N*Kb*rb^2 0;
-    0 0 Ks;
-    0 0 -Ks];
+K = [wecs.Kt 0 0;
+    0 wecs.N*wecs.Kb*wecs.rb^2 0;
+    0 0 wecs.Ks;
+    0 0 -wecs.Ks];
 
 Q = [1 0 0 ;
-    rb 0 0 ;
+    wecs.rb 0 0 ;
     0 1 0;
-    0 0 -Ng];
+    0 0 -wecs.Ng];
 
 L = [eye(3), [0;0;-1]];
 
@@ -150,36 +179,14 @@ PP = NaN(sizeA,length(Lin.V));
 opts = bodeoptions('cstprefs');
 opts.FreqUnits = 'Hz'; opts.MagUnits ='Abs'; opts.MagScale ='log'; opts.XLim ={[1e-2 1e1]};
 
-%% Initialize name of models and load into workspace
-idxModelNames = 1:2; %1:5
-modelNames =[{'NREL5MW_linearised'}; {'NREL5MW_linearised_Gen_Fa_Flap1'};
-    {'NREL5MW_linearised_Gen_Fa_SS_Flap1'};
-    {'NREL5MW_linearised_Gen_DriveTrain_Fa_SS_Flap1'}; {'NREL5MW_linearised'} ];
-modelNames = modelNames(idxModelNames);
-
-modelsL = [{'FAST 30 states'};
-    {'FAST 10 states'};
-    {'Fast Rot+FA+SW+1^{st} flap mode (12 states)'};
-    {'Fast Rot+drive train+FA+SW+1^{st} flap mode (14 states)'};
-    {'Fast Rot+FA (4 states)'}];
-
-modelsL = modelsL(idxModelNames);
-
-lenModelNames = length(modelNames);
-sysmCell = cell(lenModelNames,1);
-sysmCell_MBC = cell(lenModelNames,1);
-for idxModels = 1: lenModelNames
-    load(modelNames{idxModels},'sysm','sysm_MBC');
-    sysmCell{idxModels} = sysm;
-    sysmCell_MBC{idxModels} = sysm_MBC;
-end
-
 %% Initialize natural frequencies, damping, pole vectros
 lenLinV = length(Lin.V);
 sizeA = size(sysm{1}.A,1);
 
 P = cell(lenLinV,sizeA);
-sizeA_MBC = size(sysm_MBC{1}.A,1);
+if exist('sysm_MBC','var') == 1
+    sizeA_MBC = size(sysm_MBC{1}.A,1);
+end
 Pmbc = cell(lenLinV,sizeA);
 sysCell = cell(lenLinV,1);
 u_bar_cell = cell(lenLinV,1);
@@ -192,28 +199,34 @@ y_bar_cell =  cell(lenLinV,1);
 % Zmbc = cell(lenLinV,sizeA);
 
 
-%% Check original Output names
-sysOutNamesOrig = sysm{1}.OutputName([12 6 38]);
-disp(['FAST sysOutputnames: ', sprintf('%s, ', sysOutNamesOrig{:})])
-disp(['TU Delft sysOutputnames: ', sprintf('%s, ', sysOutputname{:})])
+%% Check original Input and Output names
+idxFASTOutput = [38 12] ; % 38 12 [12 6 38]
+idxFASTInput = [8 9 1];
 
-sysInNamesOrig = sysm{1}.InputName([8 9 1]);
-disp(['FAST sysOutputnames: ', sprintf('%s, ', sysInNamesOrig{:})])
-disp(['TU Delft sysOutputnames: ', sprintf('%s, ', sysInputname{:})])
+sysOutNamesOrig = sysm{1}.OutputName([idxFASTOutput,6]);
+disp(['TU Delft sysOutputnames: ', sprintf('%s, ', sysOutputname{:})])
+disp('FAST sysOutputnames:')
+fprintf('%s\n', sysOutNamesOrig{:});
+fprintf('\n')
+disp(['TU Delft sysInputnames: ', sprintf('%s, ', sysInputname{:})])
+sysInNamesOrig = sysm{1}.InputName(idxFASTInput);
+disp('FAST sysInputnames: ');
+fprintf('%s\n', sysInNamesOrig{:})
+
 
 %% Loop over all air speeds in LinV
 for index =  speedVec%[1,9,10,length(Lin.V)]%1 : length(Lin.V) %[1,length(Lin.V)] % [1,2,length(Lin.V)-1,length(Lin.V)]
     
     %% Variables dependent on wind speed V
     Vbar = Lin.V(index);
-    Lambda_bar = Lin.RSpeed(index)*rb/Vbar;
+    Lambda_bar = Lin.RSpeed(index)*wecs.rb/Vbar;
     omegabar = Lin.RSpeed(index);
     beta_bar = Lin.Pitch(index); %/pi*180;
     
-    dlambdadomega = rb/Vbar;
-    dlambdadV = -omegabar*rb/Vbar^2;
-    dlambdadxfa = omegabar*rb/Vbar^2; %s/m
-    dlambdadxdotfa = -kfa*omegabar*rb/Vbar^2; %s/m   xdotfa m/s
+    dlambdadomega = wecs.rb/Vbar;
+    dlambdadV = -omegabar*wecs.rb/Vbar^2;
+    dlambdadxfa = omegabar*wecs.rb/Vbar^2; %s/m
+    dlambdadxdotfa = -1*omegabar*wecs.rb/Vbar^2; %s/m   xdotfa m/s
     
     %% Grid points
     dCqdlambdab = interp2(Rotor_Lambda,Rotor_Pitch,Cqdlambda,Lambda_bar,beta_bar,'cubic');
@@ -224,14 +237,14 @@ for index =  speedVec%[1,9,10,length(Lin.V)]%1 : length(Lin.V) %[1,length(Lin.V)
     Ctb = interp2(Rotor_Lambda,Rotor_Pitch,Ct,Lambda_bar,beta_bar,'cubic');
     
     %% Ft=0.5*pi*rb^2*Ct*v^2
-    dFtdomega = 0.5*rho*pi*rb^2*dCtdlambdab*dlambdadomega*Vbar^2;%dFt/domega
-    dFtdV = 0.5*rho*pi*rb^2*(dCtdlambdab*dlambdadV*Vbar^2+2*Vbar*Ctb);%dFt/dV
-    dFtdbeta = 0.5*rho*pi*rb^2*dCtdbetab*Vbar^2;%dFt/dbeta
+    dFtdomega = 0.5*rho*pi*wecs.rb^2*dCtdlambdab*dlambdadomega*Vbar^2;%dFt/domega
+    dFtdV = 0.5*rho*pi*wecs.rb^2*(dCtdlambdab*dlambdadV*Vbar^2+2*Vbar*Ctb);%dFt/dV
+    dFtdbeta = 0.5*rho*pi*wecs.rb^2*dCtdbetab*Vbar^2;%dFt/dbeta
     
     %% Tr=0.5*pi*rb^3*Cq*v^2
-    dTrdomega = 0.5*rho*pi*rb^3*(dCqdlambdab*dlambdadomega)*Vbar^2;%dTr/domega
-    dTrdV = 0.5*rho*pi*rb^3*(dCqdlambdab*dlambdadV*Vbar^2+2*Vbar*Cqb);%dTr/dV
-    dTrdbeta = 0.5*rho*pi*rb^3*dCqdbetab*Vbar^2;%dTr/dbeta
+    dTrdomega = 0.5*rho*pi*wecs.rb^3*(dCqdlambdab*dlambdadomega)*Vbar^2;%dTr/domega
+    dTrdV = 0.5*rho*pi*wecs.rb^3*(dCqdlambdab*dlambdadV*Vbar^2+2*Vbar*Cqb);%dTr/dV
+    dTrdbeta = 0.5*rho*pi*wecs.rb^3*dCqdbetab*Vbar^2;%dTr/dbeta
     
     %% Linear Model
     % X =[yt zeta Thetha_s yt_dot zeta_dot omega_r omega_gr beta]'
@@ -240,9 +253,9 @@ for index =  speedVec%[1,9,10,length(Lin.V)]%1 : length(Lin.V) %[1,length(Lin.V)
     % Ve = V - yt_dot [m/s] - rb [m]  * zeta_dot [1/s]
     
     A9DoF = [A1(1:3,:), zeros(3,2);...
-        A1(4,1:3),A1(4,4)-B1(4,1)*dFtdV,A1(4,5)-B1(4,1)*dFtdV*rb, A1(4,6)+B1(4,1)*dFtdomega ,A1(4,7),0, B1(4,1)*dFtdbeta;...
-        A1(5,1:3),A1(5,4)-B1(5,1)*dFtdV ,A1(5,5)-B1(5,1)*dFtdV*rb, A1(5,6)+B1(5,1)*dFtdomega ,A1(5,7),0, B1(5,1)*dFtdbeta;...
-        A1(6,1:3),A1(6,4)-B1(6,2)*dTrdV,A1(6,5)-B1(6,2)*dTrdV*rb, A1(6,6)+B1(6,2)*dTrdomega ,A1(6,7),0, B1(6,2)*dTrdbeta;...
+        A1(4,1:3),A1(4,4)-B1(4,1)*dFtdV,A1(4,5)-B1(4,1)*dFtdV*wecs.rb, A1(4,6)+B1(4,1)*dFtdomega ,A1(4,7),0, B1(4,1)*dFtdbeta;...
+        A1(5,1:3),A1(5,4)-B1(5,1)*dFtdV ,A1(5,5)-B1(5,1)*dFtdV*wecs.rb, A1(5,6)+B1(5,1)*dFtdomega ,A1(5,7),0, B1(5,1)*dFtdbeta;...
+        A1(6,1:3),A1(6,4)-B1(6,2)*dTrdV,A1(6,5)-B1(6,2)*dTrdV*wecs.rb, A1(6,6)+B1(6,2)*dTrdomega ,A1(6,7),0, B1(6,2)*dTrdbeta;...
         A1(7,1:7), B1(7,3), 0;...
         zeros(1,7),  -1/kappa, 0;...
         zeros(1,8),  -1/tau];
@@ -281,43 +294,50 @@ for index =  speedVec%[1,9,10,length(Lin.V)]%1 : length(Lin.V) %[1,length(Lin.V)
     sysLagrange.Inputname = sysInputname;
     
     sysCell{index} = sysLagrange;
-    Torque_g_bar = 0.5*rho*pi*rb^3*Cqb*Vbar^2/Ng; % Nm
+    Torque_g_bar = 0.5*rho*pi*wecs.rb^3*Cqb*Vbar^2/wecs.Ng; % Nm
     u_bar_cell{index} = [Torque_g_bar, beta_bar * pi/180,Vbar]';
     x_bar_cell{index}  = - sysLagrange.A\sysLagrange.B *u_bar_cell{index}; % X(s) = (sI - A)^1 *B *U(s) (xdot = 0 = Ax +Bu)
     y_bar_cell{index}  = sysLagrange.C * x_bar_cell{index} + sysLagrange.D * u_bar_cell{index};
     
     
     %% State space model
-    % dotomega=(Tr-GTg)/J
-    % States omega xdotfa xdotss xfa xss
-    kCT = 1/2*rho*pi*rb^2;
-    A11 = 1/J*kCT*rb*Vbar^2*dCqdlambdab*dlambdadomega;
-    A12 = 1/J*kCT*rb*Vbar^2*dCqdlambdab*dlambdadxdotfa-2*kfa/J*kCT*rb*Vbar*Cqb;
+    % States omega xdotfa xdotsw xfa xss
     
-    A21 = 1/Mfa*kCT*Vbar^2*dCtdlambdab*dlambdadomega;
-    A22 = 1/Mfa*kCT*Vbar^2*dCtdlambdab*dlambdadxdotfa-2*kfa/Mfa*kCT*Vbar*Ctb;
+    % constant for CT: 0.5*rho*A
+    kCT = 1/2*rho*pi*wecs.rb^2;
     
-    A31 = kss/Mss*kCT*rb*Vbar^2*dCqdlambdab*dlambdadomega;
-    A32 = kss/Mss*kCT*rb*Vbar^2*dCqdlambdab*dlambdadxdotfa-2*kss*kfa/Mss*kCT*rb*Vbar*Cqb; % wrong
+    % dotomega = (1/Ng * Tr - Tg)/J
+    A11 = 1/wecs.Jr*kCT* wecs.rb*Vbar^2*dCqdlambdab*dlambdadomega;
+    A12 = 1/wecs.Jr*kCT*wecs.rb*(Vbar^2*dCqdlambdab*dlambdadxdotfa-2*Vbar*Cqb);
     
+    % xdotdotfa = 1/Mt( -Bt * xdotfa - Kt* xfa +Ft)
+    A21 = 1/wecs.mt*kCT*Vbar^2*dCtdlambdab*dlambdadomega;
+    A22 = 1/wecs.mt*kCT*Vbar^2*dCtdlambdab*dlambdadxdotfa-2*1/wecs.mt*kCT*Vbar*Ctb;
+    
+    % xdotdotfa = 1/Mt( -Bt * xdotfa - Kt* xfa + 3/(2*H)Tg)
+    A31 = 0;%A31 = 1/wecs.mt*kCT*wecs.rb*Vbar^2*dCqdlambdab*dlambdadomega;
+    A32 = 0; %A32 = kss/wecs.mt*kCT*wecs.rb*Vbar^2*dCqdlambdab*dlambdadxdotfa-2*kss*1/wecs.mt*kCT*wecs.rb*Vbar*Cqb; % wrong?
+
     A = [A11 A12 0 0 0;
-        A21 A22-Cfa/Mfa 0 -Kfa/Mfa 0;
-        A31 A32  -Css/Mss 0 -Kss/Mss ;
+        A21 (A22-wecs.Bt/wecs.mt) 0 -wecs.Kt/wecs.mt 0;
+        A31 A32  -wecs.Bt/wecs.mt 0 -Kss/wecs.mt ;
         [0 1 0 0 0; 0 0 1 0 0]];
     
-    % Inputs: Torque [N/m], pitch angle beta [rad], wind speed V [m/s]
-    B11 = -Ng/J;
-    B12 = 1/J*kCT*rb*Vbar^2*dCqdbetab;
-    B13 = 1/J*kCT*rb*Vbar^2*dCqdlambdab*dlambdadV+2/J*kCT*rb*Vbar*Cqb;
-    B22 = 1/Mfa*kCT*Vbar^2*dCtdbetab;
-    B23 = 1/Mfa*kCT*Vbar^2*dCtdlambdab*dlambdadV+2/Mfa*kCT*Vbar*Ctb;
+    % Inputs: Torque [wecs.N/m], pitch angle beta [rad], wind speed V [m/s]
+    B11 = -wecs.Ng/wecs.Jr;
+    B12 = 1/wecs.Jr*kCT*wecs.rb*Vbar^2*dCqdbetab;
+    B13 = 1/wecs.Jr*kCT*wecs.rb*Vbar^2*dCqdlambdab*dlambdadV+2/wecs.Jr*kCT*wecs.rb*Vbar*Cqb;
     
-    B32 = kss/Mss*kCT*rb*Vbar^2*dCqdbetab;
-    B33 = kss/Mss*kCT*rb*Vbar^2*dCqdlambdab*dlambdadV+kss*2/Mss*kCT*rb*Vbar*Cqb;
-    
-    B=[B11 B12 B13;
+    B22 = 1/wecs.mt*kCT*Vbar^2*dCtdbetab;
+    B23 = 1/wecs.mt*kCT*Vbar^2*dCtdlambdab*dlambdadV+2/wecs.mt*kCT*Vbar*Ctb;
+        
+    B31 = wecs.Ng/wecs.mt *3/(2*wecs.H);
+    B32 = 0; %B32 = kss/wecs.mt*kCT*wecs.rb*Vbar^2*dCqdbetab;
+    B33 = 0; %B33 = kss/wecs.mt*kCT*wecs.rb*Vbar^2*dCqdlambdab*dlambdadV+kss*2/wecs.mt*kCT*wecs.rb*Vbar*Cqb;
+
+    B = [B11 B12 B13;
         0   B22 B23;
-        0   B32 B33;
+        B31 B32 B33;
         zeros(2,3);];
     
     % Outputs: omega [rad/s], fore-aft dx_dot_f, fore-aft dx_dot_fa [m/s^2]
@@ -346,7 +366,7 @@ for index =  speedVec%[1,9,10,length(Lin.V)]%1 : length(Lin.V) %[1,length(Lin.V)
         for indexModels=1:lenModelNames
             sysm =  sysmCell{indexModels};
             % model = [1 0 0; 0 1 0; 0 0 2*pi/60]*sysm{index}([12 6 38],[8 9 1])*[1000 0 0; 0 1 0; 0 0 1]; %pi/180
-            model = [2*pi/60 0; 0 1]*sysm{index}([38 12],[8 9 1])*[1000 0 0; 0 1 0; 0 0 1]; %pi/180
+            model = [pi/30 0; 0 1]*sysm{index}([38 12],[8 9 1])*[1000 0 0; 0 1 0; 0 0 1]; %pi/180
             model.OutputName = sysOutputname;
             model.InputName = sysInputname;
             bodemag(model,opts); hold on
@@ -362,7 +382,7 @@ for index =  speedVec%[1,9,10,length(Lin.V)]%1 : length(Lin.V) %[1,length(Lin.V)
         strExtr = '';
         for ilegC = 1: length(modelsL)
             strExtr = [strExtr,...
-                '\color[rgb]{',num2str(cl(ilegC+1,:)),'}',modelsL{ilegC},' ']; %#ok<AGROW> This fast
+                '\color[rgb]{',num2str(cl(ilegC+1,:)),'}',' ',modelsL{ilegC}]; %#ok<AGROW> This fast
         end
         
         % legend(legCell,'location','southeast')

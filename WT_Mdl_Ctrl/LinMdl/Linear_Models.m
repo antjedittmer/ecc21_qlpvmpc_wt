@@ -97,7 +97,7 @@ Pmbc = cell(lenLinV,sizeA);
 sysCell = cell(lenLinV,1);
 
 %% Loop over all air speeds in LinV
-for index =  1 :length(Lin.V) %[1, length(Lin.V)]%
+for index =  length(Lin.V) %[1, length(Lin.V)]%
     
     %% Variables dependent on wind speed V
     Vbar = Lin_points.V(index);
@@ -131,7 +131,7 @@ for index =  1 :length(Lin.V) %[1, length(Lin.V)]%
     A32 = kss/mt*kCT*R*Vbar^2*dCqdlambdab*dlambdadxdotfa-2*kss*kfa/mt*kCT*R*Vbar*Cqb; % wrong
     
     A = [A11 A12 0 0 0;
-        A21 A22-ct/mt 0 -Kt/mt 0;
+        A21 (A22-ct/mt) 0 -Kt/mt 0;
         A31 A32  -ct/mt 0 -Kt/mt ;
         [0 1 0 0 0; 0 0 1 0 0]];
     
