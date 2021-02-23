@@ -50,7 +50,7 @@ OutTableTest1.Time = timeVec';
 OutTableTestCL.Time = timeVec';
 
 cellOfTable{1} = OutTableTest1;
-cellOfTable{2} = OutTableTestCL;
+cellOfTable{2} = OutTableTest1; %OutTableTestCL;
 calculateEvalCriteria(cellOfTable)
 
 

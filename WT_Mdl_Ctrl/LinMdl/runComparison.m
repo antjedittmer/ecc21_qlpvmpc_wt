@@ -12,7 +12,7 @@ end
 
 figNoAdd = 1;
 useTUDelftParam = 0;
-Linear_Models_Lagrange_Comparison(speedVec,useTUDelftParam,figDir, useActuatorStates,figNoAdd)
+Linear_Models_Lagrange_Comparison(speedVec,useTUDelftParam,figDir,useActuatorStates,figNoAdd)
 
 figNoAdd = 0;
 useTUDelftParam = 1;

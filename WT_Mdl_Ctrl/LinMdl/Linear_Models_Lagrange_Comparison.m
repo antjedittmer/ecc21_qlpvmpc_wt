@@ -1,11 +1,10 @@
-function wecs = Linear_Models_Lagrange_Comparison(speedVec,useTUDelftParam,figFolder, useActuatorStates,figNoAdd)
+function wecs = Linear_Models_Lagrange_Comparison(speedVec,figFolder, useActuatorStates,figNoAdd)
 
 %% Set defaults
 if nargin == 0
-    speedVec = [1,10,22];
-    useTUDelftParam = 0;
+    speedVec = 1; %:22; % variations of wind speed
     figFolder = 'FigureLagrange_201015_comp';
-    useActuatorStates = 0;
+    useActuatorStates = 1;
     figNoAdd = 0;
     close all;
 end
@@ -21,7 +20,7 @@ load('NREL5MW_CPdata_new3','Rotor_Lamda', 'Rotor_Pitch', ...
     'Rotor_cQ', 'Rotor_cT');
 
 %% Initialize name of models and load into workspace
-idxModelNames = 1:3 %1:2; %1:5
+idxModelNames = 1:2; %1:2; %1:5
 modelNames =[ {'NREL5MW_linearised'}; %{'NREL5MW_linearised_4to25'};
     {'NREL5MW_linearised_Gen_Fa_Flap1'};
     {'NREL5MW_linearised_Gen_Fa_SS_Flap1'};
@@ -86,8 +85,8 @@ wecs.mtower = 347460;%347460;%kg Mass of the tower and nacelle
 wecs.mt = 0.25*wecs.mtower+wecs.mn+wecs.mh+3*wecs.mb;
 wecs.H =  87.6;
 
-wecs.Jr = 115926 + 3 * 11.776e6; %kg*m^2 Inertia of the rotor (Hub inertia + 3 blades
 wecs.Jrg = 534.116;% * Ng^2; %kg*m^2 Inertia of the generator
+wecs.Jr = 115926 + 3 * 11.776e6 + wecs.Jrg * wecs.Ng^2; %kg*m^2 Inertia of the rotor (Hub inertia + 3 blades
 f0 = 0.324;
 f0sw = 0.3120;
 wecs.wnb = 0.6993 * 2*pi; %2.0205; %Natural frequency of blade
@@ -105,9 +104,9 @@ wecs.Bb = 2 *wecs.zetab*wecs.wnb *wecs.mb ; %Damping of the blade
 wecs.Ks = 867637000; %Nm/rad Stiffness of the transmission
 % 2*zeta*wn=B
 wecs.Bs = 6215000;  %Nm/rad/sec        %Damping of the transmission
-
 wecs.N = 3;%Number of blades
 wecs.rb = 63; % m blade radius
+
 rho = 1.225; % Air density (kg/m^3)
 % Bg = 0.9; % Tg= Bg(wg - wz). Unused because we use Tg as input
 tau = 0.1; % for pitch actuator
@@ -117,14 +116,6 @@ kappa = 0.01;
 % Tower equivalent damping, CT 6421 wecs.N s/m
 % Tower equivalent stiffness, KT 1,846,000 wecs.N/m
 
-%% Parameters for tower model
-% wecs.mt = 4.38e5; % mt+wecs.N*mb: 400680
-% wecs.Bt = 12842; %2*6421;
-% wecs.Kt = 1.846e6;
-wecs.Kt = wecs.Kt;
-wecs.Bt = wecs.Bt; %wecs.Bt;
-Kss = wecs.Kt;
-% wecs.wnt = sqrt(wecs.Kt/wecs.mt); 
 
 %% Lagrange's Model matrices
 M =[wecs.mt wecs.N*wecs.mb*wecs.rb 0 0; % M(1,1) mt+wecs.N*mb  -> mt (already includes blades)
@@ -215,7 +206,7 @@ fprintf('%s\n', sysInNamesOrig{:})
 
 
 %% Loop over all air speeds in LinV
-for index =  speedVec%[1,9,10,length(Lin.V)]%1 : length(Lin.V) %[1,length(Lin.V)] % [1,2,length(Lin.V)-1,length(Lin.V)]
+for index =  speedVec %[1,9,10,length(Lin.V)]%1 : length(Lin.V) %[1,length(Lin.V)] % [1,2,length(Lin.V)-1,length(Lin.V)]
     
     %% Variables dependent on wind speed V
     Vbar = Lin.V(index);
@@ -247,7 +238,7 @@ for index =  speedVec%[1,9,10,length(Lin.V)]%1 : length(Lin.V) %[1,length(Lin.V)
     dTrdbeta = 0.5*rho*pi*wecs.rb^3*dCqdbetab*Vbar^2;%dTr/dbeta
     
     %% Linear Model
-    % X =[yt zeta Thetha_s yt_dot zeta_dot omega_r omega_gr beta]'
+    % X =[yt zeta Thetha_s yt_dot zeta_dot omega_r omega_gr beta torque]'
     % y=[ yt_ddot rb*zeta_dot omega_r]' -> y=[ yt_ddot rb*zeta_dot omega_r]'
     % uact=[Tg_ref beta_ref V]'
     % Ve = V - yt_dot [m/s] - rb [m]  * zeta_dot [1/s]
@@ -293,7 +284,17 @@ for index =  speedVec%[1,9,10,length(Lin.V)]%1 : length(Lin.V) %[1,length(Lin.V)
     sysLagrange.Outputname = sysOutputname;
     sysLagrange.Inputname = sysInputname;
     
-    sysCell{index} = sysLagrange;
+    Cout = [C9DoF;
+            [zeros(1,7) 1 zeros(1,1)];  % beta
+            [zeros(1,8) 1]];% torque
+        Dout = [D9DoF; zeros(2,3)];
+        sysOut = ss(A9DoF,B9DoF*diag([1000,1,1]),Cout,Dout); % to give input Tg in kN/m
+        
+    sysOut.Outputname = [sysOutputname;{'beta'};{'Tg'}];
+    sysOut.Inputname = sysInputname;
+
+    
+    sysCell{index} = sysOut;
     Torque_g_bar = 0.5*rho*pi*wecs.rb^3*Cqb*Vbar^2/wecs.Ng; % Nm
     u_bar_cell{index} = [Torque_g_bar, beta_bar * pi/180,Vbar]';
     x_bar_cell{index}  = - sysLagrange.A\sysLagrange.B *u_bar_cell{index}; % X(s) = (sI - A)^1 *B *U(s) (xdot = 0 = Ax +Bu)
@@ -320,7 +321,7 @@ for index =  speedVec%[1,9,10,length(Lin.V)]%1 : length(Lin.V) %[1,length(Lin.V)
 
     A = [A11 A12 0 0 0;
         A21 (A22-wecs.Bt/wecs.mt) 0 -wecs.Kt/wecs.mt 0;
-        A31 A32  -wecs.Bt/wecs.mt 0 -Kss/wecs.mt ;
+        A31 A32  -wecs.Bt/wecs.mt 0 -wecs.Kt/wecs.mt ;
         [0 1 0 0 0; 0 0 1 0 0]];
     
     % Inputs: Torque [wecs.N/m], pitch angle beta [rad], wind speed V [m/s]
@@ -401,6 +402,7 @@ for index =  speedVec%[1,9,10,length(Lin.V)]%1 : length(Lin.V) %[1,length(Lin.V)
     
 end
 
+save('sysCell.mat','sysCell');
 
 %% Modal analysis
 return; %

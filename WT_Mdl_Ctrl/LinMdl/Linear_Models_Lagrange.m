@@ -26,77 +26,73 @@ if ~isfolder(figFolder)
     mkdir(figFolder);
 end
 
-%% Define parameters
-% 5MW FAST WIND TURBINE (NREL/TP-500-38060)Definition of a 5-MW Reference Wind Turbine for Offshore
-%System Development
-% Cut-In, Rated, Cut-Out Wind Speed 3 m/s, 11.4 m/s, 25 m/s
-% Cut-In, Rated Rotor Speed 6.9 rpm, 12.1 rpm
-%wr,wg in rad/s, Tg in kN, Pg in kW,
-Ng = 97; %Gearbox ratio
-mt = 347460 + 240000;%347460;%kg Mass of the tower and nacelle
-mb = 17740; %kg Mass of each blade
-Jr = 115926 + 3 * 11.776e6; %kg*m^2 Inertia of the rotor (Hub inertia + 3 blades
-Jg = 534.116;% * Ng^2; %kg*m^2 Inertia of the generator
-wnt = 0.32 * 2 *pi; %2.1 ; %2.9003; %Natural frequency of tower
-wnb = 0.67 * 2 *pi; %Natural frequency of blade %2.0205
-zetat = 0.01; %damping ratio of tower
-zetab = 0.00477465 *100;%damping ratio of blade
+wecs.Ng = 97; %Gearbox ratio
+wecs.mh =  56780; % hub mass
+wecs.mb = 17740; %kg Mass of each blade
+wecs.mn = 240000; % Nacellle mass
+wecs.mtower = 347460;%347460;%kg Mass of the tower and nacelle
+wecs.mt = 0.25*wecs.mtower+wecs.mn+wecs.mh+3*wecs.mb;
+wecs.H =  87.6;
 
+wecs.Jr = 115926 + 3 * 11.776e6; %kg*m^2 Inertia of the rotor (Hub inertia + 3 blades
+wecs.Jrg = 534.116;% * Ng^2; %kg*m^2 Inertia of the generator
+f0 = 0.324;
+f0sw = 0.3120;
+wecs.wnb = 0.6993 * 2*pi; %2.0205; %Natural frequency of blade
+wecs.wnt = f0 * 2*pi; % wecs.wnb; 0.3240
+wecs.zetat = 1/100; %damping ratio of tower (Table 6.2)
+wecs.zetab = 0.477465;% damping ratio of blade /100
 % K=wn^2
-Kt = wnt^2 * mt; % Stiffness of the tower s^2 + B/Ms + K/m
-Kb = wnb^2 * mb; %Stiffness of each blade
 
-Ks = 867637000; %Nm/rad Stiffness of the transmission
+%if ~useTUDelftParam
+wecs.Kt = wecs.wnt^2 * wecs.mt; % Stiffness of the tower s^2 + B/Ms + K/m
+wecs.Bt = 2 *wecs.zetat * wecs.wnt *wecs.mt; % tower 2*6421;
+%end
+wecs.Kb = wecs.wnb^2 * wecs.mb; %Stiffness of each blade
+wecs.Bb = 2 *wecs.zetab*wecs.wnb *wecs.mb ; %Damping of the blade
+wecs.Ks = 867637000; %Nm/rad Stiffness of the transmission
 % 2*zeta*wn=B
-Bt = 2*zetat*wnt *mt; % Damping of the tower
-Bb = 2*zetab*wnb *mb ; %Damping of the blade
-Bs = 6215000;  %Nm/rad/sec        %Damping of the transmission
+wecs.Bs = 6215000;  %Nm/rad/sec        %Damping of the transmission
 
-N = 3;%Number of blades
-rb = 63; % m blade radius
+wecs.N = 3;%Number of blades
+wecs.rb = 63; % m blade radius
+
 rho = 1.225; % Air density (kg/m^3)
-Bg = 0.9; % Tg= Bg(wg - wz).
+% Bg = 0.9; % Tg= Bg(wg - wz). Unused because we use Tg as input
 tau = 0.1; % for pitch actuator
 kappa = 0.01;
 
-%% Parameters for tower model
-% kfa = 1; %should this be a plus or a min?
-% Mfa = 4.38e5; % mt+N*mb: 400680
-% Cfa = 2*6421;
-% Kfa = 1.846e6;
-% 
-% % mb =(Mfa - mt)/N;
-% mt = Mfa;
-% Kt = Kfa;
-% Bt = Cfa; % 2*zetat*wnt *mt
+% Tower equivalent mass, MT 438,000 kg
+% Tower equivalent damping, CT 6421 wecs.N s/m
+% Tower equivalent stiffness, KT 1,846,000 wecs.N/m
 
-% Kb = wnb^2*mb; %
-% Bb  = 2*zetab*wnb*mb;
+%% Lagrange's Model matrices
+M =[wecs.mt wecs.N*wecs.mb*wecs.rb 0 0; % M(1,1) mt+wecs.N*mb  -> mt (already includes blades)
+    wecs.N*wecs.mb*wecs.rb wecs.N*wecs.mb*wecs.rb^2 0 0;
+    0 0 wecs.Jr 0;
+    0 0 0 wecs.Jrg*wecs.Ng^2];
 
-%% Model
-M =[mt+N*mb N*mb*rb 0 0;
-    N*mb*rb N*mb*rb^2 0 0;
-    0 0 Jr 0;
-    0 0 0 Jg*Ng^2];
+Ce = [wecs.Bt 0 0 0;
+    0 wecs.N*wecs.Bb*wecs.rb^2 0 0;
+    0 0 wecs.Bs -wecs.Bs;
+    0 0 -wecs.Bs wecs.Bs];
 
-Ce = [Bt 0 0 0;
-    0 N*Bb*rb^2 0 0;
-    0 0 Bs -Bs;
-    0 0 -Bs Bs];
-
-K = [Kt 0 0;
-    0 N*Kb*rb^2 0;
-    0 0 Ks;
-    0 0 -Ks];
+K = [wecs.Kt 0 0;
+    0 wecs.N*wecs.Kb*wecs.rb^2 0;
+    0 0 wecs.Ks;
+    0 0 -wecs.Ks];
 
 Q = [1 0 0 ;
-    rb 0 0 ;
-     0 1 0;
-     0 0 -Ng];
+    wecs.rb 0 0 ;
+    0 1 0;
+    0 0 -wecs.Ng];
+
 L = [eye(3), [0;0;-1]];
+
 A1 = [zeros(3), L;...
     -M\K, -M\Ce];
-B1=[zeros(3); M\Q];
+
+B1 = [zeros(3); M\Q];
 
 vecLambda = 1:150;
 Rotor_Lambda = Rotor_Lamda(vecLambda);
@@ -160,7 +156,7 @@ Zmbc = cell(lenLinV,sizeA);
 Pmbc = cell(lenLinV,sizeA);
 
 
-%% Check original Output names 
+%% Check original Output names
 sysOutNamesOrig = sysm{1}.OutputName([12 6 38]);
 disp(['FAST sysOutputnames: ', sprintf('%s, ', sysOutNamesOrig{:})])
 disp(['TU Delft sysOutputnames: ', sprintf('%s, ', sysOutputname{:})])
@@ -171,17 +167,18 @@ disp(['TU Delft sysOutputnames: ', sprintf('%s, ', sysInputname{:})])
 
 
 %% Loop over all air speeds in LinV
-for index = 1 %[1,length(Lin.V)]%1 : length(Lin.V) %[1,length(Lin.V)] % [1,2,length(Lin.V)-1,length(Lin.V)]
+for index = 1:length(Lin.V)%1 : length(Lin.V) %[1,length(Lin.V)] % [1,2,length(Lin.V)-1,length(Lin.V)]
     
     %% Variables dependent on wind speed V
-    Vbar = Lin_points.V(index);
-    Lambda_bar=Lin_points.RSpeed(index)*rb/Vbar;
-    omegabar=Lin_points.RSpeed(index);
-    beta_bar=Lin_points.Pitch(index); %/pi*180;
+    Vbar = Lin.V(index);
+    Lambda_bar = Lin.RSpeed(index)*wecs.rb/Vbar;
+    omegabar = Lin.RSpeed(index);
+    beta_bar = Lin.Pitch(index); %/pi*180;
     
-    dlambdadomega = rb/Vbar;
-    dlambdadV = -omegabar*rb/Vbar^2;
-    dlambdadxfa = omegabar*rb/Vbar^2;
+    dlambdadomega = wecs.rb/Vbar;
+    dlambdadV = -omegabar*wecs.rb/Vbar^2;
+    dlambdadxfa = omegabar*wecs.rb/Vbar^2; %s/m
+    dlambdadxdotfa = -1*omegabar*wecs.rb/Vbar^2; %s/m   xdotfa m/s
     
     %% Grid points
     dCqdlambdab = interp2(Rotor_Lambda,Rotor_Pitch,Cqdlambda,Lambda_bar,beta_bar,'cubic');
@@ -197,19 +194,25 @@ for index = 1 %[1,length(Lin.V)]%1 : length(Lin.V) %[1,length(Lin.V)] % [1,2,len
     % this be +
     % Ktv = 0.5*rho*pi*rb^2*(dCtdlambdab*dlambdadV*Vbar^2+2*Vbar*Ctb);%dFt/dV
     % Ktb = 0.5*rho*pi*rb^2*dCtdbetab*Vbar^2;%dFt/dbeta
-    dFtdomega = 0.5*rho*pi*rb^2*dCtdlambdab*dlambdadomega*Vbar^2;%dFt/domega
-    dFtdV = 0.5*rho*pi*rb^2*(dCtdlambdab*dlambdadV*Vbar^2+2*Vbar*Ctb);%dFt/dV
-    dFtdbeta = 0.5*rho*pi*rb^2*dCtdbetab*Vbar^2;%dFt/dbeta
+
     
     %% Tr=0.5*pi*rb^3*Cq*v^2
     %br = -0.5*rho*pi*rb^3*(dCqdlambdab*dlambdadomega)*Vbar^2;%-dTr/domega
     %Krv = 0.5*rho*pi*rb^3*(dCqdlambdab*dlambdadV*Vbar^2+2*Vbar*Cqb);%dTr/dV
     %Krb = 0.5*rho*pi*rb^3*dCqdbetab*Vbar^2;%dTr/dbeta
-    dTrdomega = 0.5*rho*pi*rb^3*(dCqdlambdab*dlambdadomega)*Vbar^2;%dTr/domega
-    dTrdV = 0.5*rho*pi*rb^3*(dCqdlambdab*dlambdadV*Vbar^2+2*Vbar*Cqb);%dTr/dV
-    dTrdbeta = 0.5*rho*pi*rb^3*dCqdbetab*Vbar^2;%dTr/dbeta
+
+        %% Ft=0.5*pi*rb^2*Ct*v^2
+    dFtdomega = 0.5*rho*pi*wecs.rb^2*dCtdlambdab*dlambdadomega*Vbar^2;%dFt/domega
+    dFtdV = 0.5*rho*pi*wecs.rb^2*(dCtdlambdab*dlambdadV*Vbar^2+2*Vbar*Ctb);%dFt/dV
+    dFtdbeta = 0.5*rho*pi*wecs.rb^2*dCtdbetab*Vbar^2;%dFt/dbeta
     
-  
+    %% Tr=0.5*pi*rb^3*Cq*v^2
+    dTrdomega = 0.5*rho*pi*wecs.rb^3*(dCqdlambdab*dlambdadomega)*Vbar^2;%dTr/domega
+    dTrdV = 0.5*rho*pi*wecs.rb^3*(dCqdlambdab*dlambdadV*Vbar^2+2*Vbar*Cqb);%dTr/dV
+    dTrdbeta = 0.5*rho*pi*wecs.rb^3*dCqdbetab*Vbar^2;%dTr/dbeta
+    
+    
+    
     %% Linear Model
     % X=[yt zeta thetha_r thetha_gr yt_dot zeta_dot omega_r omega_gr beta ]'
     % For stability
@@ -219,36 +222,36 @@ for index = 1 %[1,length(Lin.V)]%1 : length(Lin.V) %[1,length(Lin.V)] % [1,2,len
     % Ve = V - yt_dot [m/s] - rb [m]  * zeta_dot [1/s]
     
     A = [A1(1:3,:), zeros(3,2);...
-        A1(4,1:3),A1(4,4)-B1(4,1)*dFtdV,A1(4,5)-B1(4,1)*dFtdV*rb, A1(4,6)+B1(4,1)*dFtdomega ,A1(4,7),0, B1(4,1)*dFtdbeta;...
-        A1(5,1:3),A1(5,4)-B1(5,1)*dFtdV,A1(5,5)-B1(5,1)*dFtdV*rb, A1(5,6)+B1(5,1)*dFtdomega ,A1(5,7),0, B1(5,1)*dFtdbeta;...
-        A1(6,1:3),A1(6,4)-B1(6,2)*dTrdV,A1(6,5)-B1(6,2)*dTrdV*rb, A1(6,6)+B1(6,2)*dTrdomega ,A1(6,7),0, B1(6,2)*dTrdbeta;...
+        A1(4,1:3),A1(4,4)-B1(4,1)*dFtdV,A1(4,5)-B1(4,1)*dFtdV*wecs.rb, A1(4,6)+B1(4,1)*dFtdomega ,A1(4,7),0, B1(4,1)*dFtdbeta;...
+        A1(5,1:3),A1(5,4)-B1(5,1)*dFtdV,A1(5,5)-B1(5,1)*dFtdV*wecs.rb, A1(5,6)+B1(5,1)*dFtdomega ,A1(5,7),0, B1(5,1)*dFtdbeta;...
+        A1(6,1:3),A1(6,4)-B1(6,2)*dTrdV,A1(6,5)-B1(6,2)*dTrdV*wecs.rb, A1(6,6)+B1(6,2)*dTrdomega ,A1(6,7),0, B1(6,2)*dTrdbeta;...
         A1(7,1:7), B1(7,3), 0;...
         zeros(1,7),  -1/kappa, 0;...
         zeros(1,8),  -1/tau];
     
     B = [zeros(3);...
-       zeros(1,2),B1(4,1)*dFtdV;...
-       zeros(1,2),B1(5,1)*dFtdV;...
-       zeros(1,2),B1(6,2)*dTrdV;...
-       zeros(1,3);...
-       1/kappa, 0,0;...
-       0,1/tau,0];
+        zeros(1,2),B1(4,1)*dFtdV;...
+        zeros(1,2),B1(5,1)*dFtdV;...
+        zeros(1,2),B1(6,2)*dTrdV;...
+        zeros(1,3);...
+        1/kappa, 0,0;...
+        0,1/tau,0];
     C = [A(4,:);...
-        0     rb * 10     zeros(1,7);... %rb
-        zeros(1,5),     1     zeros(1,3)]; 
+        0     wecs.rb * 10     zeros(1,7);... %wecs.rb
+        zeros(1,5),     1     zeros(1,3)];
     D = [B(4,:);zeros(2,3)];
-        
+    
     %% Create a state-space model
     sys = ss(A,B*diag([1000,1,1]),C,D); % to give input Tg in kN/m
     sys.Outputname = sysOutputname;
     sys.Inputname = sysInputname;
     
     sysCell{index} = sys;
-    Torque_g_bar = 0.5*rho*pi*rb^3*Cqb*Vbar^2/Ng; % Nm
+    Torque_g_bar = 0.5*rho*pi*wecs.rb^3*Cqb*Vbar^2/wecs.Ng; % Nm
     u_bar_vec(:,index) = [Torque_g_bar, beta_bar * pi/180,Vbar]';
     x_bar_vec(:,index)  = - sys.A\sys.B *u_bar_vec(:,index); % X(s) = (sI - A)^1 *B *U(s) (xdot = 0 = Ax +Bu)
     y_bar_vec(:,index)  = sys.C * x_bar_vec(:,index) + sys.D * u_bar_vec(:,index);
-
+    
     
     %% Make a Bode plot
     if createBodePlots == 1
@@ -256,8 +259,8 @@ for index = 1 %[1,length(Lin.V)]%1 : length(Lin.V) %[1,length(Lin.V)] % [1,2,len
         ff.Position = [520   267   560   531];
         ff.Color = 'white'; ff.Visible = plotVisible;
         
-        bodemag(sys,'m'); hold on; grid on;
-            
+        bodemag(sys,'k'); hold on; grid on;
+        
         for indexModels=1:lenModelNames
             sysm =  sysmCell{indexModels};
             model = [1 0 0; 0 1 0; 0 0 2*pi/60]*sysm{index}([12 6 38],[8 9 1])*[1000 0 0; 0 1 0; 0 0 1]; %pi/180
