@@ -1,22 +1,30 @@
-function colorInOutports(aSimulinkMdl)
+function colorInOutports(aSimulinkMdl,aBackgroundColorOut,aBackgroundColorIn)
 % color in and outports of a model
 
 if ~nargin
     aSimulinkMdl = bdroot;
     if isempty(aSimulinkMdl)
-        warning('No Simulink model open')
+        warning('No Simulink model open. Return without action')
+        return;
     end
+end
+
+if nargin < 2 || isempty(aBackgroundColorOut)
+    aBackgroundColorOut = 'lightblue'; %'magenta';
+end
+
+if nargin < 3 || isempty(aBackgroundColorIn)
+    aBackgroundColorIn = 'green';% 'cyan';
 end
 
 % BlockType, 'Inport'; BackgroundColor, 'magenta'
 aBlockType = 'Inport';
-aBackgroundColor =  'magenta';
-colorInports(aSimulinkMdl, aBlockType, aBackgroundColor)
+colorInports(aSimulinkMdl, aBlockType, aBackgroundColorOut)
 
 % BlockType, 'Outport'; BackgroundColor, 'cyan'
 aBlockType = 'Outport';
-aBackgroundColor =  'cyan';
-colorInports(aSimulinkMdl, aBlockType, aBackgroundColor)
+
+colorInports(aSimulinkMdl, aBlockType, aBackgroundColorIn)
 
 function colorInports(aSimulinkMdl, aBlockType, aBackgroundColor)
 

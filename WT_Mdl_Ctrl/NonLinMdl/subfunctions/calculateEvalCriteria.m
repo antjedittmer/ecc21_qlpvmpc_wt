@@ -1,12 +1,13 @@
 function calculateEvalCriteria(cellOfTable)
 % calculate evaluation criteria for controllers
 
+% epected variablenames: GenPwr,GenSpeed,TwrBsM,BlPitchC
 outTable1 = cellOfTable{1};
 lenComparison = length(cellOfTable);
 % Get quantitative criteria for controller evaluation
 idxTime = outTable1.Time > 15; % 10 : height(outTable1); %;  %
 varNames = outTable1.Properties.VariableNames;
-summaryTickLabel = {'NREL_{FAST}', 'NREL_{OC3}','DLR','TUDelft'};
+
 
 %% Get evaluation criteria
 
@@ -31,7 +32,7 @@ end
 %C_damageBlades calculated via Rainflow count w flap. blade RootMyb signals
 % Antje ToDo Using flapping moments only: Also edgewise(x) and pitch (z)?
 % Antje ToDo: Transform from rotating into fixed reference system?
-idxRootMyb = contains(varNames,'RootMyb');
+idxRootMyb = contains(varNames,'RootMyb') | contains(varNames,'RootMFlp');
 if any(idxRootMyb)
     m = 10;
     damageBlades = nan( 1,lenComparison);
@@ -78,6 +79,10 @@ K_ActPwr = meanActPwr/refMeanActPwr;
 K_damageBlades = damageBlades/refDamageBlades;
 K_damageTower = damageTower/refDamageTower;
 
+
+
+cl = colormap('lines');
+
 strMeanGenPwr = sprintf('%2.3f, ', meanGenPwr);
 strKpowerabs = sprintf('%2.3f, ', K_GenPwr);
 %strStdGenSpeed = sprintf('%2.3f, ', stdGenSpeed);
@@ -89,9 +94,9 @@ strKActPwr = sprintf('%2.3f, ',K_ActPwr);
 strKDamageBlades = sprintf('%2.3f, ',K_damageBlades);
 strKDamageTower = sprintf('%2.3f, ',K_damageTower);
 
-cl = colormap('lines');
-
 figure;
+summaryTickLabel = {'NREL_{FAST}', 'NREL_{OC3}','DLR','TUDelft'};
+
 bar([K_GenPwr/max(K_GenPwr);K_stdGenSpeed]');
 axis tight; grid on;
 titleCell = {'Comparison PI Torque/CPC Controller',...

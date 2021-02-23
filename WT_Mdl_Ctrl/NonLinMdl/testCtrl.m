@@ -2,22 +2,34 @@
 clear;
 clear ABgL_WT;
 close all;
-addpath(fullfile(fileparts(pwd),'dataIn'));
+
+% set paths
+dataInPath = fullfile(fileparts(pwd),'dataIn');
+addpath(dataInPath);
 addpath(fullfile(pwd,'dataOut'));
 addpath(genpath('C:\Projects\FASTTool'));
+addpath('subfunctionsMPC')
+addpath('MDlWECS')
+onlyInit = 1;
+dataInPath = fullfile(fileparts(pwd),'dataIn');
+load(fullfile(dataInPath,'OutDataSweep.mat'),'OutTable'); %#ok<NASGU>
+DT = 0.008;
 
+% if onlyInit == 1
+%     return;
+% end
+
+%initModel5MWNREL;
 initModel5MWNREL;
-initModel5MWNRELBianchi;
 
 % set local fst file
 FAST_InputFileName = fullfile(pwd,'inputfiles', 'FAST.fst');
-
-onlyInit = 1;
-selectSteadyState = 0; % 0: OpenLoop FAST, 1: PI CL FAST, 2:PI CL Simulink
+selectSteadyState = 1; % 0: OpenLoop FAST, 1: PI CL FAST, 2:PI CL Simulink
 
 load('workSpace.mat')
 load('OutDataSweep.mat','OutData');
-%load('OutDataWind18NTM.mat','OutData');
+%load('OutDataSweep.mat','OutData');
+%load(fullfile(dataInPath,'OutDataWind18NTM.mat'),'OutData');
 %load('OutDataWind11To14NTM.mat','OutData');
 
 OutTable = array2table(OutData,'VariableNames', OutList);
@@ -53,27 +65,8 @@ if selectSteadyState == 2 % select CL PI Simulink steady state
 end
 
 
-if selectSteadyState > 0 % overwrite default FAST OL data
-    
-    lenTable =  height(OutTable);
-    idxVec = (2500:2500:lenTable-2500)-50;
-    
-    LUT_wind2 = round(OutTable.Wind1VelX (idxVec));
-    LUT_torque2 = OutTable.GenTq(idxVec); % kNm (in Simulink
-    LUT_omega2 = OutTable.RotSpeed(idxVec) * pi/30; %RPM -> rad/s
-    LUT_pitch2 = OutTable.BlPitch1(idxVec)* pi/180; % deg -> rad
-    
-    Lin_points.RSpeed = LUT_omega2;
-    Lin_points.GSpeed = LUT_omega2*97;
-    Lin_points.Torque = LUT_torque2; % kNm
-    Lin_points.V = LUT_wind2;
-    Lin_points.Pitch = LUT_pitch2;
-    
-    [Lin_points.V,idxV] = unique(Lin_points.V);
-    Lin_points.RSpeed = Lin_points.RSpeed(idxV); %ceil(Lin_points.RSpeed(idxV) * 30/pi)/ (30/pi);
-    Lin_points.Torque = Lin_points.Torque(idxV); %kNm
-    Lin_points.Pitch = Lin_points.Pitch(idxV);
-
+if selectSteadyState > 0 % overwrite default FAST OL data   
+    load(fullfile(dataInPath,'Lin_points_PICL.mat'),'Lin_points');
 end
  
 
@@ -90,7 +83,7 @@ G = 97;
 Ng = G;
 tau_g = 0.01;
 omegabar = interp1(Lin_points.V,Lin_points.RSpeed,Vbar,'spline');
-Lambda_bar = omegabar*rb/Vbar;
+Lambda_bar = omegabar*wecs.rb/Vbar;
 beta_bar = interp1(Lin_points.V,Lin_points.Pitch,Vbar,'spline');
 schedParam = [omegabar, beta_bar, Vbar];
 

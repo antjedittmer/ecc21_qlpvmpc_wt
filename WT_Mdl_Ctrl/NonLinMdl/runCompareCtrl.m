@@ -198,17 +198,17 @@ plot(timeVecPlot, OutTableTest2Plot.Wind);
 ylabel(yAxCell{1}); %'V [m/s]')
 axis tight; grid on;
 
-stdPI = std(OutTableTest2Plot.NcIMUTAxs);
-stdqLPV = std(OutTableTestCLPlot.NcIMUTAxs);
-titleStdPI = sprintf('%2.2f',stdPI);
-titleStdqLPV = sprintf('%2.2f',stdqLPV);
-ratioStd = sprintf('%2.1f ', stdPI/stdqLPV);
+varPI = var(OutTableTest2Plot.NcIMUTAxs);
+varqLPV = var(OutTableTestCLPlot.NcIMUTAxs);
+titleStdPI = sprintf('%2.2e',varPI);
+titleStdqLPV = sprintf('%2.2e',varqLPV);
+ratioStd = sprintf('%2.1f ', varPI/varqLPV);
 
-stdPI_Pwr = std(abs(PGRef/1000 - OutTableTest2Plot.GenPwr));
-stdqLPV_Pwr = std(abs(PGRef/1000 - OutTableTestCLPlot.GenPwr));
-titleStdPI_Pwr = sprintf('%2.2f',stdPI_Pwr);
-titleStdqLPV_Pwr = sprintf('%2.2f',stdqLPV_Pwr);
-ratioStd_Pwr = sprintf('%2.1f ', stdPI_Pwr/stdqLPV_Pwr);
+varPI_Pwr = var(abs(PGRef/1000 - OutTableTest2Plot.GenPwr));
+varqLPV_Pwr = var(abs(PGRef/1000 - OutTableTestCLPlot.GenPwr));
+titleStdPI_Pwr = sprintf('%2.2e',varPI_Pwr);
+titleStdqLPV_Pwr = sprintf('%2.2e',varqLPV_Pwr);
+ratioStd_Pwr = sprintf('%2.1f ', varPI_Pwr/varqLPV_Pwr);
 
 title({['Baseline (P-PI) vs. qLPV MPC; ', meanOpt],... %WT mdl: Model2
     ['q_ = [', qVec,'], r = [',rVec,'], p = ',pVec,'* q']})
@@ -238,26 +238,25 @@ if isempty(plot6)
 else
     ax1(5) = subplot(6,1,5);
 end
-plot(timeVecPlot, OutTableTest2Plot.GenPwr, timeVecPlot,OutTableTestCLPlot.GenPwr,'-.',timeVecPlot,PGRef/1000,'k:');
-title(['|P_{g,ref} [kW] - ', yAxCell{5},'| : std_{P-Pi} = ',titleStdPI_Pwr, ', std_{qLPVMPC} = ' ,...
-    titleStdqLPV_Pwr,', ratio: ' ,ratioStd_Pwr])
-
-ylabel(yAxCell{5}); %'P_g [kW]')
-
+plot(timeVecPlot, OutTableTest2Plot.NcIMUTAxs, timeVecPlot,OutTableTestCLPlot.NcIMUTAxs,'-.');
+title([yAxCell{6}, ': var_{P-Pi} = ',titleStdPI , ', var_{qLPVMPC} = ' ,titleStdqLPV,', ratio: ' ,ratioStd])
+ylabel(yAxCell{6}); %'y_t [m/s^2]')
 axis tight; grid on;
-legend('P-PI','MPC','P_{g,ref}','Location','SouthEast')
+
 
 if isempty(plot6)
     ax1(3) = subplot(3,1,3);
 else
     ax1(6) = subplot(6,1,6);
 end
-plot(timeVecPlot, OutTableTest2Plot.NcIMUTAxs, timeVecPlot,OutTableTestCLPlot.NcIMUTAxs,'-.');
-title([yAxCell{6}, ': std_{P-Pi} = ',titleStdPI , ', std_{qLPVMPC} = ' ,titleStdqLPV,', ratio: ' ,ratioStd])
-
-ylabel(yAxCell{6}); %'y_t [m/s^2]')
-xlabel('time [s]');
+plot(timeVecPlot, OutTableTest2Plot.GenPwr, timeVecPlot,OutTableTestCLPlot.GenPwr,'-.',timeVecPlot,PGRef/1000,'k:');
+title(['|P_{g,ref}  - P_g| [kW]: var_{P-Pi} = ',titleStdPI_Pwr, ', var_{qLPVMPC} = ' ,...
+    titleStdqLPV_Pwr,', ratio: ' ,ratioStd_Pwr])
+ylabel(yAxCell{5}); %'P_g [kW]')
 axis tight; grid on;
+legend('P-PI','MPC','P_{g,ref}','Location','SouthEast')
+
+xlabel('time [s]');
 
 linkaxes(ax1,'x')
 set(gcf,'Name', figStr)

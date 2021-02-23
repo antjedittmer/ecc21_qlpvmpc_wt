@@ -1,13 +1,20 @@
-function runCompareModels(strWindType,yAxCell)
+function runCompareModels(strWindType,loadData,yAxCell)
+% runCompareModels compares two Simulink models (Mdl1(5 states) and Mdl2 (8 
+% states) with 
 
-if ~nargin
+if ~nargin || isempty(strWindType)
     strWindType = 'Sweep'; 
 end
 
-if nargin < 2
+if nargin < 2 || isempty(loadData)
+   loadData = 0; %load simulation output data if available;
+end
+
+if nargin < 3 || isempty(yAxCell)
     yAxCell = {'wind V [m/s]', 'GenTq T_g [kNm]', 'Pitch \beta [°]', 'RotSpd \omega_r [rpm]',...
     'GenPwr P_g [MW]','Twr_{FA} y_t [m/s^2]'};
 end
+
 %% Initialize workspace and path
 %lear; clc; close all;  
 % bdclose all; 
@@ -26,7 +33,7 @@ if ~isfolder(figDir)
 end
 
 % Set path to data output directory
-loadData = 1; %load simulation output data if available;
+
 dataDirOut = 'dataOut';
 if ~isfolder(dataDirOut)
     mkdir(dataDirOut)
@@ -37,59 +44,64 @@ end
 
 % Provide names of Simulink models to be run
 simMdlname1 = 'test_SimulinkMdl1_Baseline'; %
+%simMdlname2 = 'test_SimulinkMdl3LPV_Baseline'; 
 simMdlname2 = 'test_SimulinkMdl2_Baseline'; 
 
 if strcmp(strWindType,'Sweep') == 1
     % sweep from 4 to 25 in steps
-    workspaceSimulationMat = 'workSpace.mat';
+    %workspaceSimulationMat = 'workSpace.mat';
     outDataSimulationMat = 'OutDataSweep.mat';
     strFig = '';
     testCaseStr = 'Wind Sweep';
 else
     % wind with average 18 m/s
-    workspaceSimulationMat = 'workSpace18NTM.mat';
+    %workspaceSimulationMat = 'workSpace18NTM.mat';
     outDataSimulationMat = 'OutDataWind18NTM.mat';
     strFig = 'NTW18';
     testCaseStr = 'Wind, mean 18 m/s';
 end
 
 %% Load data from FAST run
-load(workspaceSimulationMat )
-load(outDataSimulationMat ,'OutData');
+%load(fullfile(dataInDir,workspaceSimulationMat)) %#ok<LOAD> ADi ToDo: Clean this up later: Only load variables needed for simulation
+DT = 0.008;
+load(outDataSimulationMat ,'OutTable');%#ok<NASGU>
 
-LUT_torque2 = [5.0066    8.8294   13.5530   18.9143   23.8603   29.5200   36.9452,...
-   repmat(43.5290,1,15)];
-
-LUT_omega2 = [0.7776    0.8209    0.8742    0.9348    1.0430    1.1600  ...
-    1.2369    1.2555    1.2548    1.2546    1.2546    1.2545    1.2546    1.2545    1.2545    1.2545    1.2545 ...
-    1.2545    1.2545    1.2545 1.2545    1.2545];
+% LUT tables loaded have these values
+% LUT_torque2 = [5.0066    8.8294   13.5530   18.9143   23.8603   29.5200   36.9452,...
+%    repmat(43.5290,1,15)];
+% LUT_omega2 = [0.7776    0.8209    0.8742    0.9348    1.0430    1.1600  ...
+%     1.2369    1.2555    1.2548    1.2546    1.2546    1.2545    1.2546    1.2545    1.2545    1.2545    1.2545 ...
+%     1.2545    1.2545    1.2545 1.2545    1.2545];
 
 % Assign data from FAST to variables
-OutTable = array2table(OutData,'VariableNames', OutList);
+% OutTable = array2table(OutData,'VariableNames', OutList);
 idxTime = 1: height(OutTable);
 OutTable = OutTable(idxTime,:);
-OutTable.BldPitch1 = NaN(height(OutTable),1);
-OutTable.BldPitch1(1:3:end) = pitch(:,1);
+% OutTable.BlPitch1 = NaN(height(OutTable),1);
+% OutTable.BldPitch1(1:3:end) = pitch(:,1);  %#ok<NODEF> Loaded in Matfile 
+OutTable.BldPitch1 = OutTable.BlPitch1;
 
-OutTable.Torque = NaN(height(OutTable),1);
-OutTable.Torque(1:3:end) = Torque;
+% OutTable.Torque = NaN(height(OutTable),1);
+% OutTable.Torque(1:3:end) = Torque;
+OutTable.Torque = OutTable.GenTq;
 
-idxWind = contains(OutList, 'Wind');
+idxWind = contains(OutTable.Properties.VariableNames, 'Wind');
 vectWind = OutTable{:,idxWind};
 vectAmpWind = sqrt(sum((vectWind.^2),2));
+
+% assign data for LPV model
+%initModel5MWNREL;
 
 % idxWind_11to14 = vectAmpWind > 10 &  14 > vectAmpWind;
 % vectAmpWind_11to14 = vectAmpWind(idxWind_11to14);
 % time_11to14 = 0:DT: DT*length(vectAmpWind_11to14)-DT;
 
 % Initialize constants for Simulink model
-param;
-initModel5MWNRELBianchi;
-initModel5MWNREL;
+% param;
+%initModel5MWNREL;
 
 % Lin_points.RSpeed = LUT_omega2;
 % Lin_points.Torque = LUT_torque2;
-
 varnames = {'Wind', 'RotSpeed', 'GenPwr', 'BlPitch1', 'GenTq', ...
     'NcIMUTAxs', 'NcIMUTAys'}; %%'Tower FA acc', 'Tower SS acc'};
 
@@ -99,9 +111,13 @@ matFileOutTableTest1 = fullfile(dataDirOut,['OutTableTest1',strFig,'.mat']);
 if exist(matFileOutTableTest1,'file') == 2 && loadData
     load(matFileOutTableTest1,'OutTableTest1');
 else
+    WS = 'base';
+    assignin(WS,'DT',DT)
+    assignin(WS,'OutTable',OutTable)
     open_system(simMdlname1);
-    sim(simMdlname1);
-    OutTableTest1 = array2table(OutDataTest,'VariableNames',varnames);
+    %Ng = wecs.Ng;
+    out1 = sim(simMdlname1,'SrcWorkspace',WS);
+    OutTableTest1 = array2table(out1.OutDataTest,'VariableNames',varnames);
     save(matFileOutTableTest1,'OutTableTest1');
 end
 
@@ -110,8 +126,13 @@ if exist(matFileOutTableTest2,'file') == 2 && loadData
     load(matFileOutTableTest2,'OutTableTest2');
 else
     open_system(simMdlname2);
-    sim(simMdlname2);
-    OutTableTest2 = array2table(OutDataTest,'VariableNames',varnames);
+    out2 = sim(simMdlname2,'SrcWorkspace',WS);
+    if size(out2.OutDataTest,2) == 9 % Pitch commands of all actuators
+        out2OutDataTest = out2.OutDataTest(:,[1:4,7:9]);
+    else
+         out2OutDataTest = out2.OutDataTest;
+    end
+    OutTableTest2 = array2table(out2OutDataTest,'VariableNames',varnames);
     save(matFileOutTableTest2,'OutTableTest2');
 end
 
@@ -217,14 +238,15 @@ axis tight; grid on;
 ylabel(yAxCell{3}); %'Pitch \beta [°]')
 
 axPlotAll(5) = subplot(6,1,5);
+plot(time,OutTableTest2.NcIMUTAxs(idxTime),time,OutTable.NcIMUTAxs(idxTime),time,OutTableTest1.NcIMUTAxs(idxTime),'k--');
+axis tight; grid on;
+ylabel(yAxCell{6}); %'Twr_{FA} y_t[m/s^2]')
+
+axPlotAll(6) = subplot(6,1,6);
 plot(time,OutTableTest2.GenPwr(idxTime)/1000,time,OutTable.GenPwr(idxTime)/1000,time,OutTableTest1.GenPwr(idxTime)/1000,'k--');
 axis tight; grid on;
 ylabel(yAxCell{5}); %'GenPwr P_g [MW]')
 
-axPlotAll(6) = subplot(6,1,6);
-plot(time,OutTableTest2.NcIMUTAxs(idxTime),time,OutTable.NcIMUTAxs(idxTime),time,OutTableTest1.NcIMUTAxs(idxTime),'k--');
-axis tight; grid on;
-ylabel(yAxCell{6}); %'Twr_{FA} y_t[m/s^2]')
 xlabel('time [s]')
 
 linkaxes(axPlotAll,'x');
@@ -245,7 +267,7 @@ print(fullfile(figDir,['cmpTimeDomain_All',strFig]), '-depsc');
 return;
 
 %% Get incremental torque characteristic TheadG = B
-lengthWindSteps = 5:24; 
+lengthWindSteps = 5:24;  %#ok<UNRCH> This was used for debugging - ADi ToDo delete or move to another file
 
 vecIdx = (2500:2500:length(idxTime))- 50;
 %vecIdx = (2500:2500: height(OutTable)) -100
