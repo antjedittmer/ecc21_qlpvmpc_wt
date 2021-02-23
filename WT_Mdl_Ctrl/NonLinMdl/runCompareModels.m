@@ -33,7 +33,6 @@ if ~isfolder(figDir)
 end
 
 % Set path to data output directory
-
 dataDirOut = 'dataOut';
 if ~isfolder(dataDirOut)
     mkdir(dataDirOut)
