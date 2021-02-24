@@ -1,10 +1,14 @@
-function damageBlades = calculateDamageBlades(outTableNRELorig,mCarbonFibre,idxRootMy)
+function damageBlades = calculateDamageBlades(My,mCarbonFibre,idxRootMy)
 
 if nargin == 1
     mCarbonFibre = 10;
 end
 
-My = outTableNRELorig{:,idxRootMy};
+if nargin == 3 % table contains more than three rows -> index selected
+    My = My{:,idxRootMy};
+end
+
+
 damageBlades = calculateDamage(My(:,1),mCarbonFibre) + ... 
     calculateDamage(My(:,2),mCarbonFibre) + ...
     calculateDamage(My(:,3),mCarbonFibre);

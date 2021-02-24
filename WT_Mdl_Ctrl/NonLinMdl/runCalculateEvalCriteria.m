@@ -1,4 +1,9 @@
 
+%% Add all relevant paths
+
+% Matlab functions 
+addpath('subfunctions');
+
 mainDir = fullfile(pwd);
 addpath(fullfile(fileparts(pwd),'dataIn'));
 addpath(fullfile(pwd,'dataOut'));
@@ -17,7 +22,6 @@ if ~isfolder(dataDirOut)
     mkdir(dataDirOut)
 end
 
-addpath('subfunctions');
 
 % Load data closed loop simulation PI
 DT = 0.008;
@@ -49,8 +53,8 @@ timeVec = 0:DT: maxTime*DT - DT;
 OutTableTest1.Time = timeVec';
 OutTableTestCL.Time = timeVec';
 
-cellOfTable{1} = OutTableTest1;
-cellOfTable{2} = OutTableTest1; %OutTableTestCL;
+cellOfTable{1} = OutTable; %Test1;
+cellOfTable{2} = OutTable; %Test1; %OutTableTestCL;
 calculateEvalCriteria(cellOfTable)
 
 

@@ -55,7 +55,7 @@ else
 end
 
 % C_actuator is the magnitude of the power consumed by the actuators
-idxBlPitchC = contains(varNames,'BlPitchC');
+idxBlPitchC = contains(varNames,'BlPitch');
  %flapwise moment (i.e., the moment caused by flapwise forces) at the blade root
 % AD ToDo: Should this be in blade/rotating frame or fixed? Definition P_{act,ref} = P_{act,0} 
 meanActPwr = nan( 1,lenComparison);
