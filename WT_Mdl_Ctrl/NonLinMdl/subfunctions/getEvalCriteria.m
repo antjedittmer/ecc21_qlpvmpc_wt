@@ -1,4 +1,4 @@
-function [K,W,ref] = getEvalCriteria(aTable,ref)
+function [W,K,ref] = getEvalCriteria(aTable,ref)
 % calculate evaluation criteria for controllers
 
 % epected variablenames: GenPwr,GenSpeed,TwrBsM,BlPitchC
@@ -28,12 +28,10 @@ idxRootMyb = contains(varNames,'RootMyb') | contains(varNames,'RootMFlp');
 m = 10;
 damageBlades = calculateDamageBlades(aTable{idxTime,idxRootMyb},m);
 
-
 %C_damageTower calculated via Rainflow count with tower base moments 
 idxTowerM = contains(varNames,'TwrBsM');
 mT = 4;
 damageTower = calculateDamageBlades(aTable{idxTime,idxTowerM},mT);
-
 
 % C_actuator is the magnitude of the power consumed by the actuators
 idxBlPitchC = contains(varNames,'BlPitch');
@@ -41,25 +39,26 @@ idxBlPitchC = contains(varNames,'BlPitch');
 % AD ToDo: Should this be in blade/rotating frame or fixed? Definition P_{act,ref} = P_{act,0} 
 meanActPwr = mean(mean(abs(diff(aTable{idxTime,idxBlPitchC}).*aTable{idxTime,idxRootMyb}(1:end-1,:))));
 
+% Set reference
+refOut.Pw = abs(meanGenPwr/5 - 1); % this only is ok for above rated test signals
+%refOut.StdGenSpeed = stdGenSpeed;% max(stdGenSpeed);
+refOut.StdGenPwr = stdGenPwr;% max(stdGenPwr);
+refOut.MeanActPwr = meanActPwr;% max(meanActPwr); %Definition P_{act,ref} = P_{act,0} ?
+refOut.DamageBlades = damageBlades;%max(damageBlades);
+refOut.DamageTower = damageTower;%max(damageTower);
+
 
 % Opt Criteria
 if isempty(ref)
-    ref.Pw = 5;
-    %ref.StdGenSpeed = stdGenSpeed;% max(stdGenSpeed);
-    ref.StdGenPwr = stdGenPwr;% max(stdGenPwr);
-    ref.MeanActPwr = meanActPwr;% max(meanActPwr); %Definition P_{act,ref} = P_{act,0} ?
-    ref.DamageBlades = damageBlades;%max(damageBlades);
-    ref.DamageTower = damageTower;%max(damageTower);
-    K = NaN;
-    W = NaN;
-    
-else
-    K.GenPwr  = abs(meanGenPwr/ref.Pw - 1);
-    %K.stdGenSpeed = stdGenSpeed/ref.StdGenSpeed;
-    K.stdGenPwr = stdGenPwr/ref.StdGenPwr;
-    K.ActPwr = meanActPwr/ref.MeanActPwr;
-    K.damageBlades = damageBlades/ref.DamageBlades;
-    K.damageTower = damageTower/ref.DamageTower;
-    W = NaN;
-    
+    ref = refOut;
 end
+
+K.GenPwr  = abs(meanGenPwr/5 - 1)/ref.Pw;
+%K.stdGenSpeed = stdGenSpeed/ref.StdGenSpeed;
+K.stdGenPwr = stdGenPwr/ref.StdGenPwr;
+K.ActPwr = 0.5 * meanActPwr/ref.MeanActPwr;
+K.damageBlades = damageBlades/ref.DamageBlades;
+K.damageTower = damageTower/ref.DamageTower;
+W = mean(cell2mat(struct2cell(K)));
+
+ 

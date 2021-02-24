@@ -58,8 +58,6 @@ e1=1;
 e2=20;
 e3=100;
 
-
-
 % Regler 2
 % IPC_KI_1p = 0.00096466;
 % IPC_KP_1p = 0.00022946;
@@ -93,6 +91,10 @@ else
     kp_Turm   = 1.9362e-05;
     
 end
+
+IPC_KI_1p_tilt = IPC_KI_1p;
+IPC_KP_1p_tilt = IPC_KP_1p;
+
 %% Assign this to workspace
 % ToDo should this be moved to DD?
 hEntry = who;
