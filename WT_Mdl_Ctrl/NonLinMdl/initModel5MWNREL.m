@@ -157,12 +157,19 @@ Drivetrain.Generator.Efficiency = 0.944;
 
 
 %% Model
-Rotor_Lambda = Rotor_Lamda(1:150);
+idxLambda = 1:150;
+Rotor_LambdaNew = Rotor_Lamda(idxLambda);
 idxPitch = Rotor_Pitch>= -8;
+
+% Rotor_cP = Rotor_cP(idxLambda,idxPitch);
+% Rotor_cQ = Rotor_cQ(idxLambda,idxPitch);
+% Rotor_cT = Rotor_cT(idxLambda,idxPitch);
+
 [Xq,Yq] = meshgrid(Rotor_Lambda, Rotor_Pitch(idxPitch));
 Cp = interp2(Rotor_Lamda,Rotor_Pitch,Rotor_cP,Xq,Yq,'cubic');
 Cq = interp2(Rotor_Lamda,Rotor_Pitch,Rotor_cQ,Xq,Yq,'cubic');
 Ct = interp2(Rotor_Lamda,Rotor_Pitch,Rotor_cT,Xq,Yq,'cubic');
+Rotor_Pitch = Rotor_Pitch(idxPitch);
 
 % % Bindu: Calculate CP matrix for interpolated surf plot
 % Cp2Comp = interp2(Rotor_lambda2,Rotor_beta2,Rotor_cP2,Xq,Yq,'nearest');

@@ -9,13 +9,15 @@ function [W,K,ref,weightVec] = getEvalCriteria(aTable,ref,weightVec)
 %          * K: structure with optimization criteria
 %        
 
-%% Handle different input numbers
+%% Prepare inputs
+
+% Handle different input numbers
 if nargin <2 || isempty(ref)
         ref = [];
 end
 
 if nargin <3 || isempty(weightVec)
-        weightVec = ones(5,1); % weightVec = [1.25,1,0.5,1,1.25];
+        weightVec = ones(5,1); % for test: weightVec = [1.25,1,0.5,1,1.25];
 end
 
 % Ignore artifacts from initialization and get variable names 

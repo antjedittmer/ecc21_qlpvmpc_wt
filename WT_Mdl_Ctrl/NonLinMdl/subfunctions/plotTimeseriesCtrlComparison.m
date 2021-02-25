@@ -5,15 +5,38 @@ function plotTimeseriesCtrlComparison(idxTime, outTableNRELorig, outTableNRELnew
 % Inputs:
 % 
 
-if nargin <= 7
-    testCaseStr = '18';
+%% Prepare Inputs
+
+% time selection
+if nargin <1 || isempty(idxTime)
+    idxTime = outTableNRELorig.Time >= 15;   
+end
+
+if nargin < 5 
+    strNewCtrl = '';
+end
+
+if nargin < 6 
+    figNo1 = 1; 
+    figNo2 = 2;
+end
+
+if nargin < 67
+    figNo1 = 1; 
+    figNo2 = figNo1 +1;
+end
+
+if nargin <= 8
+    testCaseStr = 'NTW 18';
 end
 %% Prepare data for plots
+
+
 % Get time basis for plots
 time = outTableNRELorig.Time(idxTime);
 
 % Calculate wind amplitude
-cellChannelWind = {'Wind1Vel'};
+cellChannelWind = {'Wind'};
 OutList = outTableNRELorig.Properties.VariableNames;
 idxWind = contains(OutList, cellChannelWind);
 vectWind = outTableNRELorig{:,idxWind};
@@ -27,15 +50,17 @@ vectAmpWindDLR = sqrt(sum((vectWind.^2),2));
 
 % Get color map for 'title legends'
 cl = colormap('lines');
-titleStr = ['Test Case ',testCaseStr,': {\color[rgb]{',num2str(cl(1,:)),'}NREL FAST ',...
-    '\color[rgb]{',num2str(cl(2,:)),'}NREL OC3} ', strNewCtrl];
+titleStr = ['Test Case ',testCaseStr,': {\color[rgb]{',num2str(cl(1,:)),'}PI-CPC ',...
+    '\color[rgb]{',num2str(cl(2,:)),'}PI-IPC_{fminsearch} } ', strNewCtrl];
 
 %% 
 defaultLineWidth = get(groot,'defaultLineLineWidth');
 set(groot,'defaultLineLineWidth',1);
+pitchName = OutList{contains(OutList,'Pitch')};
+
 figure(figNo1);
 axPlot(1) = subplot(3,1,1);
-plot(time,vectAmpWind(idxTime),time,vectAmpWindNREL(idxTime),'--',time,vectAmpWindDLR(idxTime),'k:'); 
+plot(time,vectAmpWind(idxTime),time,vectAmpWindNREL(idxTime),'--',time,vectAmpWindNREL(idxTime),'k:'); 
 axis tight; grid on;
 ylabel('Wind Amplitude (m/s)')
 title(titleStr);
@@ -57,15 +82,15 @@ linkaxes(axPlot,'x');
 
 figure(figNo2)
 axPlot2(1) = subplot(4,1,1);
-plot(time,outTableNRELorig.BldPitch1(idxTime), time,-outTableNRELnew.BldPitch1(idxTime),'--',...
-    time,outTableDLR.BldPitch1(idxTime),'k-.'); 
+plot(time,outTableNRELorig.(pitchName)(idxTime), time,outTableNRELnew.(pitchName)(idxTime),'--',...
+    time,outTableDLR.(pitchName)(idxTime),'k-.'); 
 axis tight; grid on;
 ylabel('BldPitch1 (rad)')
 title(titleStr);
 
 axPlot2(2) = subplot(4,1,2);
 plot(time,outTableNRELorig.GenTq(idxTime),time,outTableNRELnew.GenTq(idxTime),'--',...
-    time,outTableDLR.GenTq(idxTime),'k-.' );
+    time,outTableNRELnew.GenTq(idxTime),'k-.' );
 axis tight; grid on;
 ylabel('GenTq (Nm)') 
 

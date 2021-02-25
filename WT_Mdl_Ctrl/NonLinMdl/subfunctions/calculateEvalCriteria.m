@@ -1,4 +1,4 @@
-function calculateEvalCriteria(cellOfTable)
+function calculateEvalCriteria(cellOfTable,summaryTickLabel)
 % calculate evaluation criteria for controllers
 
 % epected variablenames: GenPwr,GenSpeed,TwrBsM,BlPitchC
@@ -8,6 +8,10 @@ lenComparison = length(cellOfTable);
 idxTime = outTable1.Time > 15; % 10 : height(outTable1); %;  %
 varNames = outTable1.Properties.VariableNames;
 
+if nargin <2
+    summaryTickLabel = {'CPC', 'IPC_{fminsearch}','IPC_{SimAnn}'};
+    %summaryTickLabel = {'NREL_{FAST}', 'NREL_{OC3}','DLR','TUDelft'};
+end
 
 %% Get evaluation criteria
 
@@ -41,14 +45,13 @@ if any(idxRootMyb)
     end
 end
 
-
-%C_damageTower calculated via Rainflow count with tower base moments 
+% C_damageTower calculated via Rainflow count with tower base moments 
 idxTowerM = contains(varNames,'TwrBsM');
 if any(idxTowerM) % Antje ToDo What to use for offshore/floating wind turbines?
     m = 4;
     damageTower = nan( 1,lenComparison);
     for idx = 1: lenComparison
-        damageTower(idx) = calculateDamageBlades(cellOfTable{idx}(idxTime,:),m,idxRootMyb);
+        damageTower(idx) = calculateDamageBlades(cellOfTable{idx}(idxTime,:),m,idxTowerM);
     end
 else
     damageTower = nan(size(damageBlades));
@@ -65,7 +68,7 @@ for idx = 1: lenComparison
 end
 
 % Opt Criteria
-refPw = 5;
+refPw = abs(meanGenPwr(1)/5 - 1);
 refStdGenSpeed = stdGenSpeed(1); % max(stdGenSpeed);
 refStdGenPwr = stdGenPwr(1); % max(stdGenPwr);
 refMeanActPwr = meanActPwr(1); % max(meanActPwr); %Definition P_{act,ref} = P_{act,0} ?
@@ -78,8 +81,6 @@ K_stdGenPwr = stdGenPwr/refStdGenPwr;
 K_ActPwr = meanActPwr/refMeanActPwr;
 K_damageBlades = damageBlades/refDamageBlades;
 K_damageTower = damageTower/refDamageTower;
-
-
 
 cl = colormap('lines');
 
@@ -95,7 +96,6 @@ strKDamageBlades = sprintf('%2.3f, ',K_damageBlades);
 strKDamageTower = sprintf('%2.3f, ',K_damageTower);
 
 figure;
-summaryTickLabel = {'NREL_{FAST}', 'NREL_{OC3}','DLR','TUDelft'};
 
 bar([K_GenPwr/max(K_GenPwr);K_stdGenSpeed]');
 axis tight; grid on;
