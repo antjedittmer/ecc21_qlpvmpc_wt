@@ -1,5 +1,10 @@
 clc; clear; bdclose;
 
+% Add Paths for simulation
+addpath('MdlWECS');
+addpath('subfunctions');
+addpath('subfunctionsMPC');
+
 % initialize constants to base workspace
 testCtrl;
 load(fullfile(dataInPath,'OutDataWind18NTM.mat'),'OutData','OutTable');
@@ -11,13 +16,16 @@ initDLRparameter(onIPC,switchIPC);
 [sysd,x0,uoff,xoff,yoff] = initLPVParam;
 
 sim('test_SimulinkMdl3LPV_IPCa');
-OutTable = array2table(OutDataLPV,'VariableNames',OutList);
+OutTableCPC = array2table(OutDataLPV,'VariableNames',OutList);
 
 %idxRootMyb = contains(OutList,'RootMyb') | contains(OutList,'RootMFlp');
 %OutTable{:,idxRootMyb} = MY;
 
-[W,K,ref] = getEvalCriteria(OutTable);
+
+[W,K,ref] = getEvalCriteria(OutTableCPC);
 % Put(strmatch('RootMFlp1',OutList))OutDataLPV()
+
+save('OutTableWeightsOrig.mat','W','K','ref')
 
 onIPC = 1;
 
@@ -44,19 +52,24 @@ OutTableON = array2table(OutDataLPV,'VariableNames',OutList);
 % IPC_KI_1p = 4.45e-05;
 % IPC_KP_1p = -0.00010109;
 % kp_Turm   = 1.9362e-05;
-% IPC_KI_1p_tilt = IPC_KI_1p;
-% IPC_KP_1p_tilt = IPC_KP_1p;
+IPC_KI_1p_tilt = IPC_KI_1p;
+IPC_KP_1p_tilt = IPC_KP_1p;
 
 
-x0Ctrl = [IPC_K_1P, IPC_KI_1p,IPC_KP_1p,kp_Turm,IPC_KI_1p_tilt,IPC_KP_1p_tilt];
-x0Ctrl  = zeros(1,6);
+%x0Ctrl = [IPC_K_1P, IPC_KI_1p,IPC_KP_1p,kp_Turm,IPC_KI_1p_tilt,IPC_KP_1p_tilt];
+x0Ctrl  = zeros(1,3);
 
-tic; [Won,Kon,refOn] = runSimIPC(x0Ctrl,ref,OutList); toc;
+% tic; [Won,Kon,refOn] = runSimIPC(x0Ctrl,ref,OutList); toc;
 
 X = fminsearch(@(xCtrl) runSimIPC(xCtrl,ref,OutList),x0Ctrl);
 
-save X X
+save('X','X');
 
 options = optimoptions('simulannealbnd','PlotFcns',...
           {@saplotbestx,@saplotbestf,@saplotx,@saplotf});
 xSim = simulannealbnd(@(xCtrl) runSimIPC(xCtrl,ref,OutList),x0Ctrl,[],[],options);
+
+save('xSim','xSim');
+
+
+
