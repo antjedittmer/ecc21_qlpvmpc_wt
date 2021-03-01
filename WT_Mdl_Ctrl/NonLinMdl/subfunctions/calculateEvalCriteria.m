@@ -8,6 +8,8 @@ lenComparison = length(cellOfTable);
 idxTime = outTable1.Time > 15; % 10 : height(outTable1); %;  %
 varNames = outTable1.Properties.VariableNames;
 
+isFAST = any(contains(varNames,'GenSpeed'));
+
 if nargin <2
     summaryTickLabel = {'CPC', 'IPC_{fminsearch}','IPC_{SimAnn}'};
     %summaryTickLabel = {'NREL_{FAST}', 'NREL_{OC3}','DLR','TUDelft'};
@@ -28,14 +30,18 @@ for idx = 1: lenComparison
 end
 
 %Get std generator speed power
+
 stdGenSpeed = nan( 1,lenComparison);
+if isFAST
 for idx = 1: lenComparison
     stdGenSpeed(idx) = std(cellOfTable{idx}.GenSpeed(idxTime));
+end
 end
 
 %C_damageBlades calculated via Rainflow count w flap. blade RootMyb signals
 % Antje ToDo Using flapping moments only: Also edgewise(x) and pitch (z)?
 % Antje ToDo: Transform from rotating into fixed reference system?
+ if isFAST
 idxRootMyb = contains(varNames,'RootMyb') | contains(varNames,'RootMFlp');
 if any(idxRootMyb)
     m = 10;
@@ -45,7 +51,15 @@ if any(idxRootMyb)
     end
 end
 
-% C_damageTower calculated via Rainflow count with tower base moments 
+ else
+    damageBlades = nan( 1,lenComparison);
+    for idx = 1: lenComparison
+        damageBlades(idx) = std(cellOfTable{idx}.zeta_dotdot(idxTime,:));
+    end
+ end
+
+% C_damageTower calculated via Rainflow count with tower base moments
+ if isFAST
 idxTowerM = contains(varNames,'TwrBsM');
 if any(idxTowerM) % Antje ToDo What to use for offshore/floating wind turbines?
     m = 4;
@@ -56,15 +70,28 @@ if any(idxTowerM) % Antje ToDo What to use for offshore/floating wind turbines?
 else
     damageTower = nan(size(damageBlades));
 end
+ else
+    damageTower = nan( 1,lenComparison);
+    for idx = 1: lenComparison
+        damageTower(idx) = std(cellOfTable{idx}.NcIMUTAxs(idxTime,:));
+    end
+ end
 
 % C_actuator is the magnitude of the power consumed by the actuators
 idxBlPitchC = contains(varNames,'BlPitch');
  %flapwise moment (i.e., the moment caused by flapwise forces) at the blade root
 % AD ToDo: Should this be in blade/rotating frame or fixed? Definition P_{act,ref} = P_{act,0} 
 meanActPwr = nan( 1,lenComparison);
+ if isFAST
 for idx = 1: lenComparison
       meanActPwr(idx) = ...
           mean(mean(abs(diff(cellOfTable{idx}{idxTime,idxBlPitchC}).*cellOfTable{idx}{idxTime,idxRootMyb}(1:end-1,:))));
+end
+ else
+     for idx = 1: lenComparison
+      meanActPwr(idx) = ...
+          mean(abs(diff(cellOfTable{idx}{idxTime,idxBlPitchC})));
+     end
 end
 
 % Opt Criteria
@@ -96,6 +123,7 @@ strKDamageBlades = sprintf('%2.3f, ',K_damageBlades);
 strKDamageTower = sprintf('%2.3f, ',K_damageTower);
 
 figure;
+
 
 bar([K_GenPwr/max(K_GenPwr);K_stdGenSpeed]');
 axis tight; grid on;

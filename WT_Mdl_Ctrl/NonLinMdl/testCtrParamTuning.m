@@ -72,7 +72,20 @@ varnames = {'Wind', 'RotSpeed', 'GenPwr', 'BlPitch1', 'GenTq', ...
     'NcIMUTAxs', 'NcIMUTAys'};
 
 OutTableMPC = array2table(OutDataTest_4to25,'VariableNames',varnames);
+OutTableMPC.zeta_dotdot = zeta_dotdot;
 strNewCtrl = 'qLPV MPC';
+
+summaryTickLabel = {'CPC PI', 'MPC'};
+
+OutTablePICPC = array2table(OutDataTest,'VariableNames',[varnames,'zeta_dotdot']);
+OutTablePICPC.Time = OutTableCPC.Time;
+cellOfTableNew{1} = OutTablePICPC;
+cellOfTableNew{2} = OutTableMPC;
+calculateEvalCriteria(cellOfTableNew)
+
+
+
+
 plotTimeseriesCtrlComparison([], OutTableCPC,OutTableIPC,OutTableMPC,strNewCtrl)
 
 
