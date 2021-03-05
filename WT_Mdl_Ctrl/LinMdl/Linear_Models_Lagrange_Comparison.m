@@ -1,11 +1,12 @@
-function wecs = Linear_Models_Lagrange_Comparison(speedVec,figFolder, useActuatorStates,figNoAdd)
+function wecs = Linear_Models_Lagrange_Comparison(speedVec,figFolder, useActuatorStates,figNoAdd,posSubfig)
 
 %% Set defaults
 if nargin == 0
-    speedVec = 1; %:22; % variations of wind speed
-    figFolder = 'FigureLagrange_201015_comp';
-    useActuatorStates = 1;
+    speedVec = [1,22]; %:22; % variations of wind speed
+    figFolder = 'FigureLagrange_210103_comp_blade10';
+    useActuatorStates = 0;
     figNoAdd = 0;
+    posSubfig = 1;
     close all;
 end
 
@@ -20,11 +21,11 @@ load('NREL5MW_CPdata_new3','Rotor_Lamda', 'Rotor_Pitch', ...
     'Rotor_cQ', 'Rotor_cT');
 
 %% Initialize name of models and load into workspace
-idxModelNames = 1:2; %1:2; %1:5
-modelNames =[ {'NREL5MW_linearised'}; %{'NREL5MW_linearised_4to25'};
-    {'NREL5MW_linearised_Gen_Fa_Flap1'};
-    {'NREL5MW_linearised_Gen_Fa_SS_Flap1'};
-    {'NREL5MW_linearised_Gen_DriveTrain_Fa_SS_Flap1'}; {'NREL5MW_linearised'} ];
+idxModelNames = 1; %:2; %1:2; %1:5
+modelNames =[{'NREL5MW_linearised_4to25'}]; %{'NREL5MW_linearised'}]; %
+%     {'NREL5MW_linearised_Gen_Fa_Flap1'};{'NREL5MW_linearised'}; %
+%     {'NREL5MW_linearised_Gen_Fa_SS_Flap1'};
+%     {'NREL5MW_linearised_Gen_DriveTrain_Fa_SS_Flap1'}; {'NREL5MW_linearised'} ];
 modelNames = modelNames(idxModelNames);
 
 modelsL = [{'FAST 30 states'};
@@ -82,17 +83,16 @@ wecs.mh =  56780; % hub mass
 wecs.mb = 17740; %kg Mass of each blade
 wecs.mn = 240000; % Nacellle mass
 wecs.mtower = 347460;%347460;%kg Mass of the tower and nacelle
-wecs.mt = 0.25*wecs.mtower+wecs.mn+wecs.mh+3*wecs.mb;
+wecs.mt = 0.25*wecs.mtower+wecs.mn+wecs.mh;
 wecs.H =  87.6;
 
 wecs.Jrg = 534.116;% * Ng^2; %kg*m^2 Inertia of the generator
 wecs.Jr = 115926 + 3 * 11.776e6 + wecs.Jrg * wecs.Ng^2; %kg*m^2 Inertia of the rotor (Hub inertia + 3 blades
-f0 = 0.324;
-f0sw = 0.3120;
-wecs.wnb = 0.6993 * 2*pi; %2.0205; %Natural frequency of blade
+f0 = 0.324; %f0sw = 0.3120;
+wecs.wnb = 0.6993 * 2*pi; %2.0205; %Natural frequency of blade 0.6993 2.0205
 wecs.wnt = f0 * 2*pi; % wecs.wnb; 0.3240
 wecs.zetat = 1/100; %damping ratio of tower (Table 6.2)
-wecs.zetab = 0.477465;% damping ratio of blade /100
+wecs.zetab = 0.477465/100;% damping ratio of blade /100
 % K=wn^2
 
 %if ~useTUDelftParam
@@ -100,7 +100,7 @@ wecs.Kt = wecs.wnt^2 * wecs.mt; % Stiffness of the tower s^2 + B/Ms + K/m
 wecs.Bt = 2 *wecs.zetat * wecs.wnt *wecs.mt; % tower 2*6421;
 %end
 wecs.Kb = wecs.wnb^2 * wecs.mb; %Stiffness of each blade
-wecs.Bb = 2 *wecs.zetab*wecs.wnb *wecs.mb ; %Damping of the blade
+wecs.Bb = 2 *wecs.zetab*wecs.wnb *wecs.mb; %Damping of the blade
 wecs.Ks = 867637000; %Nm/rad Stiffness of the transmission
 % 2*zeta*wn=B
 wecs.Bs = 6215000;  %Nm/rad/sec        %Damping of the transmission
@@ -118,7 +118,7 @@ kappa = 0.01;
 
 
 %% Lagrange's Model matrices
-M =[wecs.mt wecs.N*wecs.mb*wecs.rb 0 0; % M(1,1) mt+wecs.N*mb  -> mt (already includes blades)
+M =[wecs.mt+3*wecs.mb wecs.N*wecs.mb*wecs.rb 0 0; % M(1,1) mt+wecs.N*mb  -> mt (already includes blades)
     wecs.N*wecs.mb*wecs.rb wecs.N*wecs.mb*wecs.rb^2 0 0;
     0 0 wecs.Jr 0;
     0 0 0 wecs.Jrg*wecs.Ng^2];
@@ -133,17 +133,23 @@ K = [wecs.Kt 0 0;
     0 0 wecs.Ks;
     0 0 -wecs.Ks];
 
-Q = [1 0 0 ;
-    wecs.rb 0 0 ;
-    0 1 0;
-    0 0 -wecs.Ng];
+% Helper matrices:
 
-L = [eye(3), [0;0;-1]];
+nx = size(M,1) -1;
 
-A1 = [zeros(3), L;...
+% Q = [1 0 0 ;
+%     wecs.rb 0 0 ;
+%     0 1 0;
+%     0 0 -wecs.Ng];
+Q = [1, zeros(1,nx-1);
+    diag([wecs.rb,ones(1,nx-2),-wecs.Ng])];
+
+L = [eye(nx), [zeros(nx-1,1); -1]];
+
+A1 = [zeros(nx), L;...
     -M\K, -M\Ce];
 
-B1 = [zeros(3); M\Q];
+B1 = [zeros(nx); M\Q];
 
 %% Select relevant section LUT
 vecLambda = 1:150;
@@ -189,7 +195,6 @@ y_bar_cell =  cell(lenLinV,1);
 % Wnmbc = cell(lenLinV,sizeA);
 % Zmbc = cell(lenLinV,sizeA);
 
-
 %% Check original Input and Output names
 idxFASTOutput = [38 12] ; % 38 12 [12 6 38]
 idxFASTInput = [8 9 1];
@@ -203,7 +208,6 @@ disp(['TU Delft sysInputnames: ', sprintf('%s, ', sysInputname{:})])
 sysInNamesOrig = sysm{1}.InputName(idxFASTInput);
 disp('FAST sysInputnames: ');
 fprintf('%s\n', sysInNamesOrig{:})
-
 
 %% Loop over all air speeds in LinV
 for index =  speedVec %[1,9,10,length(Lin.V)]%1 : length(Lin.V) %[1,length(Lin.V)] % [1,2,length(Lin.V)-1,length(Lin.V)]
@@ -242,11 +246,23 @@ for index =  speedVec %[1,9,10,length(Lin.V)]%1 : length(Lin.V) %[1,length(Lin.V
     % y=[ yt_ddot rb*zeta_dot omega_r]' -> y=[ yt_ddot rb*zeta_dot omega_r]'
     % uact=[Tg_ref beta_ref V]'
     % Ve = V - yt_dot [m/s] - rb [m]  * zeta_dot [1/s]
+%     A1 = [zeros(nx), L;...
+%     -M\K, -M\Ce];
+% 
+% B1 = [zeros(nx); M\Q];
+
+%     Ce1 = [-dFtdV*ones(2,1), -dFtdV*wecs.rb*ones(2,1), dFtdomega*ones(2,1), zeros(2,1); %States xdotFA
+%         -dTrdV,  -dTrdV*wecs.rb, dTrdomega, 0; zeros(1,4)];
+%     B1a = M\Q;
+%     Q_Tg =   [B1a(1,1) * dFtdbeta, B1a(1,2) * dFtdbeta, B1a(2,3)*dTrdbeta]';
+%     
+%     AMdl2 = [zeros(nx), L, zeros(nx,2);
+%         -M\K, -M\Ce + [B1a,zeros(4,1)]*Ce1, B1a(:,end),B1a(:,end)];
     
-    A9DoF = [A1(1:3,:), zeros(3,2);...
-        A1(4,1:3),A1(4,4)-B1(4,1)*dFtdV,A1(4,5)-B1(4,1)*dFtdV*wecs.rb, A1(4,6)+B1(4,1)*dFtdomega ,A1(4,7),0, B1(4,1)*dFtdbeta;...
-        A1(5,1:3),A1(5,4)-B1(5,1)*dFtdV ,A1(5,5)-B1(5,1)*dFtdV*wecs.rb, A1(5,6)+B1(5,1)*dFtdomega ,A1(5,7),0, B1(5,1)*dFtdbeta;...
-        A1(6,1:3),A1(6,4)-B1(6,2)*dTrdV,A1(6,5)-B1(6,2)*dTrdV*wecs.rb, A1(6,6)+B1(6,2)*dTrdomega ,A1(6,7),0, B1(6,2)*dTrdbeta;...
+    A9DoF = [A1(1:nx,:), zeros(nx,2);...
+        A1(4,1:3),A1(4,4)-B1(4,1)*dFtdV, A1(4,5)-B1(4,1)*dFtdV*wecs.rb, A1(4,6)+B1(4,1)*dFtdomega ,A1(4,7),0, B1(4,1)*dFtdbeta;...
+        A1(5,1:3),A1(5,4)-B1(5,1)*dFtdV ,A1(5,5)-B1(5,1)*dFtdV*wecs.rb, A1(5,6)+B1(5,1)*dFtdomega,A1(5,7),0, B1(5,1)*dFtdbeta;...
+        A1(6,1:3),A1(6,4)-B1(6,2)*dTrdV, A1(6,5)-B1(6,2)*dTrdV*wecs.rb, A1(6,6)+B1(6,2)*dTrdomega ,A1(6,7),0, B1(6,2)*dTrdbeta;...
         A1(7,1:7), B1(7,3), 0;...
         zeros(1,7),  -1/kappa, 0;...
         zeros(1,8),  -1/tau];
@@ -359,7 +375,8 @@ for index =  speedVec %[1,9,10,length(Lin.V)]%1 : length(Lin.V) %[1,length(Lin.V
         ff.Position = [520   267   560   531];
         ff.Color = 'white'; ff.Visible = plotVisible;
         
-        bodemag(sysLagrange); hold on; grid on;
+        bodemag(sysLagrange); 
+        hold on; grid on;
         % bodemag(ss(A9DoF,B9DoF*diag([1000,1,1]),C9DoF,D9DoF),'k--'); legend('Rot,Twr + Bld', 'Rot,Twr,Bld+Act')
         
         bodemag(sys5DoF,'k--'); hold on; grid on;
@@ -395,6 +412,9 @@ for index =  speedVec %[1,9,10,length(Lin.V)]%1 : length(Lin.V) %[1,length(Lin.V
         figStr = [strrep(titleStr,'Bode mag. plot for V =','Figure_Bode V ='),'.png'];
         figFolderStr = fullfile(figFolder,figStr);
         figFolderStrEps = fullfile(figFolder,sprintf('BodeV%d',Vbar));
+        posaxes =  get(gcf,'Position');
+        set(gcf,'Position',[posaxes(1:3),posaxes(4)*0.75]);
+        title(sprintf('V = %d: %s', Vbar, titleCell{2}))
         % export_fig(figFolderStr,'-dpng','-m2','-nocrop') %ToDo AD Check why
         print(figFolderStr, '-dpng');
         print(figFolderStrEps, '-depsc');
