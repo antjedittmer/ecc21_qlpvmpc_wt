@@ -30,7 +30,7 @@ wecs.mh = 56780; % hub mass
 wecs.mb = 17740; %kg Mass of each blade
 wecs.mn = 240000; % kg Nacellle mass
 wecs.mtower = 347460;%kg Mass of the tower and nacelle
-wecs.mt = 0.25*wecs.mtower + wecs.mn + wecs.mh + 3*wecs.mb;
+wecs.mt = 0.25*wecs.mtower + wecs.mn + wecs.mh;% + 3*wecs.mb;
 wecs.H =  87.6;
 
 wecs.Jrg = 534.116;% * Ng^2; %kg*m^2 Inertia of the generator
@@ -43,7 +43,7 @@ wecs.wnt = f0 * 2*pi; % wecs.wnb; 0.3240
 wecs.wntsw = f0sw * 2*pi; % wecs.wnb; 0.3240
 
 wecs.zetat = 1/100; %damping ratio of tower (Table 6.2)
-wecs.zetab = 0.477465;% damping ratio of blade /100
+wecs.zetab = 0.477465/100; % damping ratio of blade /100
 
 % Jr = wecs.Jr; %115926 + 3 * 11.776e6; %kg*m^2 Inertia of the rotor (Hub inertia + 3 blades
 % Jg = wecs.Jrg; % 534.116;% * Ng^2; %kg*m^2 Inertia of the generator
@@ -71,7 +71,7 @@ tau = 0.1; %#ok<NASGU> % for pitch actuator
 kappa = 0.01;
 
 
-M =[wecs.mt wecs.N*wecs.mb*wecs.rb 0 0; % M(1,1) mt+wecs.N*mb  -> mt (already includes blades)
+M =[wecs.mt+3*wecs.mb  wecs.N*wecs.mb*wecs.rb 0 0; % M(1,1) mt+wecs.N*mb  -> mt (already includes blades)
     wecs.N*wecs.mb*wecs.rb wecs.N*wecs.mb*wecs.rb^2 0 0;
     0 0 wecs.Jr 0;
     0 0 0 wecs.Jrg*wecs.Ng^2];
@@ -169,32 +169,32 @@ Ct = interp2(Rotor_Lamda,Rotor_Pitch,Rotor_cT,Xq,Yq,'cubic');
 % Cq2Comp = interp2(Rotor_lambda2,Rotor_beta2,Rotor_cQ2,Xq,Yq,'nearest');
 % Ct2Comp = interp2(Rotor_lambda2,Rotor_beta2,Rotor_cT2,Xq,Yq,'nearest');
 
-% xlabelStr = 'tip speed ratio \lambda [-]';
-% ylabelStr = 'pitch angle \beta [grad]';
-% zlabelStr = 'Force coefficient C_T [-]';
-% titleStrData1Interp = ['Aerodynamique ',zlabelStr,'  from NREL FAST 5 MW'];
-% 
-% figure(1); surf(Xq,Yq,Ct,'FaceColor','interp','EdgeColor','none'); hold on
-% axis tight;
-% xlabel(xlabelStr); ylabel(ylabelStr ); zlabel(zlabelStr);
-% title(titleStrData1Interp);
-% view(60,30)
-% 
-% print(gcf,[fullfile(figDir,'Ct_NRRLFAST5MW')], '-dpng');
-% print(gcf,[fullfile(figDir,'Ct_NRRLFAST5MW')], '-depsc');
-% 
-% 
-% zlabelStr = 'Torque coefficient C_Q [-]';
-% titleStrData1Interp = ['Aerodynamique ',zlabelStr,' from NREL FAST 5 MW'];
-% 
-% figure(2); surf(Xq,Yq,Cq,'FaceColor','interp','EdgeColor','none'); hold on
-% axis tight;
-% xlabel(xlabelStr); ylabel(ylabelStr ); zlabel(zlabelStr);
-% title(titleStrData1Interp)
-% view(60,30)
-% 
-% print(gcf,[fullfile(figDir,'Cq_NRRLFAST5MW')], '-dpng');
-% print(gcf,[fullfile(figDir,'Cq_NRRLFAST5MW')], '-depsc');
+xlabelStr = 'tip speed ratio \lambda [-]';
+ylabelStr = 'pitch angle \beta [grad]';
+zlabelStr = 'Force coefficient C_T [-]';
+titleStrData1Interp = ['Aerodynamique ',zlabelStr,'  from NREL FAST 5 MW'];
+
+figure(1); surf(Xq,Yq,Ct,'FaceColor','interp','EdgeColor','none'); hold on
+axis tight;
+xlabel(xlabelStr); ylabel(ylabelStr ); zlabel(zlabelStr);
+title(titleStrData1Interp);
+view(60,30)
+
+print(gcf,[fullfile(figDir,'Ct_NRRLFAST5MW')], '-dpng');
+print(gcf,[fullfile(figDir,'Ct_NRRLFAST5MW')], '-depsc');
+
+
+zlabelStr = 'Torque coefficient C_Q [-]';
+titleStrData1Interp = ['Aerodynamique ',zlabelStr,' from NREL FAST 5 MW'];
+
+figure(2); surf(Xq,Yq,Cq,'FaceColor','interp','EdgeColor','none'); hold on
+axis tight;
+xlabel(xlabelStr); ylabel(ylabelStr ); zlabel(zlabelStr);
+title(titleStrData1Interp)
+view(60,30)
+
+print(gcf,[fullfile(figDir,'Cq_NRRLFAST5MW')], '-dpng');
+print(gcf,[fullfile(figDir,'Cq_NRRLFAST5MW')], '-depsc');
 
 
 %% Compute gradients
