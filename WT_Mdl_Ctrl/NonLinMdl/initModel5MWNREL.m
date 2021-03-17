@@ -43,7 +43,7 @@ wecs.wnt = f0 * 2*pi; % wecs.wnb; 0.3240
 wecs.wntsw = f0sw * 2*pi; % wecs.wnb; 0.3240
 
 wecs.zetat = 1/100; %damping ratio of tower (Table 6.2)
-wecs.zetab = 0.477465/100; % damping ratio of blade /100
+wecs.zetab = 0.477465; % damping ratio of blade /100
 
 % Jr = wecs.Jr; %115926 + 3 * 11.776e6; %kg*m^2 Inertia of the rotor (Hub inertia + 3 blades
 % Jg = wecs.Jrg; % 534.116;% * Ng^2; %kg*m^2 Inertia of the generator
@@ -163,6 +163,8 @@ idxPitch = Rotor_Pitch>= -8;
 Cp = interp2(Rotor_Lamda,Rotor_Pitch,Rotor_cP,Xq,Yq,'cubic');
 Cq = interp2(Rotor_Lamda,Rotor_Pitch,Rotor_cQ,Xq,Yq,'cubic');
 Ct = interp2(Rotor_Lamda,Rotor_Pitch,Rotor_cT,Xq,Yq,'cubic');
+lambdaCt = Rotor_Lamda(1:150);
+pitchCt = Rotor_Pitch(idxPitch) *pi/180;
 
 % % Bindu: Calculate CP matrix for interpolated surf plot
 % Cp2Comp = interp2(Rotor_lambda2,Rotor_beta2,Rotor_cP2,Xq,Yq,'nearest');
