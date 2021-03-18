@@ -1,7 +1,7 @@
 close all;
-runCompareModels('NTW18');
+runCompareModels('NTW18',0);
 close all;
-runCompareModels('Sweep');
+runCompareModels('Sweep',0);
 close all;
 runCompareCtrl('NTW18');
 close all;
