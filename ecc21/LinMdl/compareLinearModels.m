@@ -1,9 +1,9 @@
-function Linear_Models_Lagrange_Comparison(speedVec,figFolder, useActuatorStates,figNoAdd,createBodePlots,plotVisible)
+function compareLinearModels(speedVec,figFolder, useActuatorStates,figNoAdd,createBodePlots,plotVisible)
 
 %% Set defaults
 if nargin == 0
-    speedVec = [1,22]; %[1,22]; % variations of wind speed
-    figFolder = 'FigureLagrange_210308_comp';
+    speedVec = [13, 22]; %[1,22]; % variations of wind speed
+    figFolder = fullfile(fileparts(pwd),'figDir');%'FigureLagrange_210308_comp';
     useActuatorStates = 0;
     figNoAdd = 0;
     close all;
@@ -61,7 +61,7 @@ end
 % Cut-In, Rated, Cut-Out Wind Speed 3 m/s, 11.4 m/s, 25 m/s
 % Cut-In, Rated Rotor Speed 6.9 rpm, 12.1 rpm
 % wr,wg in rad/s, Tg in kN, Pg in kW,
-[wecs, M, Ce, K, Q, L, rho, tau, kappa, Rotor_Lambda, Rotor_Pitch, Cq, Ct, Cqdlambda,Cqdbeta, Ctdlambda,Ctdbeta] = initModel5MWNREL(0, Rotor_Lamda, Rotor_Pitch, Rotor_cQ, Rotor_cT, figFolder);
+[wecs, M, Ce, K, Q, L, rho, tau, kappa, lambda, pitch, Cq, Ct, Cqdlambda,Cqdbeta, Ctdlambda,Ctdbeta] = initModel5MWNREL(0, Rotor_Lamda, Rotor_Pitch, Rotor_cQ, Rotor_cT, figFolder);
 
 %% Constant Matrices 
 A1 = [zeros(4), L;...
@@ -116,7 +116,7 @@ for index =  speedVec %[1,9,10,length(Lin.V)]%1 : length(Lin.V) %[1,length(Lin.V
     Vbar = Lin.V(index);
     Lambda_bar = Lin.RSpeed(index)*wecs.rb/Vbar;
     omegabar = Lin.RSpeed(index);
-    beta_bar = Lin.Pitch(index); %/pi*180;
+    beta_bar = Lin.Pitch(index); % rad
     
     dlambdadomega = wecs.rb/Vbar;
     dlambdadV = -omegabar*wecs.rb/Vbar^2;
@@ -124,12 +124,12 @@ for index =  speedVec %[1,9,10,length(Lin.V)]%1 : length(Lin.V) %[1,length(Lin.V
     dlambdadxdotfa = -1*omegabar*wecs.rb/Vbar^2; %s/m   xdotfa m/s
     
     %% Grid points
-    dCqdlambdab = interp2(Rotor_Lambda,Rotor_Pitch,Cqdlambda,Lambda_bar,beta_bar,'cubic');
-    dCtdlambdab = interp2(Rotor_Lambda,Rotor_Pitch,Ctdlambda,Lambda_bar,beta_bar,'cubic');
-    dCqdbetab = interp2(Rotor_Lambda,Rotor_Pitch,Cqdbeta,Lambda_bar,beta_bar,'cubic'); %* 180/pi;
-    dCtdbetab = interp2(Rotor_Lambda,Rotor_Pitch,Ctdbeta,Lambda_bar,beta_bar,'cubic'); %dCqdbetab = dCqdbetabDeg * 180/pi;
-    Cqb = interp2(Rotor_Lambda,Rotor_Pitch,Cq,Lambda_bar,beta_bar,'cubic');
-    Ctb = interp2(Rotor_Lambda,Rotor_Pitch,Ct,Lambda_bar,beta_bar,'cubic');
+    dCqdlambdab = interp2(lambda,pitch,Cqdlambda,Lambda_bar,beta_bar,'cubic');
+    dCtdlambdab = interp2(lambda,pitch,Ctdlambda,Lambda_bar,beta_bar,'cubic');
+    dCqdbetab = interp2(lambda,pitch,Cqdbeta,Lambda_bar,beta_bar,'cubic'); %* 180/pi;
+    dCtdbetab = interp2(lambda,pitch,Ctdbeta,Lambda_bar,beta_bar,'cubic'); %dCqdbetab = dCqdbetabDeg * 180/pi;
+    Cqb = interp2(lambda,pitch,Cq,Lambda_bar,beta_bar,'cubic');
+    Ctb = interp2(lambda,pitch,Ct,Lambda_bar,beta_bar,'cubic');
     
     %% Ft=0.5*pi*rb^2*Ct*v^2
     dFtdomega = 0.5*rho*pi*wecs.rb^2*dCtdlambdab*dlambdadomega*Vbar^2;%dFt/domega
@@ -142,12 +142,10 @@ for index =  speedVec %[1,9,10,length(Lin.V)]%1 : length(Lin.V) %[1,length(Lin.V
     dTrdbeta = 0.5*rho*pi*wecs.rb^3*dCqdbetab*Vbar^2;%dTr/dbeta
     
     %% Linear Model
-    % Models from Bianchi do not include sidevards motions
-    % X =[yt zeta Thetha_s yt_dot zeta_dot omega_r omega_gr beta torque]'
+    % X = [yt zeta Thetha_s yt_dot zeta_dot omega_r omega_gr beta torque]'
     % y=[ yt_ddot rb*zeta_dot omega_r]' -> y=[ yt_ddot rb*zeta_dot omega_r]'
     % uact=[Tg_ref beta_ref V]'
     % Ve = V - yt_dot [m/s] - rb [m]  * zeta_dot [1/s]
-    % n
     
     ksw = 3/(2* wecs.H);
     

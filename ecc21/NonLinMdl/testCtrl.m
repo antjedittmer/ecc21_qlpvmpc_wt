@@ -2,6 +2,7 @@
 clear;
 clear ABgL_WT;
 close all;
+Simulink.data.dictionary.closeAll
 
 %% Set paths
 dataIn = 'dataIn'; % external data from FAST linearization, FASTtool

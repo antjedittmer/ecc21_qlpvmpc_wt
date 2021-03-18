@@ -7,7 +7,7 @@ if ~nargin || isempty(strWindType)
 end
 
 if nargin < 2 || isempty(loadData)
-   loadData = 0; %load simulation output data if available;
+   loadData = 1; %load simulation output data if available;
 end
 
 if nargin < 3 || isempty(yAxCell)
@@ -62,7 +62,7 @@ end
 
 %% Load data from FAST run
 %load(fullfile(dataInDir,workspaceSimulationMat)) %#ok<LOAD> ADi ToDo: Clean this up later: Only load variables needed for simulation
-DT = 0.008;
+% DT = 0.008;
 load(outDataSimulationMat ,'OutTable');%#ok<NASGU>
 
 % LUT tables loaded have these values
@@ -101,7 +101,7 @@ vectAmpWind = sqrt(sum((vectWind.^2),2));
 
 % Lin_points.RSpeed = LUT_omega2;
 % Lin_points.Torque = LUT_torque2;
-varnames = {'Wind', 'RotSpeed', 'GenPwr', 'BlPitch1', 'GenTq', ...
+varnames = {'Wind', 'RotSpeed', 'GenPwr', 'GenTq', 'BlPitch1', ...
     'NcIMUTAxs', 'NcIMUTAys'}; %%'Tower FA acc', 'Tower SS acc'};
 
 %% Run simulations or load data
@@ -111,7 +111,7 @@ if exist(matFileOutTableTest1,'file') == 2 && loadData
     load(matFileOutTableTest1,'OutTableTest1');
 else
     WS = 'base';
-    assignin(WS,'DT',DT)
+    % assignin(WS,'DT',DT)
     assignin(WS,'OutTable',OutTable)
     open_system(simMdlname1);
     %Ng = wecs.Ng;
@@ -196,7 +196,7 @@ title(titleStr);
 axPlot2(2) = subplot(3,1,2);
 plot(time,OutTableTest2.GenTq(idxTime)/10^3,time,OutTable.GenTq(idxTime),time,OutTableTest1.GenTq(idxTime)/10^3,'k--');
 axis tight; grid on;
-ylabel('GenTq T_g [Nm]') 
+ylabel('GenTq T_g [kNm]') 
 
 axPlot2(3) = subplot(3,1,3);
 plot(time,OutTableTest2.NcIMUTAxs(idxTime),time,OutTable.NcIMUTAxs(idxTime),time,OutTableTest1.NcIMUTAxs(idxTime),'k--');
