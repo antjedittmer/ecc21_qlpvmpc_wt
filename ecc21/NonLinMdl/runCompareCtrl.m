@@ -1,20 +1,17 @@
 %clear ; close all; clc;
-function runCompareCtrl(strWindType)
+function runCompareCtrl(loadData,strWindType)
 
-if ~nargin
-    strWindType = 'NTW18'; %'Sweep';
-end
+
 
 % Set path to inputdata directory
-mainDir = fullfile(pwd);
-addpath(fullfile(fileparts(pwd),'dataIn'));
-addpath(fullfile(pwd,'dataOut'));
+%% Handle optional inputs
+if ~nargin || isempty(loadData) 
+   loadData = 1; %load simulation output data if available;
+end
 
-% Set path to figure directory
-%figDir = fullfile(mainDir,'html','figDir');
-figDir = fullfile(fileparts(mainDir),'figDir');
-if ~isfolder(figDir)
-    mkdir(figDir)
+% Two testcases: step sweep 4 to 25 ms and normal dist. 18 m/s mean
+if nargin < 2 || isempty(strWindType)
+    strWindType = 'Sweep'; %'NTW18';
 end
 
 % Set path to data output directory
@@ -25,73 +22,53 @@ if ~isfolder(dataDirOut)
 end
 
 % Load data closed loop simulation PI
-DT = 0.008;
 
+
+% Weight values (copied from MATLAB function
+q_ = [1 10^4 0 10^3 10^3 0 0 0]; 
+r_ = [1 10^4]; %[10^7,0.1];
+p = 10^3;
+
+%% 
+% Provide names of Simulink models to be run
 if strcmp(strWindType,'Sweep') == 1
     % sweep from 4 to 25 in steps
+    outDataSimulationMat = 'OutDataSweep.mat';
     strFig = '';
+    testCaseStr = 'Wind Sweep';
 else
     % wind with average 18 m/s
+    outDataSimulationMat = 'OutDataWind18NTW.mat';
     strFig = 'NTW18';
-end
-matFileOutTableTest1 = fullfile(dataDirOut,['OutTableTest1',strFig,'.mat']);
-load(matFileOutTableTest1,'OutTableTest1');
-
-%load('OutTableTest1.mat','OutTableTest1');
-if exist('OutTableTest1','var') == 1
-    OutTableTest2 = OutTableTest1;
+    testCaseStr = 'Wind, mean 18 m/s';
 end
 
-load('workSpace.mat','OutList');
-load('OutDataSweep.mat','OutData');
-OutTable = array2table(OutData,'VariableNames', OutList);
 
-OutTableTest = OutTable(:,OutTableTest2.Properties.VariableNames(2:end));
+load(outDataSimulationMat ,'OutTable');%
+
+OutTableTest2 = OutTable; %(:,OutTableTest2.Properties.VariableNames(2:end));
+OutList = OutTableTest2.Properties.VariableNames;
 idxWind = contains(OutList, 'Wind');
-OutTableTest.Wind = sqrt(sum((OutTable{:,idxWind}.^2),2));
+OutTableTest2.Wind = sqrt(sum((OutTable{:,idxWind}.^2),2));
+OutTableTest2.GenTq = OutTableTest2.GenTq*1000; % kNm -> Nm
+OutTableTest2.RotSpeed = OutTableTest2.RotSpeed *pi/30; %RPM -> rad/s
 
-OutTableTest.GenTq = OutTableTest.GenTq*1000; % kNm -> Nm
-OutTableTest.RotSpeed = OutTableTest.RotSpeed *pi/30; %RPM -> rad/s
-
-%OutTableTest2 = OutTableTest;
-
-% load('OutDataTestCL_LPV_200s_sweep_4degPerS_filt.mat', 'OutDataTestOL','q_','r_','p')
-
-%% Good results wiht wrong pitch (deg *180)
-% load('OutDataTestCL_LPV_200s_sweep_4degPerS_filt', 'OutDataTestOL','q_','r_','p')
-% figStr = 'RefFASTClosedLoopSim_GenSpeedFilt';
-% plotComparison(OutTableTest2,OutDataTestOL,q_,r_,p,DT,figStr,figDir)
-
-%% Demonstrate reference OL vs Reference CL
-% load('OutDataTestCL6_LPV_200s_sweep_4degPerS_filt','OutDataTestOL') %
-% figStr = 'RefFASTOpenLoop_GenSpeedFilt';
-% plotComparison(OutTableTest2,OutDataTestOL,q_,r_,p,DT,figStr,figDir)
-
-%% Test with Reference from CL omega NoFilt, penalty on beta, no penatly on changes
-% Test with Reference from CL omega Filt, penalty on beta, no penatly on changes
-% load('OutDataTestCL8_LPV_200s_sweep_8degPerS_NOfilt','OutDataTestOL','q_','r_','p')
-% figStr = 'RefFAST_GenSpeedNotFilt';
-% plotComparison(OutTableTest2,OutDataTestOL,q_,r_,p,DT,figStr,figDir)
-%
-% load('OutDataTestCL13_LPV_200s_sweep_8degPerS_Filt','OutDataTestOL','q_','r_','p','r');
-% figStr = 'RefFASTOpenLoop_GenSpeedFilt';
-% plotComparison(OutTableTest2,OutDataTestOL,q_,r_,p,DT,figStr,figDir,r)
-%
-% load('OutDataTestCL2_MdlOrd5_LPV_200s_sweep_8degPerS_NoFilt','OutDataTestOL','q_','r_','p');
-% figStr = 'RefFASTOpenLoop_GenSpeedNoFilt_Ord5';
-% plotComparison(OutTableTest2,OutDataTestOL,q_,r_,p,DT,figStr,figDir)
-
-%% Results
-% load('OutDataTestCL_NoFilt_Simulink_beta.mat','OutDataTestOL','q_','r_','p');
-% figStr = 'RefFASTOpenLoop_beta';
-% plotComparison(OutTableTest2,OutDataTestOL,q_,r_,p,DT,figStr,figDir)
-%
-% load('OutDataTestCL_NoFilt_Simulink_beta_steadyStateCLFAST.mat','OutDataTestOL','q_','r_','p');
-% figStr = 'RefFASTClosedLoop_beta';
-% plotComparison(OutTableTest2,OutDataTestOL,q_,r_,p,DT,figStr,figDir)
-
+%%
+simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta.slx'; %
 if strcmp(strWindType,'Sweep') == 1
-    load('OutDataTestCL_NoFilt_Simulink_beta_steadyStateCLSim.mat','OutDataTestOL','q_','r_','p', 'rOut','tictoc_LPVMPC');
+    
+    % Names of simulation output in correct order
+varnames = {'Wind', 'RotSpeed', 'GenPwr', 'GenTq', 'BlPitch1', ...
+    'NcIMUTAxs', 'NcIMUTAys'}; %%'Tower FA acc', 'Tower SS acc'};
+
+% Run simulation for two models or load mat files if available
+
+matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPC',strFig,'.mat']);
+OutTableTest1 = getSimulationOutputTable(matFileOutTableTest1,loadData,OutTableTest2,simMdlname,varnames);
+
+    load('OutDataTestCL_NoFilt_Simulink_beta_steadyStateCLSim.mat',...
+        'OutDataTestOL','tictoc_LPVMPC');
+    
     figStr = 'RefSimulinkClosedLoop_beta';
     meanOpt = strrep(sprintf(' mean cputime MPC: %1.2e s',mean(tictoc_LPVMPC.Data)),'e-0','e-');
     k_pitch = 1;
@@ -271,28 +248,4 @@ end
 %snapnow;
 print(gcf,[fullfile(figDir,'cmpCtrlSimulink_PI_MPC'),plot6,'_',figStr,'_',num2str(timeVecPlot(end))], '-dpng');
 print(gcf,[fullfile(figDir,'cmpCtrlSimulink_PI_MPC'),plot6,'_',figStr,'_',num2str(timeVecPlot(end))], '-depsc');
-%return;
 
-%% Code to plot Generator torquee
-% load('GeneratorTorqueInput.mat')
-%
-% GeneratorTorqueDemand = max(min(Control_Torque_OptGain*MeasuredGeneratorSpeed^2, Torque_Demanded), T_MinTorque);
-%
-% % Calculate torques at beginning and end of CP_max operation
-% TorqueOmegaB = Control_Torque_OptGain*(omega_ABCD(2)*pi/30)^2;
-% TorqueOmegaC = Control_Torque_OptGain*(omega_ABCD(3)*pi/30)^2;
-%
-% % Apply maximum demanded torque when pitch is 1 degree above fine-pitch and
-% % the wind turbine is not in start-up mode.
-% if (Event == 5 && Clock >= EventTime) && (MeasuredPitch > (FineMaxPitch(2) - 1.0)*pi/180) %Emergency shutdown
-%     GeneratorTorqueDemand = 0.0;
-% elseif MeasuredPitch > (FineMaxPitch(1) + 1.0)*pi/180 && P_StartupMode == false
-%     GeneratorTorqueDemand = Torque_Demanded;
-% elseif MeasuredGeneratorSpeed < omega_ABCD(1)*pi/30
-%     GeneratorTorqueDemand = T_MinTorque;
-% elseif MeasuredGeneratorSpeed < omega_ABCD(2)*pi/30
-%     GeneratorTorqueDemand = (TorqueOmegaB - T_MinTorque)/((omega_ABCD(2) - omega_ABCD(1))*pi/30)*(MeasuredGeneratorSpeed - omega_ABCD(1)*pi/30) + T_MinTorque;
-% elseif MeasuredGeneratorSpeed >= omega_ABCD(3)*pi/30
-%     GeneratorTorqueDemand = (Torque_Demanded - TorqueOmegaC)/((omega_ABCD(4) - omega_ABCD(3))*pi/30)*(MeasuredGeneratorSpeed - omega_ABCD(3)*pi/30) + TorqueOmegaC;
-% end
-%
