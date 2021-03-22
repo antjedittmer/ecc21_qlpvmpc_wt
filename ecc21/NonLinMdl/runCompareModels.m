@@ -1,13 +1,21 @@
-function runCompareModels(strWindType,loadData,yAxCell)
-% runCompareModels compares two Simulink models (Mdl1(5 states) and Mdl2 (8 
-% states) with 
+function runCompareModels(loadData,strWindType,yAxCell)
+% runCompareModels compares two Simulink models (Mdl1, five states) and
+% Mdl2, nine states) with FASTTool simulation data with same input and same 
+% controller. All inputs are optional:
+% - loadData: load simulation output data if available instead of running
+%   simulation (Default: 1)
+% - strWindType: 
+% - yAxCell: 
 
-if ~nargin || isempty(strWindType)
-    strWindType = 'Sweep'; 
+
+%% Handle optional inputs
+if ~nargin || isempty(loadData) 
+   loadData = 1; %load simulation output data if available;
 end
 
-if nargin < 2 || isempty(loadData)
-   loadData = 1; %load simulation output data if available;
+% Two test cases: step sweep 4 to 25 ms and n
+if nargin < 2 || isempty(strWindType)
+    strWindType = 'Sweep'; 
 end
 
 if nargin < 3 || isempty(yAxCell)
@@ -16,8 +24,6 @@ if nargin < 3 || isempty(yAxCell)
 end
 
 %% Initialize workspace and path
-%lear; clc; close all;  
-% bdclose all; 
 
 % Set path to inputdata directory
 mainDir = fullfile(pwd);
@@ -25,7 +31,6 @@ dataInDir = fullfile(fileparts(pwd),'dataIn');
 addpath(dataInDir);
 
 % Set path to figure directory
-%figDir = fileparts(mainDir); %'html','figDir');
 figDir = fullfile(fileparts(mainDir),'figDir');
 
 if ~isfolder(figDir)
@@ -43,18 +48,17 @@ end
 
 % Provide names of Simulink models to be run
 simMdlname1 = 'test_SimulinkMdl1_Baseline'; %
-%simMdlname2 = 'test_SimulinkMdl3LPV_Baseline'; 
 simMdlname2 = 'test_SimulinkMdl2_Baseline'; 
 
 if strcmp(strWindType,'Sweep') == 1
     % sweep from 4 to 25 in steps
-    %workspaceSimulationMat = 'workSpace.mat';
+    % workspaceSimulationMat = 'workSpace.mat';
     outDataSimulationMat = 'OutDataSweep.mat';
     strFig = '';
     testCaseStr = 'Wind Sweep';
 else
     % wind with average 18 m/s
-    %workspaceSimulationMat = 'workSpace18NTM.mat';
+    % workspaceSimulationMat = 'workSpace18NTM.mat';
     outDataSimulationMat = 'OutDataWind18NTM.mat';
     strFig = 'NTW18';
     testCaseStr = 'Wind, mean 18 m/s';
@@ -63,7 +67,7 @@ end
 %% Load data from FAST run
 %load(fullfile(dataInDir,workspaceSimulationMat)) %#ok<LOAD> ADi ToDo: Clean this up later: Only load variables needed for simulation
 % DT = 0.008;
-load(outDataSimulationMat ,'OutTable');%#ok<NASGU>
+load(outDataSimulationMat ,'OutTable');
 
 % LUT tables loaded have these values
 % LUT_torque2 = [5.0066    8.8294   13.5530   18.9143   23.8603   29.5200   36.9452,...
