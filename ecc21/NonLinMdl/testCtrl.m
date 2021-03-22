@@ -7,7 +7,7 @@ Simulink.data.dictionary.closeAll;
 %% Set paths
 dataIn = 'dataIn'; % external data from FAST linearization, FASTtool
 dataOut = 'dataOut'; % data from simulation runs, saved to not run all simulation again
-subDir = {'subfunctionsMPC', 'WECSCtrl', 'WECSMDl'}; 
+subDir = {'subfunctionsMPC', 'WECSCtrl', 'WECSMDl','WECSAct'}; 
 
 
 fileName = mfilename('fullpath');
