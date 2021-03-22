@@ -2,23 +2,29 @@
 clear;
 clear ABgL_WT;
 close all;
-Simulink.data.dictionary.closeAll
+Simulink.data.dictionary.closeAll;
 
 %% Set paths
 dataIn = 'dataIn'; % external data from FAST linearization, FASTtool
 dataOut = 'dataOut'; % data from simulation runs, saved to not run all simulation again
 subDir = {'subfunctionsMPC', 'WECSCtrl', 'WECSMDl'}; 
 
-dataInPath = fullfile(fileparts(pwd),dataIn);
+
+fileName = mfilename('fullpath');
+workDir = fileparts(fileName);
+parentDir = fileparts(workDir);
+
+dataInPath = fullfile(parentDir,dataIn);
 addpath(dataInPath);
 
-if ~isdir(dataOut) %#ok<ISDIR>
-    mkdir(dataOut);
+dataOutPath = fullfile(workDir,dataOut); 
+if ~isdir(dataOutPath) %#ok<ISDIR>
+    mkdir(dataOutPath);
 end
-addpath(fullfile(pwd,dataOut));
+addpath(dataOutPath);
 
 for idx = 1: length(subDir)
-    addpath(subDir{idx});
+    addpath(fullfile(workDir,subDir{idx}));
 end
 
 onlyInit = 1;
