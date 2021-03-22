@@ -67,7 +67,7 @@ end
 %% Load data from FAST run
 %load(fullfile(dataInDir,workspaceSimulationMat)) %#ok<LOAD> ADi ToDo: Clean this up later: Only load variables needed for simulation
 % DT = 0.008;
-load(outDataSimulationMat ,'OutTable');
+load(outDataSimulationMat ,'OutTable');%#ok<NASGU>
 
 % LUT tables loaded have these values
 % LUT_torque2 = [5.0066    8.8294   13.5530   18.9143   23.8603   29.5200   36.9452,...
@@ -111,33 +111,35 @@ varnames = {'Wind', 'RotSpeed', 'GenPwr', 'GenTq', 'BlPitch1', ...
 %% Run simulations or load data
 % Run simulation for two models or load mat files if available
 matFileOutTableTest1 = fullfile(dataDirOut,['OutTableTest1',strFig,'.mat']);
-if exist(matFileOutTableTest1,'file') == 2 && loadData
-    load(matFileOutTableTest1,'OutTableTest1');
-else
-    WS = 'base';
-    % assignin(WS,'DT',DT)
-    assignin(WS,'OutTable',OutTable)
-    open_system(simMdlname1);
-    %Ng = wecs.Ng;
-    out1 = sim(simMdlname1,'SrcWorkspace',WS);
-    OutTableTest1 = array2table(out1.OutDataTest,'VariableNames',varnames);
-    save(matFileOutTableTest1,'OutTableTest1');
-end
+OutTableTest1 = getSimulationOutputTable(matFileOutTableTest1,loadData,OutTable,simMdlname1,varnames);
+% if exist(matFileOutTableTest1,'file') == 2 && loadData
+%     load(matFileOutTableTest1,'OutTableTest1');
+% else
+%     WS = 'base';
+%     % assignin(WS,'DT',DT)
+%     assignin(WS,'OutTable',OutTable)
+%     open_system(simMdlname1);
+%     %Ng = wecs.Ng;
+%     out1 = sim(simMdlname1,'SrcWorkspace',WS);
+%     OutTableTest1 = array2table(out1.OutDataTest,'VariableNames',varnames);
+%     save(matFileOutTableTest1,'OutTableTest1');
+% end
 
 matFileOutTableTest2 = fullfile(dataDirOut,['OutTableTest2',strFig,'.mat']);
-if exist(matFileOutTableTest2,'file') == 2 && loadData
-    load(matFileOutTableTest2,'OutTableTest2');
-else
-    open_system(simMdlname2);
-    out2 = sim(simMdlname2,'SrcWorkspace',WS);
-    if size(out2.OutDataTest,2) == 9 % Pitch commands of all actuators
-        out2OutDataTest = out2.OutDataTest(:,[1:4,7:9]);
-    else
-         out2OutDataTest = out2.OutDataTest;
-    end
-    OutTableTest2 = array2table(out2OutDataTest,'VariableNames',varnames);
-    save(matFileOutTableTest2,'OutTableTest2');
-end
+OutTableTest2 = getSimulationOutputTable(matFileOutTableTest2,loadData,OutTable,simMdlname2,varnames);
+% if exist(matFileOutTableTest2,'file') == 2 && loadData
+%     load(matFileOutTableTest2,'OutTableTest2');
+% else
+%     open_system(simMdlname2);
+%     out2 = sim(simMdlname2,'SrcWorkspace',WS);
+%     if size(out2.OutDataTest,2) == 9 % Pitch commands of all actuators
+%         out2OutDataTest = out2.OutDataTest(:,[1:4,7:9]);
+%     else
+%          out2OutDataTest = out2.OutDataTest;
+%     end
+%     OutTableTest2 = array2table(out2OutDataTest,'VariableNames',varnames);
+%     save(matFileOutTableTest2,'OutTableTest2');
+% end
 
 % Get actuator block to test influence
 % actuatorBlock =  find_system(simMdelname,'Name','Actuators');
