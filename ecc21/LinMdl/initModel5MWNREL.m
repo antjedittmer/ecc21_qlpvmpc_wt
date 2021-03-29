@@ -13,8 +13,8 @@ end
 if nargin < 5 || isempty(Rotor_Lamda) || isempty(Rotor_Pitch) || ....
         isempty(Rotor_cQ) ||  isempty(Rotor_Pitch)
     % Set path to inputdata directory
-    mainDir = fullfile(pwd);
-    dataInDir = fullfile(fileparts(pwd),'dataIn');
+    workDir = fileparts(mfilename('fullpath'));
+    dataInDir = fullfile(fileparts(workDir),'dataIn');
     addpath(dataInDir);
     
     % load('NREL5MW_CPdata_new3','Lin_points','Rotor_Lamda','Rotor_Pitch','Rotor_cP','Rotor_cQ','Rotor_cT');
@@ -24,9 +24,8 @@ end
 % Set figDir
 if nargin < 6
     % Set path to figure directory
-    % figDir = fileparts(mainDir); %'html','figDir');
-    figDir = fullfile(fileparts(mainDir),'figDir');
-    
+    workDir = fileparts(mfilename('fullpath'));
+    figDir = fullfile(fileparts(workDir),'figDir');
     if ~isfolder(figDir)
         mkdir(figDir)
     end
@@ -39,13 +38,17 @@ end
 % Cut-In, Rated, Cut-Out Wind Speed 3 m/s, 11.4 m/s, 25 m/s
 % Cut-In, Rated Rotor Speed 6.9 rpm, 12.1 rpm
 % wr,wg in rad/s, Tg in kN, Pg in kW,
+% Tower equivalent mass, MT 438,000 kg
+% Tower equivalent damping, CT 6421 wecs.N s/m
+% Tower equivalent stiffness, KT 1,846,000 wecs.N/m
+
 wecs.N = 3;%Number of blades
 wecs.Ng = 97; %Gearbox ratio
 wecs.mh =  56780; % hub mass
 wecs.mb =  17740; %kg Modal mass of each blade
 wecs.mn = 240000; % Nacellle mass
 wecs.mtower = 347460;%347460;%kg Mass of the tower and nacelle
-wecs.mt = 0.25*wecs.mtower+wecs.mn + wecs.mh + 3* wecs.N*wecs.mb;
+wecs.mt = 0.25*wecs.mtower+wecs.mn + wecs.mh; %3* wecs.N*wecs.mb;
 wecs.H =  87.6;
 
 wecs.Jrg = 534.116;% * Ng^2; %kg*m^2 Inertia of the generator
@@ -65,23 +68,18 @@ wecs.Ks = 867637000; %Nm/rad Stiffness of the transmission
 % 2*zeta*wn=B
 wecs.Bs = 6215000;  %Nm/rad/sec        %Damping of the transmission
 wecs.rb = 63; % m blade radius
-wecs.etag = 0.944;
-%Drivetrain.Generator.Efficiency = 0.944;
+wecs.etag = 0.944; %Drivetrain.Generator.Efficiency = 0.944;
 
 rho = 1.225; % Air density (kg/m^3)
 % Bg = 0.9; % Tg= Bg(wg - wz). Unused because we use Tg as input
 tau = 0.1; % for pitch actuator
 kappa = 0.01; % tau_g  = 0.01;
 
-% Tower equivalent mass, MT 438,000 kg
-% Tower equivalent damping, CT 6421 wecs.N s/m
-% Tower equivalent stiffness, KT 1,846,000 wecs.N/m
-
 %% Lagrange's Model matrices
 % Force input w = [Ft_fa,Ft_sw,Tr,Tg]; Ft_fa = Ft, Ft_sw = 3/2*Tg
 % States q: xdot_fa, zeta, xdot_sw, omega_r, omega_gr
 
-M =[wecs.mt wecs.N*wecs.mb*wecs.rb 0 0 0; % M(1,1) mt+wecs.N*mb  -> mt (already includes blades)
+M =[wecs.mt + 3* wecs.N*wecs.mb wecs.N*wecs.mb*wecs.rb 0 0 0; % M(1,1) mt+wecs.N*mb  -> mt (already includes blades)
     wecs.N*wecs.mb*wecs.rb  wecs.N*wecs.mb*wecs.rb^2 0 0 0;
     0 0 wecs.mt 0 0;
     0 0 0 wecs.Jr 0;
