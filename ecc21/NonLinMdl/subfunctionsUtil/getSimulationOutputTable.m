@@ -1,11 +1,16 @@
-function [currentOutTableTest, tictoc_LPVMPC ]= getSimulationOutputTable(matFileOutTableTest1,loadData,OutTable,simMdlname1,varnames)
+function [currentOutTableTest, tictoc_LPVMPC,GenPwrIdeal ]= getSimulationOutputTable(matFileOutTableTest1,loadData,OutTable,simMdlname1,varnames)
 % OutTableTest1 retrieves simulation data, either from previous runs or by
 % running the simulation. All inputs are required.
+%
+% Inputs
 % - matFileOutTableTest1: mat file name
 % - loadData: data loaded if available
 % - OutTable: FAST simulation table
 % - simMdlname1: Simulink mdl name
 % - varnames: variables names of simulation output
+%
+% Outputs
+% - Simulation
 
 % Get the name of the table
 [~, strTable] = fileparts(matFileOutTableTest1);
@@ -13,10 +18,11 @@ function [currentOutTableTest, tictoc_LPVMPC ]= getSimulationOutputTable(matFile
 % Get the simulation output
 tictoc_LPVMPC = [];
 if exist(matFileOutTableTest1,'file') == 2 && loadData
-    tmp = load(matFileOutTableTest1,strTable);
+    tmp = load(matFileOutTableTest1);
     currentOutTableTest = tmp.(strTable);
-    if isfield(tmp.tictoc_LPVMPC) 
+    if isfield(tmp,'tictoc_LPVMPC') 
         tictoc_LPVMPC = tmp.tictoc_LPVMPC;
+        GenPwrIdeal = tmp.GenPwrIdeal;
     end
 else
     WS = 'base';
@@ -27,7 +33,9 @@ else
     currentOutTableTest = array2table(out1.OutDataTest,'VariableNames',varnames);
     eval([strTable,' = currentOutTableTest;']);
     if contains(strTable,'MPC')
-        save(matFileOutTableTest1,strTable,'tictoc_LPVMPC');
+        tictoc_LPVMPC = out1.tictoc_LPVMPC;
+        GenPwrIdeal = out1.GenPwrIdeal
+        save(matFileOutTableTest1,strTable,'tictoc_LPVMPC','GenPwrIdeal');
     else
     save(matFileOutTableTest1,strTable);
     end

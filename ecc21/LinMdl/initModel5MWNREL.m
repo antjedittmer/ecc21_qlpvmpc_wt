@@ -42,20 +42,20 @@ end
 wecs.N = 3;%Number of blades
 wecs.Ng = 97; %Gearbox ratio
 wecs.mh =  56780; % hub mass
-wecs.mb =  0.25* 17740; %kg Modal mass of each blade
+wecs.mb =  17740; %kg Modal mass of each blade
 wecs.mn = 240000; % Nacellle mass
 wecs.mtower = 347460;%347460;%kg Mass of the tower and nacelle
 wecs.mt = 0.25*wecs.mtower+wecs.mn + wecs.mh + 3* wecs.N*wecs.mb;
 wecs.H =  87.6;
 
 wecs.Jrg = 534.116;% * Ng^2; %kg*m^2 Inertia of the generator
-wecs.Jr = 115926 + 3 * 11.776e6 + wecs.Jrg * wecs.Ng^2; %kg*m^2 Inertia of the rotor (Hub inertia + 3 blades
+wecs.Jr = 115926 + 3 * 11.776e6; % wecs.Jrg * wecs.Ng^2; %kg*m^2 Inertia of the rotor (Hub inertia + 3 blades
 f0 = 0.324; %First natural tower frequency
 % f0sw = 0.3120;
 wecs.wnb = 0.6993 * 2*pi; %2.0205; %Natural frequency of blade 0.6993
 wecs.wnt = f0 * 2*pi; % wecs.wnb; 0.3240
 wecs.zetat = 1/100; %damping ratio of tower (Table 6.2)
-wecs.zetab = 0.477465/10;% damping ratio of blade /100
+wecs.zetab = 0.477465/100;% damping ratio of blade /100
 
 wecs.Kt = wecs.wnt^2 * wecs.mt; % Stiffness of the tower s^2 + B/Ms + K/m
 wecs.Bt = 2 *wecs.zetat * wecs.wnt *wecs.mt; % tower 2*6421;

@@ -1,21 +1,23 @@
-function runCompareModels(loadData,strWindType,yAxCell)
+function runCompareModels(strWindType,loadData,yAxCell)
 % runCompareModels compares two Simulink models (Mdl1, five states) and
 % Mdl2, nine states) with FASTTool simulation data with same input and same 
 % controller. All inputs are optional:
+% - strWindType: Two testcases: step sweep 4 to 25 ms and normal dist. with 
+%   18 m/s mean (Default: Sweep)
 % - loadData: load simulation output data if available instead of running
 %   simulation (Default: 1)
-% - strWindType: 
 % - yAxCell: Axes labels 
 
 
 %% Handle optional inputs
-if ~nargin || isempty(loadData) 
-   loadData = 1; %load simulation output data if available;
-end
 
 % Two testcases: step sweep 4 to 25 ms and normal dist. 18 m/s mean
-if nargin < 2 || isempty(strWindType)
-    strWindType = 'Sweep'; 
+if ~nargin || isempty(strWindType) 
+   strWindType = 'Sweep'; 
+end
+
+if nargin < 2 || isempty(loadData) 
+    loadData = 1; %load simulation output data if available;
 end
 
 % Axes labels for figure
