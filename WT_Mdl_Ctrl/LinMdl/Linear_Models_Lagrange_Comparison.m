@@ -2,7 +2,7 @@ function wecs = Linear_Models_Lagrange_Comparison(speedVec,figFolder, useActuato
 
 %% Set defaults
 if nargin == 0
-    speedVec = [1,22]; %:22; % variations of wind speed
+    speedVec = [1,10,22]; %:22; % variations of wind speed
     figFolder = 'FigureLagrange_210103_comp_blade10';
     useActuatorStates = 0;
     figNoAdd = 0;
@@ -21,8 +21,8 @@ load('NREL5MW_CPdata_new3','Rotor_Lamda', 'Rotor_Pitch', ...
     'Rotor_cQ', 'Rotor_cT');
 
 %% Initialize name of models and load into workspace
-idxModelNames = 1; %:2; %1:2; %1:5
-modelNames =[{'NREL5MW_linearised_4to25'}]; %{'NREL5MW_linearised'}]; %
+idxModelNames = 1:2; %:2; %1:2; %1:5
+modelNames =[{'NREL5MW_linearised_4to25'},{'NREL5MW_linearised'}]; %
 %     {'NREL5MW_linearised_Gen_Fa_Flap1'};{'NREL5MW_linearised'}; %
 %     {'NREL5MW_linearised_Gen_Fa_SS_Flap1'};
 %     {'NREL5MW_linearised_Gen_DriveTrain_Fa_SS_Flap1'}; {'NREL5MW_linearised'} ];

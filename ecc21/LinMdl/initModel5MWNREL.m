@@ -1,6 +1,6 @@
 function [wecs, M, Ce, K, Q, L, rho, tau, kappa, lambda, beta,Cq, Ct,Cqdlambda,Cqdbeta, Ctdlambda,Ctdbeta] = initModel5MWNREL(plotOn, Rotor_Lamda, Rotor_Pitch, Rotor_cQ, Rotor_cT, figDir)
 % initModel5MWNREL initializes parameters of NREL 5 MW turbine.
-% Aerodynamic force and thrust LUT can be plotted.
+% Aerodynamic force and thrust LUT can be plotted. All inputs are optional.
 
 %% Input data
 
@@ -9,7 +9,7 @@ if ~nargin
     plotOn = 0;
 end
 
-% Load data foer cT, cQ LUT
+% Load data for cT, cQ LUT if not passed as input
 if nargin < 5 || isempty(Rotor_Lamda) || isempty(Rotor_Pitch) || ....
         isempty(Rotor_cQ) ||  isempty(Rotor_Pitch)
     % Set path to inputdata directory
@@ -45,10 +45,10 @@ end
 wecs.N = 3;%Number of blades
 wecs.Ng = 97; %Gearbox ratio
 wecs.mh =  56780; % hub mass
-wecs.mb =  17740; %kg Modal mass of each blade
+wecs.mb =  17740; %17740; %kg Modal mass of each blade
 wecs.mn = 240000; % Nacellle mass
 wecs.mtower = 347460;%347460;%kg Mass of the tower and nacelle
-wecs.mt = 0.25*wecs.mtower+wecs.mn + wecs.mh; %3* wecs.N*wecs.mb;
+wecs.mt = 0.25*wecs.mtower + wecs.mn + wecs.mh + wecs.N*wecs.mb;
 wecs.H =  87.6;
 
 wecs.Jrg = 534.116;% * Ng^2; %kg*m^2 Inertia of the generator
@@ -62,11 +62,11 @@ wecs.zetab = 0.477465/100;% damping ratio of blade /100
 
 wecs.Kt = wecs.wnt^2 * wecs.mt; % Stiffness of the tower s^2 + B/Ms + K/m
 wecs.Bt = 2 *wecs.zetat * wecs.wnt *wecs.mt; % tower 2*6421;
-wecs.Kb = wecs.wnb^2 * wecs.mb; %Stiffness of each blade
-wecs.Bb = 2 *wecs.zetab*wecs.wnb *wecs.mb ; %Damping of the blade
+wecs.Kb = wecs.wnb^2 * wecs.mb* 0.25; %Stiffness of each blade
+wecs.Bb = 2 *wecs.zetab*wecs.wnb *wecs.mb *0.5; %Damping of the blade
 wecs.Ks = 867637000; %Nm/rad Stiffness of the transmission
-% 2*zeta*wn=B
-wecs.Bs = 6215000;  %Nm/rad/sec        %Damping of the transmission
+% 2*zeta*wn = B
+wecs.Bs = 6215000;  %Nm/rad/sec %Damping of the transmission
 wecs.rb = 63; % m blade radius
 wecs.etag = 0.944; %Drivetrain.Generator.Efficiency = 0.944;
 
@@ -79,7 +79,7 @@ kappa = 0.01; % tau_g  = 0.01;
 % Force input w = [Ft_fa,Ft_sw,Tr,Tg]; Ft_fa = Ft, Ft_sw = 3/2*Tg
 % States q: xdot_fa, zeta, xdot_sw, omega_r, omega_gr
 
-M =[wecs.mt + 3* wecs.N*wecs.mb wecs.N*wecs.mb*wecs.rb 0 0 0; % M(1,1) mt+wecs.N*mb  -> mt (already includes blades)
+M =[wecs.mt + wecs.N*wecs.mb wecs.N*wecs.mb*wecs.rb 0 0 0; % M(1,1) mt+wecs.N*mb  -> mt (already includes blades)
     wecs.N*wecs.mb*wecs.rb  wecs.N*wecs.mb*wecs.rb^2 0 0 0;
     0 0 wecs.mt 0 0;
     0 0 0 wecs.Jr 0;

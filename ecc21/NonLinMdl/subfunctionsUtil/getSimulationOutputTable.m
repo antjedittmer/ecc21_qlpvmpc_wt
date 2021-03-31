@@ -1,4 +1,4 @@
-function [currentOutTableTest, tictoc_LPVMPC,GenPwrIdeal ]= getSimulationOutputTable(matFileOutTableTest1,loadData,OutTable,simMdlname1,varnames)
+function [currentOutTableTest, tictoc_LPVMPC,GenPwrIdeal ] = getSimulationOutputTable(matFileOutTableTest1,loadData,OutTable,simMdlname1,varnames)
 % OutTableTest1 retrieves simulation data, either from previous runs or by
 % running the simulation. All inputs are required.
 %
@@ -10,7 +10,8 @@ function [currentOutTableTest, tictoc_LPVMPC,GenPwrIdeal ]= getSimulationOutputT
 % - varnames: variables names of simulation output
 %
 % Outputs
-% - Simulation
+% - currentOutTableTest: Simulation results as a table
+% - 
 
 % Get the name of the table
 [~, strTable] = fileparts(matFileOutTableTest1);

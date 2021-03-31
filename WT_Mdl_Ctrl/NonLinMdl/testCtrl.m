@@ -28,7 +28,7 @@ FAST_InputFileName = fullfile(pwd,'inputfiles', 'FAST.fst');
 selectSteadyState = 1; % 0: OpenLoop FAST, 1: PI CL FAST, 2:PI CL Simulink
 
 load('workSpace.mat')
-%load('OutDataSweep.mat','OutData');
+% load('OutDataSweep.mat','OutData');
 load(fullfile(dataInPath,'OutDataWind18NTM.mat'),'OutData');
 % load('OutDataWind11To14NTM.mat','OutData');
 

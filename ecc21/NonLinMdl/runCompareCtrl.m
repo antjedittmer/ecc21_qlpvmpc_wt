@@ -9,8 +9,8 @@ function runCompareCtrl(strWindType,loadData)
 % - yAxCell: Axes labels 
 
 % Set path to inputdata directory
-mainDir = fullfile(pwd);
-dataInDir = fullfile(fileparts(pwd),'dataIn');
+mainDir = fileparts(mfilename('fullpath'));
+dataInDir = fullfile(fileparts(mainDir),'dataIn');
 addpath(dataInDir);
 
 % Set path to figure directory
@@ -126,7 +126,7 @@ omegaG2 = 1000 /Generator_Efficiency * OutTableTestCLPlot.GenPwr./OutTableTestCL
 
 if ~isempty(r)
     PGRefIdeal = r.Data(idxPlot);
-    PGRef = PGRefIdeal * 1/10* Generator_Efficiency;
+    PGRef = PGRefIdeal * 97* Generator_Efficiency/1000;
     
 else
     % Set reference
@@ -145,7 +145,6 @@ LUT_omegaG2 = OutTableTest2Plot.RotSpeed(idxVec) * pi/30 *97; %RPM -> rad/s
     end
     PGRef = (TGRef .* omegaGRef)/100;
 end
-PGRef = min(PGRef, mean(OutTableTestCLPlot.GenPwr(1:100)));
 
 % Strings of weights for optimization
 qVec = deblank(sprintf('%d ',ceil(q_)));

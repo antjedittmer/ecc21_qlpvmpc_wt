@@ -101,7 +101,7 @@ vectAmpWind = sqrt(sum((vectWind.^2),2));
 
 % Lin_points.RSpeed = LUT_omega2;
 % Lin_points.Torque = LUT_torque2;
-varnames = {'Wind', 'RotSpeed', 'GenPwr', 'BlPitch1', 'GenTq', ...
+varnames = {'Wind', 'RotSpeed', 'GenPwr', 'GenTq','BlPitch1', ...
     'NcIMUTAxs', 'NcIMUTAys'}; %%'Tower FA acc', 'Tower SS acc'};
 
 %% Run simulations or load data
@@ -124,6 +124,9 @@ matFileOutTableTest2 = fullfile(dataDirOut,['OutTableTest2',strFig,'.mat']);
 if exist(matFileOutTableTest2,'file') == 2 && loadData
     load(matFileOutTableTest2,'OutTableTest2');
 else
+    WS = 'base';
+    assignin(WS,'DT',DT)
+    assignin(WS,'OutTable',OutTable)
     open_system(simMdlname2);
     out2 = sim(simMdlname2,'SrcWorkspace',WS);
     if size(out2.OutDataTest,2) == 9 % Pitch commands of all actuators

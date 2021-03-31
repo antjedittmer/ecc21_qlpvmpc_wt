@@ -1,9 +1,14 @@
 function compareLinearModels(speedVec,figFolder, useActuatorStates,figNoAdd,createBodePlots,plotVisible)
 
 %% Set defaults
+
+% get relative paths to main directory (for data input dir)
+workDir = fileparts(mfilename('fullfile'));
+mainDir = fileparts(workDir);
+
 if nargin == 0
-    speedVec = [13, 22]; %[1,22]; % variations of wind speed
-    figFolder = fullfile(fileparts(pwd),'figDir');%'FigureLagrange_210308_comp';
+    speedVec = [1, 22]; %[1,22]; % variations of wind speed
+    figFolder = fullfile(mainDir,'figDir');%'FigureLagrange_210308_comp';
     useActuatorStates = 0;
     figNoAdd = 0;
     close all;
@@ -12,7 +17,7 @@ if nargin == 0
 end
 
 %% Initialize: Set path
-addpath(fullfile(fileparts(pwd),'dataIn'));
+addpath(fullfile(mainDir,'dataIn'));
 load('NREL5MW_CPdata','Rotor_Lamda', 'Rotor_Pitch', 'Rotor_cQ', 'Rotor_cT');
 
 %% Initialize name of models and load into workspace

@@ -50,7 +50,7 @@ OutTableTest = OutTable(:,OutTableTest2.Properties.VariableNames(2:end));
 idxWind = contains(OutList, 'Wind');
 OutTableTest.Wind = sqrt(sum((OutTable{:,idxWind}.^2),2));
 
-OutTableTest.GenTq = OutTableTest.GenTq*1000; % kNm -> Nm
+OutTableTest.GenTq = OutTableTest.GenTq; %*1000; % kNm -> Nm
 OutTableTest.RotSpeed = OutTableTest.RotSpeed *pi/30; %RPM -> rad/s
 
 %OutTableTest2 = OutTableTest;
@@ -175,7 +175,7 @@ else
         TGRef = LUT_torque2(end)* ones(size(OutTableTest2Plot.Wind));
     end
 end
-PGRef = TGRef.*omegaGRef* 0.944;
+PGRef = TGRef.*omegaGRef* 0.944 *pi/30;
 
 % Strings of weights for optimization
 qVec = deblank(sprintf('%d ',ceil(q_)));
@@ -270,7 +270,7 @@ end
 
 %snapnow;
 print(gcf,[fullfile(figDir,'cmpCtrlSimulink_PI_MPC'),plot6,'_',figStr,'_',num2str(timeVecPlot(end))], '-dpng');
-print(gcf,[fullfile(figDir,'cmpCtrlSimulink_PI_MPC'),plot6,'_',figStr,'_',num2str(timeVecPlot(end))], '-depsc');
+%print(gcf,[fullfile(figDir,'cmpCtrlSimulink_PI_MPC'),plot6,'_',figStr,'_',num2str(timeVecPlot(end))], '-depsc');
 %return;
 
 %% Code to plot Generator torquee

@@ -29,16 +29,17 @@ end
 %% Initialize workspace and path
 
 % Set path to inputdata directory
-mainDir = fullfile(pwd);
-dataInDir = fullfile(fileparts(pwd),'dataIn');
+workDir = fileparts(mfilename('fullpath'));
+mainDir = fileparts(workDir);
+dataInDir = fullfile( mainDir,'dataIn');
 addpath(dataInDir);
 
 % Set path to figure directory
-figDir = fullfile(fileparts(mainDir),'figDir');
-
+figDir = fullfile(mainDir,'figDir');
 if ~isfolder(figDir)
     mkdir(figDir)
 end
+
 
 % Set path to data output directory
 dataDirOut = 'dataOut';
