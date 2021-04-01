@@ -166,7 +166,6 @@ set(findall(gcf,'-property','FontSize'),'FontSize',11)
 print(fullfile(figDir,['cmpTimeDomain_BlPitchTqTwr',strFig]), '-dpng');
 linkaxes(axPlot2,'x');
 
-
 %% Figure for paper
 figure(figNo2+1)
 axPlotAll(1) = subplot(6,1,1);

@@ -23,8 +23,7 @@ end
 % Set path to inputdata directory
 %% Handle optional inputs
 if ~nargin || isempty(strWindType) 
-    strWindType = 'Sweep'; %'NTW18';
-    
+    strWindType = 'Sweep'; %'NTW18';   
 end
 
 % Two testcases: step sweep 4 to 25 ms and normal dist. 18 m/s mean
@@ -72,7 +71,7 @@ simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta.slx'; %
 varnames = {'Wind', 'RotSpeed', 'GenPwr', 'GenTq', 'BlPitch1', ...
     'NcIMUTAxs', 'NcIMUTAys'}; %%'Tower FA acc', 'Tower SS acc'};
 matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPC',strFig,'.mat']);
-[OutTableMPC, tictoc_LPVMPC,GenPwrIdeal] = getSimulationOutputTable(matFileOutTableTest1,loadData,OutTableTest2,simMdlname,varnames);
+[OutTableMPC, tictoc_LPVMPC,GenPwrRef] = getSimulationOutputTable(matFileOutTableTest1,loadData,OutTableTest2,simMdlname,varnames);
 
 figStr = ['RefSimulinkClosedLoop',strFig,'_beta'];
 
@@ -80,7 +79,7 @@ meanOpt = strrep(sprintf(' mean cputime MPC: %1.2e s',mean(tictoc_LPVMPC.Data)),
 k_pitch = 1;
 timeForPlot = [15,400];
 DT = 0.008;
-r = GenPwrIdeal;
+r = GenPwrRef;
 plotComparison(OutTableTest2,OutTableMPC,q_,r_,p,DT,figStr,figDir,r,timeForPlot,k_pitch,'', meanOpt)
 
 
@@ -123,28 +122,7 @@ Generator_Efficiency = 0.944;
 omegaG1 = 1000 /Generator_Efficiency * OutTableTest2Plot.GenPwr./OutTableTest2Plot.GenTq;
 omegaG2 = 1000 /Generator_Efficiency * OutTableTestCLPlot.GenPwr./OutTableTestCLPlot.GenTq;
 
-
-if ~isempty(r)
-    PGRefIdeal = r.Data(idxPlot);
-    PGRef = PGRefIdeal * 97* Generator_Efficiency/1000;
-    
-else
-    % Set reference
-idxVec = 20/DT : 20/DT : length(timeVecPlot)-50;
-LUT_wind2 = round(OutTableTest2Plot.Wind(idxVec));
-LUT_torque2 = OutTableTest2Plot.GenTq(idxVec); % kNm (in Simulink
-LUT_omegaG2 = OutTableTest2Plot.RotSpeed(idxVec) * pi/30 *97; %RPM -> rad/s
-%LUT_pitch2 = OutTableTest2Plot.BlPitch1(idxVec)* pi/180;
-
-    try
-        omegaGRef = interp1(LUT_wind2,LUT_omegaG2, OutTableTest2Plot.Wind,'spline');
-        TGRef = interp1(LUT_wind2,LUT_torque2, OutTableTest2Plot.Wind,'spline');
-    catch
-        omegaGRef = LUT_omegaG2(end)* ones(size(OutTableTest2Plot.Wind));
-        TGRef = LUT_torque2(end)* ones(size(OutTableTest2Plot.Wind));
-    end
-    PGRef = (TGRef .* omegaGRef)/100;
-end
+PGRef = r.Data(idxPlot);
 
 % Strings of weights for optimization
 qVec = deblank(sprintf('%d ',ceil(q_)));
@@ -239,4 +217,26 @@ end
 %snapnow;
 print(gcf,[fullfile(figDir,'cmpCtrlSimulink_PI_MPC'),plot6,'_',figStr,'_',num2str(timeVecPlot(end))], '-dpng');
 print(gcf,[fullfile(figDir,'cmpCtrlSimulink_PI_MPC'),plot6,'_',figStr,'_',num2str(timeVecPlot(end))], '-depsc');
+
+%% Unused legacy code (no reference available)
+% if ~isempty(r)
+%     PGRef = r.Data(idxPlot);
+%     
+% else
+%     % Set reference
+% idxVec = 20/DT : 20/DT : length(timeVecPlot)-50;
+% LUT_wind2 = round(OutTableTest2Plot.Wind(idxVec));
+% LUT_torque2 = OutTableTest2Plot.GenTq(idxVec); % kNm (in Simulink
+% LUT_omegaG2 = OutTableTest2Plot.RotSpeed(idxVec) * pi/30 *97; %RPM -> rad/s
+% %LUT_pitch2 = OutTableTest2Plot.BlPitch1(idxVec)* pi/180;
+% 
+%     try
+%         omegaGRef = interp1(LUT_wind2,LUT_omegaG2, OutTableTest2Plot.Wind,'spline');
+%         TGRef = interp1(LUT_wind2,LUT_torque2, OutTableTest2Plot.Wind,'spline');
+%     catch
+%         omegaGRef = LUT_omegaG2(end)* ones(size(OutTableTest2Plot.Wind));
+%         TGRef = LUT_torque2(end)* ones(size(OutTableTest2Plot.Wind));
+%     end
+%     PGRef = (TGRef .* omegaGRef)/100;
+% end
 
