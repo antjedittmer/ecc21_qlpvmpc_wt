@@ -1,6 +1,6 @@
 function runCompareCtrl(strWindType,loadData,figNo1,useFASTforComparison)
 % runCompareModels compares two controllers, baseline P(k-omega^-squared)-PI
-% and qLPV MPC in closed loop with the Simulink Mdl2, (nine states)
+% and qLPV MPC in closed loop with the Simulink Mdl2, (nine states).
 % All inputs are optional:
 % - strWindType: Two testcases: step sweep 4 to 25 ms and normal dist. with 
 %   18 m/s mean (Default: Sweep)
