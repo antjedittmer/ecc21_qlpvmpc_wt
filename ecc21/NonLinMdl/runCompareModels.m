@@ -1,4 +1,4 @@
-function runCompareModels(strWindType,loadData,yAxCell)
+function runCompareModels(strWindType,loadData,figNo1,yAxCell)
 % runCompareModels compares two Simulink models (Mdl1, five states) and
 % Mdl2, nine states) with FASTTool simulation data with same input and same 
 % controller. All inputs are optional:
@@ -6,8 +6,8 @@ function runCompareModels(strWindType,loadData,yAxCell)
 %   18 m/s mean (Default: Sweep)
 % - loadData: load simulation output data if available instead of running
 %   simulation (Default: 1)
+% - figNo1: Number of figure (Default: 1)
 % - yAxCell: Axes labels 
-
 
 %% Handle optional inputs
 
@@ -20,11 +20,16 @@ if nargin < 2 || isempty(loadData)
     loadData = 1; %load simulation output data if available;
 end
 
-% Axes labels for figure
-if nargin < 3 || isempty(yAxCell)
+if nargin < 3 || isempty(figNo1) 
+    figNo1 = 1;
+end
+figNo2 = figNo1 + 1;
+
+if nargin < 4 || isempty(yAxCell) % Axes labels for figure
     yAxCell = {'wind V [m/s]', 'GenTq T_g [kNm]', 'Pitch \beta [°]', 'RotSpd \omega_r [rpm]',...
     'GenPwr P_g [MW]','Twr_{FA} y_t [m/s^2]'};
 end
+
 
 %% Initialize workspace and path
 
@@ -40,9 +45,8 @@ if ~isfolder(figDir)
     mkdir(figDir)
 end
 
-
 % Set path to data output directory
-dataDirOut = 'dataOut';
+dataDirOut = fullfile(workDir, 'dataOut');
 if ~isfolder(dataDirOut)
     mkdir(dataDirOut)
 end
@@ -67,16 +71,9 @@ else
 end
 
 %% Load data from FAST run
-%load(fullfile(dataInDir,workspaceSimulationMat)) %#ok<LOAD> ADi ToDo: Clean this up later: Only load variables needed for simulation
+
 % DT = 0.008;
 load(outDataSimulationMat ,'OutTable');%
-
-% LUT tables loaded have these values
-% LUT_torque2 = [5.0066    8.8294   13.5530   18.9143   23.8603   29.5200   36.9452,...
-%    repmat(43.5290,1,15)];
-% LUT_omega2 = [0.7776    0.8209    0.8742    0.9348    1.0430    1.1600  ...
-%     1.2369    1.2555    1.2548    1.2546    1.2546    1.2545    1.2546    1.2545    1.2545    1.2545    1.2545 ...
-%     1.2545    1.2545    1.2545 1.2545    1.2545];
 
 % Assign data from FAST to variables
 idxTime = 1: height(OutTable);
@@ -87,9 +84,6 @@ OutTable.Torque = OutTable.GenTq;
 idxWind = contains(OutTable.Properties.VariableNames, 'Wind');
 vectWind = OutTable{:,idxWind};
 vectAmpWind = sqrt(sum((vectWind.^2),2));
-
-% Lin_points.RSpeed = LUT_omega2;
-
 
 %% Run simulations or load data
 % Names of simulation output in correct order
@@ -103,7 +97,6 @@ OutTableTest1 = getSimulationOutputTable(matFileOutTableTest1,loadData,OutTable,
 matFileOutTableTest2 = fullfile(dataDirOut,['OutTableTest2',strFig,'.mat']);
 OutTableTest2 = getSimulationOutputTable(matFileOutTableTest2,loadData,OutTable,simMdlname2,varnames);
 
-
 %% Create output plots
 % Get color map for 'title legends'
 cl = colormap('lines');
@@ -111,8 +104,6 @@ titleStr = [testCaseStr,': Mdl1: Rot+Twr {\color[rgb]{',num2str(cl(1,:)),'}Mdl2:
     '\color[rgb]{',num2str(cl(2,:)),'}FAST} '];
 
 %Create output plots
-figNo1 = 1; figNo2 = 2;
-
 idxTime = 1: min([length(idxTime), height(OutTableTest1),height(OutTableTest2)]);
 time = OutTable.Time(idxTime);
 

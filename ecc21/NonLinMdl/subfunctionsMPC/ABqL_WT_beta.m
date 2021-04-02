@@ -9,6 +9,7 @@ function [Aeval,Beval] = ABqL_WT_beta(rhoP,Rotor_Lambda,Rotor_Pitch,Rotor_cQ)
 %          * B: Input matrix B(AwithV) at current AwithV, discretised with Ts
 
 % Pablo S.G. Cisneros, Herbert Werner, ICS TUHH
+% modified for WECS simulation: Antje Dittmer
 
 persistent lambdaVec pitchVec cQ Cqdlambda Cqdbeta
 

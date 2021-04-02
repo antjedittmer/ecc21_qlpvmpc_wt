@@ -1,4 +1,5 @@
-%% Script to generate pictures for paper 
+%% Script to generate pictures for paper
+clc; clear; close all;
 
 %% Set path to initialization script testCtrl and run it
 addpath('NonLinMdl');
@@ -12,19 +13,23 @@ compareLinearModels;
 % FAST simulation results obtained with FASTTool (Tu Delft) are provided as
 % mat-files in dataIn folder. 
 % Inputs to the files runCompareModels and runCompareCtrl are 
-% type of wind (either a step sweep from 4 to 25 ms or normal turbulent
-% wind with mean 18 ms)
-
+% - strWindType: Two testcases: step sweep 4 to 25 ms and normal dist. with 
+%   18 m/s mean (Default: Sweep)
+% - loadData: load simulation output data if available instead of running
+%   simulation (Default: 1)
+loadData = 1;
 % Run Simulink models in closed loop w baseline controller( Torque controller
 % k-omega-squared, Pitch controller: Gainscheduled Pi)
-close all;
-runCompareModels('NTW18',1);
-close all;
-runCompareModels('Sweep',1);
+figNo = 1;
+runCompareModels('Sweep',loadData,figNo);
+figNo = 4;
+runCompareModels('NTW18',loadData,figNo);
+
 
 % Run models in closed loop w qLPV MPC
-close all;
-runCompareCtrl('NTW18',1);
+figNo1 = 7;
+runCompareCtrl('Sweep',loadData,figNo1);
+figNo1 = 8;
+runCompareCtrl('NTW18',loadData,figNo1);
 
-close all;
-runCompareCtrl('Sweep',1);
+

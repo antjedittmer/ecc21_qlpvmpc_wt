@@ -1,23 +1,31 @@
 function [currentOutTableTest, tictoc_LPVMPC,GenPwrRef] = getSimulationOutputTable(matFileOutTableTest1,loadData,OutTable,simMdlname1,varnames)
 % OutTableTest1 retrieves simulation data, either from previous runs or by
-% running the simulation. All inputs are required.
+% running the simulation. All inputs but varnames are required.
 %
 % Inputs
 % - matFileOutTableTest1: mat file name
 % - loadData: data loaded if available
 % - OutTable: FAST simulation table
 % - simMdlname1: Simulink mdl name
-% - varnames: variables names of simulation output
+% - varnames (optional): variables names of simulation output
 %
 % Outputs
 % - currentOutTableTest: Simulation results as a table
-% -
+% - tictoc_LPVMPC: duration of qLPVMPC calculation
+% - GenPwrRef: Power reference, calculated from windspeed
+
+% set default variablenames
+if nargin < 5 || isempty(varnames)
+    varnames = {'Wind', 'RotSpeed', 'GenPwr', 'GenTq', 'BlPitch1', ...
+    'NcIMUTAxs', 'NcIMUTAys'}; %%'Tower FA acc', 'Tower SS acc'};
+end
 
 % Get the name of the table
 [~, strTable] = fileparts(matFileOutTableTest1);
 
 % Get the simulation output
 tictoc_LPVMPC = [];
+GenPwrRef = [];
 if exist(matFileOutTableTest1,'file') == 2 && loadData
     tmp = load(matFileOutTableTest1);
     currentOutTableTest = tmp.(strTable);

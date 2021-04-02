@@ -1,4 +1,15 @@
 function compareLinearModels(speedVec,figFolder, useActuatorStates,figNoAdd,createBodePlots,plotVisible)
+% compareLinearModels compares two non-linear wind turbine models with
+% linearized FAST models. All inputs are optional.
+% Inputs:
+% - speedVec: index vector for 22 windspeeds, from 4 to 25 m/s (Default: [1, 22])
+% - figFolder: figure folder (Default: figDir in mainDir)
+% - useActuatorStates: include (1)/exclude(0) actuator states (Default: 0)
+% - figNoAdd: Add integer to figure number (100 + index) (Default: 0)
+% - createBodePlots: Bode plots for analysis (Default: 1)
+% - plotVisible: Figure visible (Default: 'on')
+%
+% Bindu Sharan, Antje Dittmer, ICS TUHH
 
 %% Set defaults
 
@@ -39,7 +50,6 @@ for idxModels = 2 : lenModelNames
     load(modelNames{idxModels},'sysm');
     sysmCell{idxModels} = sysm;
 end
-
 
 %% Plot parameters
 % yt is the axial displacement of the nacelle, $\zeta$ is the angular blade displacement
@@ -349,7 +359,8 @@ for index =  speedVec %[1,9,10,length(Lin.V)]%1 : length(Lin.V) %[1,length(Lin.V
     
 end
 
-save('sysCell.mat','sysCell');
+% For debugging;
+% save('sysCell.mat','sysCell');
 
 %% Modal analysis
 return; %

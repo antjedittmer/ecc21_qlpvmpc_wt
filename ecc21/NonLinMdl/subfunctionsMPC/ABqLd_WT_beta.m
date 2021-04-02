@@ -10,10 +10,10 @@ function [Av,Bv] = ABqLd_WT_beta(DT,rhoP,Rotor_Lambda,Rotor_Pitch,Rotor_cQ)
 %          * B: Augmented Input matrix B(rho) at current rho
 
 % Pablo S.G. Cisneros, Herbert Werner, ICS TUHH
+% modified for WECS simulation: Antje Dittmer
 
-%[Arho,Brho] = ABqL_WT(rhoP,Rotor_Lambda,Rotor_Pitch,Rotor_cQ);
+% Calculate system and input matrices at current wind speed
 [Arho,Brho] = ABqL_WT_beta(rhoP,Rotor_Lambda,Rotor_Pitch,Rotor_cQ);
-%[Arho, Brho, ~, ~, dTrdomega, Tr, dTrdV] = ABqL_WT_KMC(rhoP,Rotor_Lambda,Rotor_Pitch,Rotor_cQ);
 
 %% Calculate discrete forms of A,B
 A2 = Arho*Arho;
