@@ -39,8 +39,8 @@ for idx = 1: length(subDir)
 end
 
 %% Load FASTTool wind as test signal
-% onlyInit = 1; DT = 0.008; %Nout used anymore
-%load(fullfile(dataInPath,'OutDataSweep.mat'),'OutTable');
-load(fullfile(dataInPath,'OutDataWind18NTW.mat'),'OutTable');
+DT = 0.008; % one sample time 
+load(fullfile(dataInPath,'OutDataSweep.mat'),'OutTable');
+% load(fullfile(dataInPath,'OutDataWind18NTW.mat'),'OutTable');
 
 
