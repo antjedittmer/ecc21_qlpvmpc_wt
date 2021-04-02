@@ -14,7 +14,7 @@ function compareLinearModels(speedVec,figFolder, useActuatorStates,figNoAdd,crea
 %% Set defaults
 
 % get relative paths to main directory (for data input dir)
-workDir = fileparts(mfilename('fullfile'));
+workDir = fileparts(mfilename('fullpath'));
 mainDir = fileparts(workDir);
 
 if nargin == 0
@@ -290,12 +290,10 @@ for index =  speedVec %[1,9,10,length(Lin.V)]%1 : length(Lin.V) %[1,length(Lin.V
     
     % Outputs: omega [rad/s], fore-aft dx_dot_f, fore-aft dx_dot_fa [m/s^2]
     C(2,:) = A(2,:);
-    % C(3,:) = A(3,:);
     C(1,1) = 1;
     
     D(2,:)= B(2,:);
-    %D(3,:)=B(3,:);
-    
+        
     sys5DoF = ss(A,B*diag([1000,1,1]),C,D);
     sys5DoF.OutputName = sysOutputname;
     sys5DoF.InputName = sysInputname;
@@ -307,14 +305,11 @@ for index =  speedVec %[1,9,10,length(Lin.V)]%1 : length(Lin.V) %[1,length(Lin.V
         ff.Color = 'white'; ff.Visible = plotVisible;
         
         bodemag(sysLagrange); hold on; grid on;
-        % bodemag(ss(A9DoF,B9DoF*diag([1000,1,1]),C9DoF,D9DoF),'k--'); legend('Rot,Twr + Bld', 'Rot,Twr,Bld+Act')
-        
         bodemag(sys5DoF,'k--'); hold on; grid on;
         
         for indexModels=1:lenModelNames
             sysm =  sysmCell{indexModels};
-            % model = [1 0 0; 0 1 0; 0 0 2*pi/60]*sysm{index}([12 6 38],[8 9 1])*[1000 0 0; 0 1 0; 0 0 1]; %pi/180
-            model = [pi/30 0; 0 1]*sysm{index}([38 12],[8 9 1])*[1000 0 0; 0 1 0; 0 0 1]; %pi/180
+            model = [pi/30 0; 0 1]*sysm{index}([38 12],[8 9 1])*[1000 0 0; 0 1 0; 0 0 1]; 
             model.OutputName = sysOutputname;
             model.InputName = sysInputname;
             bodemag(model,opts); hold on
@@ -333,25 +328,19 @@ for index =  speedVec %[1,9,10,length(Lin.V)]%1 : length(Lin.V) %[1,length(Lin.V
                 '\color[rgb]{',num2str(cl(ilegC+1,:)),'}',' ',modelsL{ilegC}]; %#ok<AGROW> This fast
         end
         
-        % legend(legCell,'location','southeast')
-        
+        % Title string
         titleStr = sprintf('Bode mag. plot for V = %d, pitch = %2.2f, and TSR = %2.4f',Vbar,beta_bar,Lambda_bar);
         titleCell = {titleStr, [legCell{1},legCell{2},strExtr]};
         title(titleCell)
         
-%         figStr = [strrep(titleStr,'Bode mag. plot for V =','Figure_Bode V ='),'.png'];
-%         figFolderStr = fullfile(figFolder,figStr);
-%         figFolderStrEps = fullfile(figFolder,sprintf('BodeV%d',Vbar));
-%         % export_fig(figFolderStr,'-dpng','-m2','-nocrop') %ToDo AD Check why
-%         print(figFolderStr, '-dpng');
-%         print(figFolderStrEps, '-depsc');
+        % Figure information
         figStr = [strrep(titleStr,'Bode mag. plot for V =','Figure_Bode V ='),'.png'];
         figFolderStr = fullfile(figFolder,figStr);
         figFolderStrEps = fullfile(figFolder,sprintf('BodeV%d',Vbar));
         posaxes =  get(gcf,'Position');
         set(gcf,'Position',[posaxes(1:3),posaxes(4)*0.75]);
         title(sprintf('V = %d: %s', Vbar, titleCell{2}))
-        % export_fig(figFolderStr,'-dpng','-m2','-nocrop') %ToDo AD Check why
+        
         print(figFolderStr, '-dpng');
         print(figFolderStrEps, '-depsc');
 
@@ -406,17 +395,6 @@ ylim([0 3])
 
 figStr = 'Figure_Damping_Freq.png';
 figFolderStr = fullfile(figFolder,figStr);
-%export_fig(figStr,'-dpng','-m2','-nocrop')
 print(figFolderStr, '-dpng');
 
-% Antje toDo: Investigate this later
-% Ca = [dFtdV, dFtdV*rb, dFtdomega, 0;
-%     dFtdV, dFtdV*rb, dFtdomega,0;
-%     dTrdV, dTrdV*rb, dTrdomega,0;
-%     zeros(1,4)];
-% Q1Tilda = [dFtdbeta,dFtdbeta, dTrdbeta, 0]';
-%
-% A9DoFTest =  [A1(1:3,:), zeros(3,2);
-%     [-inv(M)* K, -inv(M) *(Ce + Ca), zeros(4,1), inv(M) *Q1Tilda];
-%     zeros(1,7),  -1/kappa, 0;...
-%     zeros(1,8),  -1/tau];
+
