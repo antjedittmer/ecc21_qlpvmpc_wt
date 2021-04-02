@@ -1,13 +1,37 @@
 function runCompareCtrl(strWindType,loadData,figNo1,useFASTforComparison)
-% runCompareModels compares two controllers, baseline P(k-omega^-squared)-PI
-% and qLPV MPC in closed loop with the Simulink Mdl2, (nine states).
+% runCompareModels compares two controllers, baseline P(k-omega-squared)-PI
+% and qLPV MPC in closed loop with the Simulink Mdl2, (nine states). 
+% One plot is generated with three subplots: Wind, tower fore-aft 
+% accerelatation for baseline and qLPVPC, and generator power: baseline, 
+% qLPVMPC and reference.
+%
 % All inputs are optional:
 % - strWindType: Two testcases: step sweep 4 to 25 ms and normal dist. with 
 %   18 m/s mean (Default: Sweep)
 % - loadData: load simulation output data if available instead of running
 %   simulation (Default: 1)
 % - figNo1: Number of figure (Default: 1)
-% - useFASTforComparison: Uses FAST data for comparison
+% - useFASTforComparison: Uses FAST(1) or Simulink data for comparison
+
+%% Handle optional inputs
+% The default inputs are provided here.
+
+if ~nargin || isempty(strWindType) 
+    strWindType = 'Sweep'; %'NTW18';   
+end
+
+% Two testcases: step sweep 4 to 25 ms and normal dist. 18 m/s mean
+if nargin < 2 || isempty(loadData)
+    loadData = 1; %load simulation output data if available;
+end
+
+if nargin < 3 || isempty(figNo1) 
+    figNo1 = 1;
+end
+
+if nargin < 4 || isempty(useFASTforComparison)
+    useFASTforComparison = 0;
+end
 
 %% Set path to figure directory
 
@@ -29,42 +53,20 @@ if ~isfolder(dataDirOut)
     mkdir(dataDirOut)
 end
 
-
-% Handle optional inputs
-if ~nargin || isempty(strWindType) 
-    strWindType = 'Sweep'; %'NTW18';   
-end
-
-% Two testcases: step sweep 4 to 25 ms and normal dist. 18 m/s mean
-if nargin < 2 || isempty(loadData)
-    loadData = 1; %load simulation output data if available;
-end
-
-if nargin < 3 || isempty(figNo1) 
-    figNo1 = 1;
-end
-
-if nargin < 4 || isempty(useFASTforComparison)
-    useFASTforComparison = 0;
-end
-
-
 % Names of simulation output in correct order
 varnames = {'Wind', 'RotSpeed', 'GenPwr', 'GenTq', 'BlPitch1', ...
     'NcIMUTAxs', 'NcIMUTAys'}; %%'Tower FA acc', 'Tower SS acc'};
 
-% Weight values (copied from MATLAB function
+% Weight values (copied from MATLAB function)
 q_ = [1 10^4 0 10^3 10^3 0 0 0];
 r_ = [1 10^4]; %[10^7,0.1];
 p = 10^3;
 
 % Switch between Sweep and NTW18
-if strcmp(strWindType,'Sweep') == 1
-    % sweep from 4 to 25 in steps
+if strcmp(strWindType,'Sweep') == 1 % sweep from 4 to 25 in steps
     outDataSimulationMat = 'OutDataSweep.mat';
     strFig = ''; %testCaseStr = 'Wind Sweep';
-else
-    % wind with average 18 m/s
+else % wind with average 18 m/s
     outDataSimulationMat = 'OutDataWind18NTW.mat';
     strFig = 'NTW18'; %testCaseStr = 'Wind, mean 18 m/s';
 end
@@ -238,7 +240,6 @@ else
     set(gcf, 'position', [posDefault(1:3),posDefault(4)*1.2]);
 end
 
-%snapnow;
 print(gcf,[fullfile(figDir,'cmpCtrlSimulink_PI_MPC'),plot6,'_',figStr,'_',num2str(timeVecPlot(end))], '-dpng');
 print(gcf,[fullfile(figDir,'cmpCtrlSimulink_PI_MPC'),plot6,'_',figStr,'_',num2str(timeVecPlot(end))], '-depsc');
 

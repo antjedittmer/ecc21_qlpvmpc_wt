@@ -10,6 +10,7 @@ function runCompareModels(strWindType,loadData,figNo1,yAxCell)
 % - yAxCell: Axes labels 
 
 %% Handle optional inputs
+% The default inputs are provided here.
 
 % Two testcases: step sweep 4 to 25 ms and normal dist. 18 m/s mean
 if ~nargin || isempty(strWindType) 
@@ -31,7 +32,10 @@ if nargin < 4 || isempty(yAxCell) % Axes labels for figure
 end
 
 
-%% Initialize workspace and path
+%% Initialize path and files names
+% The path to figure and input directory is set. The name of the Simulink
+% models for Mdl1 and Mdl2 are provided. The name of the mat file with the
+% FAST reference data is given.
 
 % Set path to inputdata directory
 workDir = fileparts(mfilename('fullpath'));
@@ -51,28 +55,24 @@ if ~isfolder(dataDirOut)
     mkdir(dataDirOut)
 end
 
-% Provide names of FAST simulation data to be loaded
-%'NTW18';%'Sweep'; %normal turbulance
-
 % Provide names of Simulink models to be run
-simMdlname1 = 'test_SimulinkMdl1_Baseline'; %
+simMdlname1 = 'test_SimulinkMdl1_Baseline'; 
 simMdlname2 = 'test_SimulinkMdl2_Baseline'; 
 
-if strcmp(strWindType,'Sweep') == 1
-    % sweep from 4 to 25 in steps
+% Provide names of FAST simulation data to be loaded
+if strcmp(strWindType,'Sweep') == 1 % sweep from 4 to 25 in steps  
     outDataSimulationMat = 'OutDataSweep.mat';
     strFig = '';
     testCaseStr = 'Wind Sweep';
-else
-    % wind with average 18 m/s
+else  % wind with average 18 m/s
     outDataSimulationMat = 'OutDataWind18NTW.mat';
     strFig = 'NTW18';
     testCaseStr = 'Wind, mean 18 m/s';
 end
 
 %% Load data from FAST run
+% Load FASTtool simulation data from dataIn folder.
 
-% DT = 0.008;
 load(outDataSimulationMat ,'OutTable');%
 
 % Assign data from FAST to variables
@@ -81,14 +81,15 @@ OutTable = OutTable(idxTime,:);
 OutTable.BldPitch1 = OutTable.BlPitch1;
 OutTable.Torque = OutTable.GenTq;
 
+% Calculate and assign wind amplitude from comonents
 idxWind = contains(OutTable.Properties.VariableNames, 'Wind');
 vectWind = OutTable{:,idxWind};
 vectAmpWind = sqrt(sum((vectWind.^2),2));
 
-%% Run simulations or load data
-% Names of simulation output in correct order
-varnames = {'Wind', 'RotSpeed', 'GenPwr', 'GenTq', 'BlPitch1', ...
-    'NcIMUTAxs', 'NcIMUTAys'}; %%'Tower FA acc', 'Tower SS acc'};
+%% Run Simulink simulations or load data
+
+% Names of simulation output in order of Simulink bus
+varnames = {'Wind', 'RotSpeed', 'GenPwr', 'GenTq', 'BlPitch1', 'NcIMUTAxs', 'NcIMUTAys'}; 
 
 % Run simulation for two models or load mat files if available
 matFileOutTableTest1 = fullfile(dataDirOut,['OutTableTest1',strFig,'.mat']);
@@ -97,23 +98,25 @@ OutTableTest1 = getSimulationOutputTable(matFileOutTableTest1,loadData,OutTable,
 matFileOutTableTest2 = fullfile(dataDirOut,['OutTableTest2',strFig,'.mat']);
 OutTableTest2 = getSimulationOutputTable(matFileOutTableTest2,loadData,OutTable,simMdlname2,varnames);
 
-%% Create output plots
+%% Create output plots (for use in power point)
+% Two plots are created: 1st plot shows wind, rotor speed, 
+
 % Get color map for 'title legends'
 cl = colormap('lines');
 titleStr = [testCaseStr,': Mdl1: Rot+Twr {\color[rgb]{',num2str(cl(1,:)),'}Mdl2: Rot,Twr,Bld+Act ',...
     '\color[rgb]{',num2str(cl(2,:)),'}FAST} '];
 
-%Create output plots
+% Create output plot time reference
 idxTime = 1: min([length(idxTime), height(OutTableTest1),height(OutTableTest2)]);
 time = OutTable.Time(idxTime);
-
 idxTime = time > 15;
 time = time(idxTime);
 
-% defaultLineWidth = get(groot,'defaultLineLineWidth');
-% set(groot,'defaultLineLineWidth',1);
-% set(groot,'defaultLineLineWidth',defaultLineWidth );
+% Change line width
+defaultLineWidth = get(groot,'defaultLineLineWidth');
+set(groot,'defaultLineLineWidth',0.5);
 
+% 1st plot
 figure(figNo1);
 axPlot(1) = subplot(3,1,1);
 plot(time,vectAmpWind(idxTime),time,OutTableTest1.Wind(idxTime),'--'); 
@@ -132,10 +135,11 @@ axis tight; grid on;
 ylabel('GenPwr P_g [MW]')
 xlabel('time [s]')
 linkaxes(axPlot,'x');
-
 set(findall(gcf,'-property','FontSize'),'FontSize',11)
+
 print(fullfile(figDir,['cmpTimeDomain_Wind',strFig]), '-dpng');
 
+% 2nd plot
 figure(figNo2)
 axPlot2(1) = subplot(3,1,1);
 plot(time,OutTableTest2.BlPitch1(idxTime),time,OutTable.BlPitch1(idxTime),time,OutTableTest1.BlPitch1(idxTime),'k--'); 
@@ -154,10 +158,13 @@ axis tight; grid on;
 ylabel('Twr_{FA} y_t[m/s^2]')
 xlabel('time [s]')
 set(findall(gcf,'-property','FontSize'),'FontSize',11)
-print(fullfile(figDir,['cmpTimeDomain_BlPitchTqTwr',strFig]), '-dpng');
 linkaxes(axPlot2,'x');
 
+print(fullfile(figDir,['cmpTimeDomain_BlPitchTqTwr',strFig]), '-dpng');
+
+
 %% Figure for paper
+
 figure(figNo2+1)
 axPlotAll(1) = subplot(6,1,1);
 plot(time,vectAmpWind(idxTime),time,OutTableTest1.Wind(idxTime),'--'); 
@@ -194,13 +201,14 @@ axPlotAll(6) = subplot(6,1,6);
 plot(time,OutTableTest2.GenPwr(idxTime)/1000,time,OutTable.GenPwr(idxTime)/1000,time,OutTableTest1.GenPwr(idxTime)/1000,'k--');
 axis tight; grid on;
 ylabel(yAxCell{5}); %'GenPwr P_g [MW]')
-
 xlabel('time [s]')
-
 linkaxes(axPlotAll,'x');
 
 posDefault = get(gcf, 'position');
 set(gcf, 'position', [posDefault(1:3),posDefault(4)*1.5]);
+
+set(groot,'defaultLineLineWidth',defaultLineWidth);
+
 print(fullfile(figDir,['cmpTimeDomain_All',strFig]), '-dpng');
 print(fullfile(figDir,['cmpTimeDomain_All',strFig]), '-depsc');
 

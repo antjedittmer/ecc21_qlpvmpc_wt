@@ -16,6 +16,8 @@ The code has been tested using:
 - Matlab R2019b 
 It requires MATLAB, Simulink, and Control System Toolbox.
 
+The Simulink project file Ecc21.prj is provide as well as the necessary
+
 This program is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or 
 FITNESS FOR A PARTICULAR PURPOSE.
