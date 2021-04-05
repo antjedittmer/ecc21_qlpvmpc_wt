@@ -1,6 +1,6 @@
 function compareLinearModels(speedVec,figFolder, useActuatorStates,figNoAdd,createBodePlots,plotVisible)
-% compareLinearModels compares two non-linear wind turbine models with
-% linearized FAST models. All inputs are optional.
+% compareLinearModels compares two sets of linearized turbine models with
+% linearized FAST models at different wind speeds. All inputs are optional.
 %
 % Inputs:
 % - speedVec: index vector for 22 windspeeds, 4 to 25 m/s (Default: [1, 22])
