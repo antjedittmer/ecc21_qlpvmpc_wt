@@ -6,7 +6,8 @@ addpath('NonLinMdl');
 initWorkspace;
 
 %% Matlab analysis: Bode plots linearized FAST models (reference)
-% Bode plots of two non-linear wind turbine models with linearized FAST models. 
+% Bode plots of two linearized non-linear wind turbine models with linearized 
+% FAST models. 
 
 % Create Bode plots for comparison
 compareLinearModels;
@@ -17,7 +18,7 @@ compareLinearModels;
 % mat-files in dataIn folder. 
 
 %Load data if available from previous simulation.
-loadData = 0;
+loadData = 1;
 
 % Run Simulink models in closed loop w baseline controller( Torque controller
 % k-omega-squared, Pitch controller: Gainscheduled Pi)

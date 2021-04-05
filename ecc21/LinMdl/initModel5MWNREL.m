@@ -16,10 +16,6 @@ function [wecs, M, Ce, K, Q, L, rho, tau, kappa, lambda, beta,Cq,Ct,Cqdlambda,Cq
 % Set path to input data directory
 workDir = fileparts(mfilename('fullpath'));
 mainDir = fileparts(workDir);
-dataInDir = fullfile(mainDir,'dataIn');
-addpath(dataInDir);
-
-%% Input data
 
 % Switch for plots
 if ~nargin
@@ -29,15 +25,13 @@ end
 % Load data for cT, cQ LUT if not passed as input
 if nargin < 5 || isempty(Rotor_Lamda) || isempty(Rotor_Pitch) || ....
         isempty(Rotor_cQ) || isempty(Rotor_Pitch)
-    
-    % Load data
-    load('NREL5MW_CPdata','Rotor_Lamda','Rotor_Pitch','Rotor_cQ','Rotor_cT');
+    dataInDir = fullfile(mainDir,'dataIn');
+    load(fullfile(dataInDir,'NREL5MW_CPdata.mat'),...
+    'Rotor_Lamda','Rotor_Pitch','Rotor_cQ','Rotor_cT');
 end
 
-% Set figDir
+% Set path to figure directory
 if nargin < 6
-    
-    % Set path to figure directory
     figDir = fullfile(mainDir,'figDir');
     if ~isfolder(figDir)
         mkdir(figDir)

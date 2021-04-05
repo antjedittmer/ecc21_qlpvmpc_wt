@@ -1,4 +1,4 @@
-function runCompareCtrl(strWindType,loadData,figNo1,useFASTforComparison)
+function runCompareCtrl(strWindType,loadData,figNo1,useSimulinkForComparison)
 % runComparCtrl compares simulation results for the baseline and qLPV MPC
 % controller in closed loop with the Simulink WECS model.
 %
@@ -8,7 +8,7 @@ function runCompareCtrl(strWindType,loadData,figNo1,useFASTforComparison)
 % - loadData: load simulation output data if available instead of running
 %   simulation (Default: 1)
 % - figNo1: Number of figure (Default: 1)
-% - useFASTforComparison: Uses FAST(1) or Simulink data for comparison
+% - useSimulinkForComparison: Uses FAST(1) or Simulink data for comparison
 
 %% Handle optional inputs
 % The default inputs are provided here.
@@ -26,8 +26,8 @@ if nargin < 3 || isempty(figNo1)
     figNo1 = 1;
 end
 
-if nargin < 4 || isempty(useFASTforComparison)
-    useFASTforComparison = 0;
+if nargin < 4 || isempty(useSimulinkForComparison)
+    useSimulinkForComparison = 1;
 end
 
 %% Set path to figure directory
@@ -52,29 +52,29 @@ end
 
 % Names of simulation output in correct order
 varnames = {'Wind', 'RotSpeed', 'GenPwr', 'GenTq', 'BlPitch1', ...
-    'NcIMUTAxs', 'NcIMUTAys'}; %%'Tower FA acc', 'Tower SS acc'};
+    'NcIMUTAxs', 'NcIMUTAys'}; 
 
 % Weight values (copied from MATLAB function)
 q_ = [1 10^4 0 10^3 10^3 0 0 0];
-r_ = [1 10^4]; %[10^7,0.1];
+r_ = [1 10^4]; 
 p = 10^3;
 
 % Switch between Sweep and NTW18
 if strcmp(strWindType,'Sweep') == 1 % sweep from 4 to 25 in steps
     outDataSimulationMat = 'OutDataSweep.mat';
-    strFig = ''; %testCaseStr = 'Wind Sweep';
+    strFig = ''; 
 else % wind with average 18 m/s
     outDataSimulationMat = 'OutDataWind18NTW.mat';
-    strFig = 'NTW18'; %testCaseStr = 'Wind, mean 18 m/s';
+    strFig = 'NTW18'; 
 end
 
 %% Load baseline and MPC data or run simulations
 
-%For FAST simulation
+%For FASTtool simulation data
 load(outDataSimulationMat ,'OutTable'); 
 
 % Load data closed loop simulation PI
-if useFASTforComparison % from FAST
+if useSimulinkForComparison % from FAST
     OutTableTest2 = OutTable; 
 else % from Simulink
     loadBaseline = 1; %always load if available
@@ -102,7 +102,6 @@ matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPC',strFig,'.mat']);
 % Information for plot
 figStr = ['RefSimulinkClosedLoop',strFig,'_beta'];
 meanOpt = strrep(sprintf(' mean cputime MPC: %1.2e s',mean(tictoc_LPVMPC.Data)),'e-0','e-');
-k_pitch = 1;
 timeForPlot = [15,400];
 DT = 0.008;
 r = GenPwrRef;
@@ -111,7 +110,7 @@ r = GenPwrRef;
 plotComparison(OutTableTest2,OutTableMPC,q_,r_,p,DT,figStr,figDir,r,timeForPlot,k_pitch,'', meanOpt,figNo1)
 
 
-function plotComparison(OutTableTest2,OutTableMPC,q_,r_,p,DT,figStr,figDir,r,timeForPlot,k_pitch,plot6,meanOpt,figNo1)
+function plotComparison(OutTableTest2,OutTableMPC,q_,r_,p,DT,figStr,figDir,r,timeForPlot,plot6,meanOpt,figNo1)
 
 if nargin < 9
     r = [];
@@ -124,14 +123,10 @@ if nargin <10
 end
 
 if nargin <11
-    k_pitch = 180/pi;
-end
-
-if nargin <12
     plot6 = '';
 end
 
-if nargin < 13
+if nargin < 12
     meanOpt = '';
 end
 

@@ -8,8 +8,8 @@ The mat files are:
    the points are not directly taking from FAST, but from the closed loop 
    FASTTool simulation.
 - NREL5MW_CPdata.mat: four numerical matrices for 
-   - Rotor_Lamda: tip speed ratio vector (from mat file NREL5MW_CPdata)
-   - Rotor_Pitch: blade pitch vector (from mat file NREL5MW_CPdata)
+   - Rotor_Lamda: tip speed ratio vector 
+   - Rotor_Pitch: blade pitch vector
    - Rotor_cQ: aerodynamic torque look-up table matrix 
    - Rotor_cT: aerodynamic force look-up table matrix         
 - NREL5MW_linearised_4to25.mat: FASTTool output of linearization sweep from

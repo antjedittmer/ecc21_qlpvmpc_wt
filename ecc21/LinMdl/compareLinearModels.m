@@ -83,7 +83,10 @@ sysInputname =[{'Torque [kNm]'}; {'\beta [rad]'};{'V [m/s]'}];
 % Cut-In, Rated, Cut-Out Wind Speed 3 m/s, 11.4 m/s, 25 m/s
 % Cut-In, Rated Rotor Speed 6.9 rpm, 12.1 rpm
 % wr,wg in rad/s, Tg in kN, Pg in kW,
-[wecs, M, Ce, K, Q, L, rho, tau, kappa, lambda, pitch, Cq, Ct, Cqdlambda,Cqdbeta, Ctdlambda,Ctdbeta] = initModel5MWNREL(0, Rotor_Lamda, Rotor_Pitch, Rotor_cQ, Rotor_cT, figFolder);
+[wecs, M, Ce, K, Q, L, rho, tau, kappa, lambda, pitch, ...
+    Cq, Ct, Cqdlambda,Cqdbeta, Ctdlambda,Ctdbeta] = ...
+    initModel5MWNREL(0, Rotor_Lamda, Rotor_Pitch, Rotor_cQ, Rotor_cT, figFolder);
+ksw = 3/(2* wecs.H);
 
 %% Constant Matrices 
 A1 = [zeros(4), L;...
@@ -163,12 +166,11 @@ for index =  speedVec %[1,9,10,length(Lin.V)]%1 : length(Lin.V) %[1,length(Lin.V
     
     %% Linear Model
     % X = [yt zeta Thetha_s yt_dot zeta_dot omega_r omega_gr beta torque]'
-    % y=[ yt_ddot rb*zeta_dot omega_r]' -> y=[ yt_ddot rb*zeta_dot omega_r]'
-    % uact=[Tg_ref beta_ref V]'
+    % y = [ yt_ddot rb*zeta_dot omega_r]' -> y=[ yt_ddot rb*zeta_dot omega_r]'
+    % uact = [Tg_ref beta_ref V]'
     % Ve = V - yt_dot [m/s] - rb [m]  * zeta_dot [1/s]
     
-    ksw = 3/(2* wecs.H);
-    
+        
     A9DoF = [A1(1:4,:) ,zeros(4,2); % states 1 - 4: x_FA,zeta,x_sw, Theta_s
         [A1(5,1:4), ... % state 5: xdot_FA (from  states 1 - 4: x_FA,zeta,x_sw, Theta_s)
         A1(5,5) - B1(5,1)*dFtdV,... % state 5-> 5: xdot_FA <- xdot_FA
