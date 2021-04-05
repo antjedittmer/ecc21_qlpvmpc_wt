@@ -137,6 +137,7 @@ ylabel('GenPwr P_g [MW]')
 xlabel('time [s]')
 linkaxes(axPlot,'x');
 set(findall(gcf,'-property','FontSize'),'FontSize',11)
+set(gcf,'Name',['cmpTimeDomain_Wind',strFig])
 
 print(fullfile(figDir,['cmpTimeDomain_Wind',strFig]), '-dpng');
 
@@ -160,6 +161,7 @@ ylabel('Twr_{FA} y_t[m/s^2]')
 xlabel('time [s]')
 set(findall(gcf,'-property','FontSize'),'FontSize',11)
 linkaxes(axPlot2,'x');
+set(gcf,'Name',['cmpTimeDomain_BlPitchTqTwr',strFig])
 
 print(fullfile(figDir,['cmpTimeDomain_BlPitchTqTwr',strFig]), '-dpng');
 
@@ -204,6 +206,7 @@ axis tight; grid on;
 ylabel(yAxCell{5}); %'GenPwr P_g [MW]')
 xlabel('time [s]')
 linkaxes(axPlotAll,'x');
+set(gcf,'Name',['cmpTimeDomain_All',strFig])
 
 posDefault = get(gcf, 'position');
 set(gcf, 'position', [posDefault(1:3),posDefault(4)*1.5]);

@@ -97,7 +97,7 @@ simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta.slx'; %
 matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPC',strFig,'.mat']);
 [OutTableMPC, tictoc_LPVMPC,GenPwrRef] = getSimulationOutputTable(matFileOutTableTest1,loadData,OutTable,simMdlname,varnames);
 
-%% Prepare information for plot and plot data
+%% Prepare information for plots and plot data
 
 % Information for plot
 figStr = ['RefSimulinkClosedLoop',strFig,'_beta'];
@@ -106,30 +106,22 @@ timeForPlot = [15,400];
 DT = 0.008;
 r = GenPwrRef;
 
-% Plot
-plotComparison(OutTableTest2,OutTableMPC,q_,r_,p,DT,figStr,figDir,r,timeForPlot,k_pitch,'', meanOpt,figNo1)
+% Plot and compare closed-loop results
+plotComparison(OutTableTest2,OutTableMPC,q_,r_,p,DT,figStr,figDir,r,timeForPlot,meanOpt,figNo1)
 
 
-function plotComparison(OutTableTest2,OutTableMPC,q_,r_,p,DT,figStr,figDir,r,timeForPlot,plot6,meanOpt,figNo1)
+function plotComparison(OutTableTest2,OutTableMPC,q_,r_,p,DT,figStr,figDir,r,timeForPlot,meanOpt,figNo1)
 
-if nargin < 9
-    r = [];
-end
-
+%% 
 maxTime = min(height(OutTableTest2),height(OutTableMPC));
 if nargin <10
     timeForPlot(1) = 0;
     timeForPlot(2) = maxTime;
 end
 
-if nargin <11
-    plot6 = '';
-end
 
-if nargin < 12
-    meanOpt = '';
-end
 
+%% Vector for plot: Time index for plot
 timeVec = 0:DT: maxTime*DT - DT;
 
 idxPlot = timeVec >= timeForPlot(1) & timeVec <= timeForPlot(2);
@@ -137,32 +129,18 @@ timeVecPlot = timeVec(idxPlot);
 OutTableTest2Plot = OutTableTest2(idxPlot,:);
 OutTableMPCPlot = OutTableMPC(idxPlot,:);
 
-% Calculate omega_g
-Generator_Efficiency = 0.944;
-omegaG1 = 1000 /Generator_Efficiency * OutTableTest2Plot.GenPwr./OutTableTest2Plot.GenTq;
-omegaG2 = 1000 /Generator_Efficiency * OutTableMPCPlot.GenPwr./OutTableMPCPlot.GenTq;
-
 PGRef = r.Data(idxPlot);
 
-% Strings of weights for optimization
+%% Title strings 
+% Display optimization weights and calculate decrease in tower movement and
+% power variance.
+
+% String of optimization weights
 qVec = deblank(sprintf('%d ',ceil(q_)));
 rVec = deblank(sprintf('%d ', ceil(r_)));
 pVec = deblank(sprintf('%d', p(1)/q_(1)));
 
-% yAxCell = {'V [m/s]', '\omega_g [rad/s]', 'T_g [kNm]', 'Pitch \beta [°]', 'P_g [kW]','y_t [m/s^2]'};
-yAxCell = {'wind V [m/s]', 'RotSpd \omega_g [rad/s]', 'GenTq T_g [kNm]', 'Pitch \beta [°]',...
-    'GenPwr P_g [kW]','Twr_{FA} y_t [m/s^2]'};
-
-figure(figNo1);
-if isempty(plot6)
-    ax1(1) = subplot(3,1,1);
-else
-    ax1(1) = subplot(6,1,1);
-end
-plot(timeVecPlot, OutTableMPCPlot.Wind);
-ylabel(yAxCell{1}); %'V [m/s]')
-axis tight; grid on;
-
+% Improvement tower foreaft acceleration
 varPI = var(OutTableTest2Plot.NcIMUTAxs);
 varqLPV = var(OutTableMPCPlot.NcIMUTAxs);
 titleStdPI = sprintf('%2.2e',varPI);
@@ -175,63 +153,44 @@ titleStdPI_Pwr = sprintf('%2.2e',varPI_Pwr);
 titleStdqLPV_Pwr = sprintf('%2.2e',varqLPV_Pwr);
 ratioStd_Pwr = sprintf('%2.1f ', varPI_Pwr/varqLPV_Pwr);
 
+% axis for plot
+yAxCell = {'wind V [m/s]', 'Twr_{FA} y_t [m/s^2]','GenPwr P_g [kW]'};
+
+%% Plot
+
+figure(figNo1);
+
+% Wind
+ax1(1) = subplot(3,1,1);
+plot(timeVecPlot, OutTableMPCPlot.Wind);
+ylabel(yAxCell{1}); 
+axis tight; grid on;
 title({['Baseline (P-PI) vs. qLPV MPC; ', meanOpt],... %WT mdl: Model2
     ['q_ = [', qVec,'], r = [',rVec,'], p = ',pVec,'* q']})
 
-if ~isempty(plot6)
-    ax1(2) = subplot(6,1,2);
-    plot(timeVecPlot, omegaG1,timeVecPlot, omegaG2,'-.', timeVecPlot, omegaGRef,'k--');
-    ylabel(yAxCell{2}); %'\omega_g [rad/s]')
-    axis tight; grid on;
-    
-    ax1(3) = subplot(6,1,3);
-    plot(timeVecPlot, OutTableTest2Plot.GenTq/1000, timeVecPlot,OutTableMPCPlot.GenTq/1000,'-.',...
-        timeVecPlot, TGRef/1000, 'k--');
-    posAxis = axis;
-    axis([posAxis(1:2), min(40,posAxis(3)), 45]);
-    ylabel(yAxCell{3}); %'T_g [kNm]')
-    grid on; % axis tight;
-    
-    ax1(4) = subplot(6,1,4);
-    plot(timeVecPlot, OutTableTest2Plot.BlPitch1, timeVecPlot,OutTableMPCPlot.BlPitch1 * k_pitch,'-.');
-    ylabel(yAxCell{4}); %'Pitch \beta [°]')
-    axis tight; grid on;
-end
-
-if isempty(plot6)
-    ax1(2) = subplot(3,1,2);
-else
-    ax1(5) = subplot(6,1,5);
-end
+% Tower fore-aft acceleration
+ax1(2) = subplot(3,1,2);
 plot(timeVecPlot, OutTableTest2Plot.NcIMUTAxs, timeVecPlot,OutTableMPCPlot.NcIMUTAxs,'-.');
-title([yAxCell{6}, ': var_{P-Pi} = ',titleStdPI , ', var_{qLPVMPC} = ' ,titleStdqLPV,', ratio: ' ,ratioStd])
-ylabel(yAxCell{6}); %'y_t [m/s^2]')
+title([yAxCell{2}, ': var_{P-Pi} = ',titleStdPI , ', var_{qLPVMPC} = ' ,titleStdqLPV,', ratio: ' ,ratioStd])
+ylabel(yAxCell{2}); %'y_t [m/s^2]')
 axis tight; grid on;
 
-if isempty(plot6)
-    ax1(3) = subplot(3,1,3);
-else
-    ax1(6) = subplot(6,1,6);
-end
+% Power
+ax1(3) = subplot(3,1,3);
 plot(timeVecPlot, OutTableTest2Plot.GenPwr, timeVecPlot,OutTableMPCPlot.GenPwr,'-.',timeVecPlot,PGRef,'k:');
 title(['|P_{g,ref}  - P_g| [kW]: var_{P-Pi} = ',titleStdPI_Pwr, ', var_{qLPVMPC} = ' ,...
     titleStdqLPV_Pwr,', ratio: ' ,ratioStd_Pwr])
-ylabel(yAxCell{5}); %'P_g [kW]')
+ylabel(yAxCell{3}); %'P_g [kW]')
 axis tight; grid on;
 legend('P-PI','MPC','P_{g,ref}','Location','SouthEast')
-
 xlabel('time [s]');
 
 linkaxes(ax1,'x')
 set(gcf,'Name', figStr)
 
-posDefault = get(gcf, 'position');
-if ~isempty(plot6)
-    set(gcf, 'position', [posDefault(1:3),posDefault(4)*1.5]);
-else
-    set(gcf, 'position', [posDefault(1:3),posDefault(4)*1.2]);
-end
+posDefault = [520   378   560   420]; %get(gcf, 'position');
+set(gcf, 'position', [posDefault(1:3),posDefault(4)*1.1]);
 
-print(gcf,[fullfile(figDir,'cmpCtrlSimulink_PI_MPC'),plot6,'_',figStr,'_',num2str(timeVecPlot(end))], '-dpng');
-print(gcf,[fullfile(figDir,'cmpCtrlSimulink_PI_MPC'),plot6,'_',figStr,'_',num2str(timeVecPlot(end))], '-depsc');
+print(gcf,[fullfile(figDir,'cmpCtrlSimulink_PI_MPC'),'_',figStr,'_',num2str(timeVecPlot(end))], '-dpng');
+print(gcf,[fullfile(figDir,'cmpCtrlSimulink_PI_MPC'),'_',figStr,'_',num2str(timeVecPlot(end))], '-depsc');
 

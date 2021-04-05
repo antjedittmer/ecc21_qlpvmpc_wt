@@ -65,7 +65,7 @@ end
 %% Plot parameters
 % yt is the axial displacement of the nacelle, $\zeta$ is the angular blade 
 % displacement out of the plane of rotation and $\omega_r$ and $\omega_r$ are the angular positions of the
-% X =[yt zeta thetha_r thetha_gr yt_dot zeta_dot omega_r omega_gr ]'
+% X = [yt zeta thetha_r thetha_gr yt_dot zeta_dot omega_r omega_gr ]'
 % uact = [Tg_ref beta_ref V ]'
 % y = [ yt_dot zeta_dot omega_r omega_gr]'
 % u = [beta_ref wg_ref]' d=v
@@ -306,7 +306,7 @@ for index =  speedVec %[1,9,10,length(Lin.V)]%1 : length(Lin.V) %[1,length(Lin.V
     
     %% Make a Bode plot
     if createBodePlots == 1
-        ff = figure(index*100+3 + figNoAdd);%ff.Units='centimeters';
+        ff = figure(index*100+3 + figNoAdd);
         ff.Position = [520   267   560   531];
         ff.Color = 'white'; ff.Visible = plotVisible;
         
