@@ -1,8 +1,9 @@
 function compareLinearModels(speedVec,figFolder, useActuatorStates,figNoAdd,createBodePlots,plotVisible)
 % compareLinearModels compares two non-linear wind turbine models with
 % linearized FAST models. All inputs are optional.
+%
 % Inputs:
-% - speedVec: index vector for 22 windspeeds, from 4 to 25 m/s (Default: [1, 22])
+% - speedVec: index vector for 22 windspeeds, 4 to 25 m/s (Default: [1, 22])
 % - figFolder: figure folder (Default: figDir in mainDir)
 % - useActuatorStates: include (1)/exclude(0) actuator states (Default: 0)
 % - figNoAdd: Add integer to figure number (100 + index) (Default: 0)
@@ -17,34 +18,44 @@ function compareLinearModels(speedVec,figFolder, useActuatorStates,figNoAdd,crea
 workDir = fileparts(mfilename('fullpath'));
 mainDir = fileparts(workDir);
 
-if nargin == 0
+% speedVec: index vector for 22 windspeeds, 4 to 25 m/s (Default: [1, 22])
+if nargin == 0 || isempty(speedVec)
     speedVec = [1, 22]; %[1,22]; % variations of wind speed
-    figFolder = fullfile(mainDir,'figDir');%'FigureLagrange_210308_comp';
-    useActuatorStates = 0;
+end
+
+if nargin < 2 || isempty(figFolder)
+    figFolder = fullfile(mainDir,'figDir');
+end
+% Create output folder
+if ~isfolder(figFolder)
+    mkdir(figFolder);
+end
+
+if nargin < 3
+    useActuatorStates = 1;
     figNoAdd = 0;
     close all;
     createBodePlots = 1;
     plotVisible = 'on';
 end
 
-%% Initialize: Set path
+%% Initialize: Set path and load 
 addpath(fullfile(mainDir,'dataIn'));
 load('NREL5MW_CPdata','Rotor_Lamda', 'Rotor_Pitch', 'Rotor_cQ', 'Rotor_cT');
 
 %% Initialize name of models and load into workspace
-idxModelNames = 1; %1:2; %1:5
+idxModel = 1; %in case several linearized models are provided
 modelNames ={'NREL5MW_linearised_4to25'};
-modelNames = modelNames(idxModelNames);
+modelNames = modelNames(idxModel);
 
 modelsL = {'FAST 30 states'};
-modelsL = modelsL(idxModelNames);
+modelsL = modelsL(idxModel);
 
 lenModelNames = length(modelNames);
 sysmCell = cell(lenModelNames,1);
 
 idxModels = 1;
-
-load(modelNames{idxModels},'sysm','Lin'); %'sysm_MBC');
+load(modelNames{idxModels},'sysm','Lin'); 
 sysmCell{idxModels} = sysm;
 for idxModels = 2 : lenModelNames
     load(modelNames{idxModels},'sysm');
@@ -52,10 +63,10 @@ for idxModels = 2 : lenModelNames
 end
 
 %% Plot parameters
-% yt is the axial displacement of the nacelle, $\zeta$ is the angular blade displacement
-% out of the plane of rotation and $\omega_r$ and $\omega_r$ are the angular positions of the
+% yt is the axial displacement of the nacelle, $\zeta$ is the angular blade 
+% displacement out of the plane of rotation and $\omega_r$ and $\omega_r$ are the angular positions of the
 % X =[yt zeta thetha_r thetha_gr yt_dot zeta_dot omega_r omega_gr ]'
-% uact=[Tg_ref beta_ref V ]'
+% uact = [Tg_ref beta_ref V ]'
 % y = [ yt_dot zeta_dot omega_r omega_gr]'
 % u = [beta_ref wg_ref]' d=v
 % y = [yt_dot zeta_dot omega_r omega_z]'
@@ -65,12 +76,8 @@ end
 sysOutputname = [{'omega_r [rad/s]'};{'ydotdot_{fa} [m/s^2]'}];
 sysInputname =[{'Torque [kNm]'}; {'\beta [rad]'};{'V [m/s]'}];
 
-%% Create output folder
-if ~isfolder(figFolder)
-    mkdir(figFolder);
-end
 
-%% Define parameters
+%% Get parameters
 % 5MW FAST WIND TURBINE (NREL/TP-500-38060) Definition of a 5-MW Reference
 % Wind Turbine for Offshore System Development
 % Cut-In, Rated, Cut-Out Wind Speed 3 m/s, 11.4 m/s, 25 m/s
@@ -99,9 +106,6 @@ lenLinV = length(Lin.V);
 sizeA = size(sysm{1}.A,1);
 
 P = cell(lenLinV,sizeA);
-if exist('sysm_MBC','var') == 1
-    sizeA_MBC = size(sysm_MBC{1}.A,1);
-end
 Pmbc = cell(lenLinV,sizeA);
 sysCell = cell(lenLinV,1);
 u_bar_cell = cell(lenLinV,1);
@@ -139,19 +143,20 @@ for index =  speedVec %[1,9,10,length(Lin.V)]%1 : length(Lin.V) %[1,length(Lin.V
     dlambdadxdotfa = -1*omegabar*wecs.rb/Vbar^2; %s/m   xdotfa m/s
     
     %% Grid points
-    dCqdlambdab = interp2(lambda,pitch,Cqdlambda,Lambda_bar,beta_bar,'cubic');
-    dCtdlambdab = interp2(lambda,pitch,Ctdlambda,Lambda_bar,beta_bar,'cubic');
-    dCqdbetab = interp2(lambda,pitch,Cqdbeta,Lambda_bar,beta_bar,'cubic'); %* 180/pi;
-    dCtdbetab = interp2(lambda,pitch,Ctdbeta,Lambda_bar,beta_bar,'cubic'); %dCqdbetab = dCqdbetabDeg * 180/pi;
     Cqb = interp2(lambda,pitch,Cq,Lambda_bar,beta_bar,'cubic');
     Ctb = interp2(lambda,pitch,Ct,Lambda_bar,beta_bar,'cubic');
+    dCqdlambdab = interp2(lambda,pitch,Cqdlambda,Lambda_bar,beta_bar,'cubic');
+    dCtdlambdab = interp2(lambda,pitch,Ctdlambda,Lambda_bar,beta_bar,'cubic');
+    dCqdbetab = interp2(lambda,pitch,Cqdbeta,Lambda_bar,beta_bar,'cubic'); 
+    dCtdbetab = interp2(lambda,pitch,Ctdbeta,Lambda_bar,beta_bar,'cubic'); 
+
     
-    %% Ft=0.5*pi*rb^2*Ct*v^2
-    dFtdomega = 0.5*rho*pi*wecs.rb^2*dCtdlambdab*dlambdadomega*Vbar^2;%dFt/domega
-    dFtdV = 0.5*rho*pi*wecs.rb^2*(dCtdlambdab*dlambdadV*Vbar^2+2*Vbar*Ctb);%dFt/dV
-    dFtdbeta = 0.5*rho*pi*wecs.rb^2*dCtdbetab*Vbar^2;%dFt/dbeta
+    %% Ft = 0.5*pi*rb^2*Ct*v^2
+    dFtdomega = 0.5*rho*pi*wecs.rb^2*dCtdlambdab*dlambdadomega*Vbar^2;
+    dFtdV = 0.5*rho*pi*wecs.rb^2*(dCtdlambdab*dlambdadV*Vbar^2+2*Vbar*Ctb);
+    dFtdbeta = 0.5*rho*pi*wecs.rb^2*dCtdbetab*Vbar^2;
     
-    %% Tr=0.5*pi*rb^3*Cq*v^2
+    %% Tr = 0.5*pi*rb^3*Cq*v^2
     dTrdomega = 0.5*rho*pi*wecs.rb^3*(dCqdlambdab*dlambdadomega)*Vbar^2;%dTr/domega
     dTrdV = 0.5*rho*pi*wecs.rb^3*(dCqdlambdab*dlambdadV*Vbar^2+2*Vbar*Cqb);%dTr/dV
     dTrdbeta = 0.5*rho*pi*wecs.rb^3*dCqdbetab*Vbar^2;%dTr/dbeta
@@ -239,7 +244,6 @@ for index =  speedVec %[1,9,10,length(Lin.V)]%1 : length(Lin.V) %[1,length(Lin.V
     
     sysOut.Outputname = [sysOutputname;{'beta'};{'Tg'}];
     sysOut.Inputname = sysInputname;
-    
     
     sysCell{index} = sysOut;
     Torque_g_bar = 0.5*rho*pi*wecs.rb^3*Cqb*Vbar^2/wecs.Ng; % Nm
@@ -347,54 +351,4 @@ for index =  speedVec %[1,9,10,length(Lin.V)]%1 : length(Lin.V) %[1,length(Lin.V
     end
     
 end
-
-% For debugging;
-% save('sysCell.mat','sysCell');
-
-%% Modal analysis
-return; %
-% This analysis is left out fro noe
-ff = figure(50 + figNoAdd);ff.Units='centimeters'; ff.Position=[2 2 45 27]; ff.Color='white'; %#ok<UNRCH> This analysis is left out fro noe
-subplot(2,3,4)
-Damping=[Zmbc{:,4}];
-Freq=[Wnmbc{:,4}]/2/pi;
-plot(Lin.V,Damping(3:end,:)); hold on
-ylabel('Modal damping')
-xlabel('Wind Speed [m/s]')
-subplot(2,3,1)
-plot(Lin.V,Freq(3:end,:)); hold on
-ylabel('Frequency in Hz')
-xlabel('Wind Speed [m/s]')
-title('Modal frequencies and damping vs V [MBC transformed]')
-ylim([0 3])
-
-subplot(2,3,5)
-Damping = [Z{:,4}] ;
-Freq= [Wn{:,4}]/2/pi;
-plot(Lin.V,Damping(3:end,:)); hold on
-ylabel('Modal damping')
-xlabel('Wind Speed [m/s]')
-subplot(2,3,2)
-plot(Lin.V,Freq(3:end,:)); hold on
-ylabel('Frequency in Hz')
-xlabel('Wind Speed [m/s]')
-title('Modal frequencies and damping vs V ')
-ylim([0 3])
-subplot(2,3,6)
-Damping = ZZ;
-Freq = Wnn/2/pi;
-plot(Lin.V,Damping(3:end,:)); hold on
-ylabel('Modal damping')
-xlabel('Wind Speed [m/s]')
-subplot(2,3,3)
-plot(Lin.V,Freq(3:end,:)); hold on
-ylabel('Frequency in Hz')
-xlabel('Wind Speed [m/s]')
-title('Modal frequencies and damping vs V ')
-ylim([0 3])
-
-figStr = 'Figure_Damping_Freq.png';
-figFolderStr = fullfile(figFolder,figStr);
-print(figFolderStr, '-dpng');
-
 

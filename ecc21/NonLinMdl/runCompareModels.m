@@ -1,7 +1,8 @@
 function runCompareModels(strWindType,loadData,figNo1,yAxCell)
-% runCompareModels compares two Simulink models (Mdl1, five states) and
-% Mdl2, nine states) with FASTTool simulation data with same input and same 
-% controller. All inputs are optional:
+% runCompareModels compares two Simulink models with FASTTool simulation 
+% data generated with the baseline controller. 
+%
+% All inputs are optional:
 % - strWindType: Two testcases: step sweep 4 to 25 ms and normal dist. with 
 %   18 m/s mean (Default: Sweep)
 % - loadData: load simulation output data if available instead of running
