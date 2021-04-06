@@ -1,5 +1,5 @@
-function runCompareCtrl(strWindType,loadData,figNo1,useSimulinkForComparison)
-% runComparCtrl compares simulation results for the baseline and qLPV MPC
+function runCompareCtrl(strWindType,loadData,figNo1,useFASTForComparison)
+% runComparCtrl compares simulation results for baseline and qLPV MPC
 % controller in closed loop with the Simulink WECS model.
 %
 % All inputs are optional:
@@ -8,7 +8,7 @@ function runCompareCtrl(strWindType,loadData,figNo1,useSimulinkForComparison)
 % - loadData: load simulation output data if available instead of running
 %   simulation (Default: 1)
 % - figNo1: Number of figure (Default: 1)
-% - useSimulinkForComparison: Uses FAST(1) or Simulink data for comparison
+% - useFASTForComparison: Uses FAST(1) or Simulink data for comparison
 
 %% Handle optional inputs
 % The default inputs are provided here.
@@ -17,7 +17,6 @@ if ~nargin || isempty(strWindType)
     strWindType = 'Sweep'; %'NTW18';   
 end
 
-% Two testcases: step sweep 4 to 25 ms and normal dist. 18 m/s mean
 if nargin < 2 || isempty(loadData)
     loadData = 1; %load simulation output data if available;
 end
@@ -26,11 +25,11 @@ if nargin < 3 || isempty(figNo1)
     figNo1 = 1;
 end
 
-if nargin < 4 || isempty(useSimulinkForComparison)
-    useSimulinkForComparison = 1;
+if nargin < 4 || isempty(useFASTForComparison)
+    useFASTForComparison = 1;
 end
 
-%% Set path to figure directory
+%% Set path to directories
 
 % Set path to inputdata directory
 workDir = fileparts(mfilename('fullpath'));
@@ -74,13 +73,13 @@ end
 load(outDataSimulationMat ,'OutTable'); 
 
 % Load data closed loop simulation PI
-if useSimulinkForComparison % from FAST
-    OutTableTest2 = OutTable; 
-else % from Simulink
+if useFASTForComparison % from FAST
     loadBaseline = 1; %always load if available
     matFileOutTableTest2 = fullfile(dataDirOut,['OutTableTest2',strFig,'.mat']);
     simMdlname2 = 'test_SimulinkMdl2_Baseline';
-    OutTableTest2 = getSimulationOutputTable(matFileOutTableTest2,loadBaseline,OutTable,simMdlname2);
+    OutTableTest2 = getSimulationOutputTable(matFileOutTableTest2,loadBaseline,OutTable,simMdlname2);    
+else % from Simulink
+    OutTableTest2 = OutTable;
 end
 
 % Check that SI units are used (can be removed, 
@@ -111,15 +110,14 @@ plotComparison(OutTableTest2,OutTableMPC,q_,r_,p,DT,figStr,figDir,r,timeForPlot,
 
 
 function plotComparison(OutTableTest2,OutTableMPC,q_,r_,p,DT,figStr,figDir,r,timeForPlot,meanOpt,figNo1)
+%plotComparison plots the time series obtained with baseline and qLPVMPC
 
-%% 
+%% Handle optional inputs
 maxTime = min(height(OutTableTest2),height(OutTableMPC));
 if nargin <10
     timeForPlot(1) = 0;
     timeForPlot(2) = maxTime;
 end
-
-
 
 %% Vector for plot: Time index for plot
 timeVec = 0:DT: maxTime*DT - DT;
@@ -157,10 +155,11 @@ ratioStd_Pwr = sprintf('%2.1f ', varPI_Pwr/varqLPV_Pwr);
 yAxCell = {'wind V [m/s]', 'Twr_{FA} y_t [m/s^2]','GenPwr P_g [kW]'};
 
 %% Plot
+% Plot input wind, tower fore-aft acceleration and generator power
 
 figure(figNo1);
 
-% Wind
+% Plot wind
 ax1(1) = subplot(3,1,1);
 plot(timeVecPlot, OutTableMPCPlot.Wind);
 ylabel(yAxCell{1}); 
@@ -175,7 +174,7 @@ title([yAxCell{2}, ': var_{P-Pi} = ',titleStdPI , ', var_{qLPVMPC} = ' ,titleStd
 ylabel(yAxCell{2}); %'y_t [m/s^2]')
 axis tight; grid on;
 
-% Power
+% Generator power
 ax1(3) = subplot(3,1,3);
 plot(timeVecPlot, OutTableTest2Plot.GenPwr, timeVecPlot,OutTableMPCPlot.GenPwr,'-.',timeVecPlot,PGRef,'k:');
 title(['|P_{g,ref}  - P_g| [kW]: var_{P-Pi} = ',titleStdPI_Pwr, ', var_{qLPVMPC} = ' ,...
@@ -185,9 +184,9 @@ axis tight; grid on;
 legend('P-PI','MPC','P_{g,ref}','Location','SouthEast')
 xlabel('time [s]');
 
+% Link axes and set poisition
 linkaxes(ax1,'x')
 set(gcf,'Name', figStr)
-
 posDefault = [520   378   560   420]; %get(gcf, 'position');
 set(gcf, 'position', [posDefault(1:3),posDefault(4)*1.1]);
 

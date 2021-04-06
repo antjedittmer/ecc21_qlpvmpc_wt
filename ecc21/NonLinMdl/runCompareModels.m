@@ -32,7 +32,6 @@ if nargin < 4 || isempty(yAxCell) % Axes labels for figure
     'GenPwr P_g [MW]','Twr_{FA} y_t [m/s^2]'};
 end
 
-
 %% Initialize path and files names
 % The path to figure and input directory is set. The name of the Simulink
 % models for Mdl1 and Mdl2 are provided. The name of the mat file with the
@@ -117,7 +116,7 @@ time = time(idxTime);
 defaultLineWidth = get(groot,'defaultLineLineWidth');
 set(groot,'defaultLineLineWidth',0.5);
 
-% 1st plot
+% 1st figure
 figure(figNo1);
 axPlot(1) = subplot(3,1,1);
 plot(time,vectAmpWind(idxTime),time,OutTableTest1.Wind(idxTime),'--'); 
@@ -141,7 +140,7 @@ set(gcf,'Name',['cmpTimeDomain_Wind',strFig])
 
 print(fullfile(figDir,['cmpTimeDomain_Wind',strFig]), '-dpng');
 
-% 2nd plot
+% 2nd figure
 figure(figNo2)
 axPlot2(1) = subplot(3,1,1);
 plot(time,OutTableTest2.BlPitch1(idxTime),time,OutTable.BlPitch1(idxTime),time,OutTableTest1.BlPitch1(idxTime),'k--'); 
@@ -206,11 +205,10 @@ axis tight; grid on;
 ylabel(yAxCell{5}); %'GenPwr P_g [MW]')
 xlabel('time [s]')
 linkaxes(axPlotAll,'x');
-set(gcf,'Name',['cmpTimeDomain_All',strFig])
 
+set(gcf,'Name',['cmpTimeDomain_All',strFig])
 posDefault = get(gcf, 'position');
 set(gcf, 'position', [posDefault(1:3),posDefault(4)*1.5]);
-
 set(groot,'defaultLineLineWidth',defaultLineWidth);
 
 print(fullfile(figDir,['cmpTimeDomain_All',strFig]), '-dpng');
