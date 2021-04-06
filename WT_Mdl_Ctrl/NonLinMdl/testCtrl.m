@@ -15,20 +15,19 @@ onlyInit = 1;
 dataInPath = fullfile(fileparts(pwd),'dataIn');
 load(fullfile(dataInPath,'OutDataSweep.mat'),'OutTable'); %#ok<NASGU>
 DT = 0.008;
+%initModel5MWNREL;
+initModel5MWNREL;
 
 % if onlyInit == 1
 %     return;
 % end
-
-%initModel5MWNREL;
-initModel5MWNREL;
 
 % set local fst file
 FAST_InputFileName = fullfile(pwd,'inputfiles', 'FAST.fst');
 selectSteadyState = 1; % 0: OpenLoop FAST, 1: PI CL FAST, 2:PI CL Simulink
 
 load('workSpace.mat')
-% load('OutDataSweep.mat','OutData');
+%load('OutDataSweep.mat','OutData');
 load(fullfile(dataInPath,'OutDataWind18NTM.mat'),'OutData');
 % load('OutDataWind11To14NTM.mat','OutData');
 
@@ -116,6 +115,8 @@ idxWind_11to14 = vectAmpWind >= 10 &  15 > vectAmpWind;
 vectAmpWind_11to14 = vectAmpWind(idxWind_11to14);
 time_11to14 = 0:DT: DT*length(vectAmpWind_11to14)-DT;
 
+%initModel5MWNREL;
+%initModel5MWNREL;
 if onlyInit == 1
     return
 end

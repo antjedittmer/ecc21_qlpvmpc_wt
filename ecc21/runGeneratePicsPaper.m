@@ -1,7 +1,7 @@
 %% Script to generate pictures for paper
 clc; clear; close all;
 
-%% Set path to initialization script testCtrl and run it
+%% Set path to initialization script initWorkspace and run it
 addpath('NonLinMdl');
 initWorkspace;
 
@@ -18,7 +18,7 @@ compareLinearModels;
 % mat-files in dataIn folder. 
 
 %Load data if available from previous simulation.
-loadData = 1;
+loadData = 0;
 
 % Run Simulink models in closed loop w baseline controller( Torque controller
 % k-omega-squared, Pitch controller: Gainscheduled Pi)

@@ -28,22 +28,24 @@ load('NREL5MW_CPdata','Rotor_Lamda','Rotor_Pitch','Rotor_cP','Rotor_cQ','Rotor_c
 wecs.Ng = 97; %Gearbox ratio
 wecs.mh = 56780; % hub mass
 wecs.mb = 17740; %kg Mass of each blade
+wecs.mbM = wecs.mb * 0.2; %kg Modal Mass of each blade
 wecs.mn = 240000; % kg Nacellle mass
-wecs.mtower = 347460;%kg Mass of the tower and nacelle
-wecs.mt = 0.25*wecs.mtower + wecs.mn + wecs.mh;% + 3*wecs.mb;
+wecs.mtower = 564880; %347460;% kg Mass of the tower and nacelle
+wecs.mt = 0.25*wecs.mtower + wecs.mn + wecs.mh; % + 3*wecs.mb; M: 438000 %sprintf('%2.3f', 1846000 /(wecs.wnt^2))
+
 wecs.H =  87.6;
 
 wecs.Jrg = 534.116;% * Ng^2; %kg*m^2 Inertia of the generator
-wecs.Jr = 115926 + 3 * 11.776e6 + wecs.Ng^2 * wecs.Jrg; %kg*m^2 Inertia of the rotor (Hub inertia + 3 blades
+wecs.Jr = 115926 + 3 * 11.776e6; % + wecs.Ng^2 * wecs.Jrg; %kg*m^2 Inertia of the rotor (Hub inertia + 3 blades
 
-f0 = 0.324;
+f0 = 0.3263; %0.324;
 f0sw = 0.3120;
-wecs.wnb = 0.6993 * 2*pi; %2.0205; %Natural frequency of blade
+wecs.wnb =  0.7191 * 2*pi; %2.0205; %Natural frequency of blade 0.6993 
 wecs.wnt = f0 * 2*pi; % wecs.wnb; 0.3240
 wecs.wntsw = f0sw * 2*pi; % wecs.wnb; 0.3240
 
 wecs.zetat = 1/100; %damping ratio of tower (Table 6.2)
-wecs.zetab = 0.477465; % damping ratio of blade /100
+wecs.zetab = wecs.zetat; %0.477465/100; % damping ratio of blade /100
 
 % Jr = wecs.Jr; %115926 + 3 * 11.776e6; %kg*m^2 Inertia of the rotor (Hub inertia + 3 blades
 % Jg = wecs.Jrg; % 534.116;% * Ng^2; %kg*m^2 Inertia of the generator
@@ -54,11 +56,12 @@ wecs.zetab = 0.477465; % damping ratio of blade /100
 % wecs.zetab = wecs.wecs.zetab; %0.477465;%damping ratio of blade
 
 wecs.Kt = wecs.wnt^2 * wecs.mt; % Stiffness of the tower s^2 + B/Ms + K/m
-wecs.Bt = 2*wecs.zetat*wecs.wnt*wecs.mt; % Damping of the tower
+wecs.Bt = 2*wecs.zetat*wecs.wnt* wecs.mt; % Damping of the tower : 12842
 wecs.Ktsw = wecs.wntsw^2 * wecs.mt; % Stiffness of the tower s^2 + B/Ms + K/m
 wecs.Btsw = 2*wecs.zetat*wecs.wntsw*wecs.mt; % Damping of the tower
-wecs.Kb = wecs.wnb^2 * wecs.mb; %Stiffness of each blade
-wecs.Bb = 2*wecs.zetab*wecs.wnb * wecs.mb ; %Damping of the blade
+
+wecs.Kb = wecs.wnb^2 * wecs.mbM; %Stiffness of each blade
+wecs.Bb = 2*wecs.zetab * wecs.wnb * wecs.mbM ; %Damping of the blade (342.282) sprintf('%2.3f',Ce(2,2)/(3*wecs.rb^2))
 
 wecs.Ks = 867637000; %Nm/rad Stiffness of the transmission
 wecs.Bs = 6215000;  %Nm/rad/sec        %Damping of the transmission
@@ -69,6 +72,18 @@ wecs.rb = 63;
 rho = 1.225; % Air density (kg/m^3)% Bg = 0.9; % Tg= Bg(wg - wz). Unused because we use Tg as input
 tau = 0.1; %#ok<NASGU> % for pitch actuator
 kappa = 0.01;
+
+useTUDelftParam = 1; %should this be a plus or a min?
+Mfa = 4.38e5; % mt+N*mb: 400680
+Cfa = 2*6421;
+Kfa = 1.846e6;
+
+% mb =(Mfa - mt)/N;
+if useTUDelftParam == 1
+    mt = Mfa;
+    Kt = Kfa;
+    Bt = Cfa; % 2*zetat*wnt *mt
+end
 
 
 M =[wecs.mt+3*wecs.mb  wecs.N*wecs.mb*wecs.rb 0 0; % M(1,1) mt+wecs.N*mb  -> mt (already includes blades)
