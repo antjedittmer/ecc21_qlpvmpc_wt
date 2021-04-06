@@ -1,4 +1,4 @@
-function [wecs, M, Ce, K, Q, L, rho, tau, kappa, lambda, beta, Cq, Ct, Cqdlambda, Cqdbeta, Ctdlambda, Ctdbeta] = initModel5MWNREL(plotOn, Rotor_Lamda, Rotor_Pitch, Rotor_cQ, Rotor_cT, figDir)
+function [wecs, M, Ce, K, Q, L, rho, tau, kappa, lambda, pitch, Cq, Ct ] = initModel5MWNREL(plotOn, Rotor_Lamda, Rotor_Pitch, Rotor_cQ, Rotor_cT, figDir)
 % initModel5MWNREL initializes parameters of NREL 5 MW turbine.
 % Aerodynamic force and thrust LUT can be plotted. 
 % All inputs are optional.
@@ -129,17 +129,11 @@ idxPitch = Rotor_Pitch >= -8;
 idxTSR = Rotor_Lamda < 15;
 
 betaDeg = Rotor_Pitch(idxPitch);
+pitch = betaDeg * pi/180;
 lambda = Rotor_Lamda(idxTSR);
 
 Cq = Rotor_cQ(idxPitch,idxTSR);
 Ct = Rotor_cT(idxPitch,idxTSR);
-
-%% Compute gradients
-beta = betaDeg * pi/180;
-dLambda = mean(diff(lambda));
-dBeta = mean(diff(beta));
-[Cqdlambda,Cqdbeta] = gradient(Cq,dLambda,dBeta);
-[Ctdlambda,Ctdbeta] = gradient(Ct,dLambda,dBeta);
 
 %% Plot aerodynamic torque and force dependent on pitch and tip speed ratio 
 
@@ -147,6 +141,7 @@ dBeta = mean(diff(beta));
 if plotOn
     [Xq,Yq] = meshgrid(lambda,betaDeg);
     
+    % Plot aerodynamic force C_T
     xlabelStr = 'tip speed ratio \lambda [-]';
     ylabelStr = 'pitch angle \beta [deg]';
     zlabelStr = 'Force coefficient C_T [-]';
@@ -161,6 +156,7 @@ if plotOn
     print(gcf,fullfile(figDir,'Ct_NRRLFAST5MW'), '-dpng');
     print(gcf,fullfile(figDir,'Ct_NRRLFAST5MW'), '-depsc');
     
+    % Plot aerodynamic torque C_Q
     zlabelStr = 'Torque coefficient C_Q [-]';
     titleStrData1Interp = ['Aerodynamique ',zlabelStr,' from NREL FAST 5 MW'];
     
