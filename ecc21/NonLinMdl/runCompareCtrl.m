@@ -74,12 +74,12 @@ load(outDataSimulationMat ,'OutTable');
 
 % Load data closed loop simulation PI
 if useFASTForComparison % from FAST
+    OutTableTest2 = OutTable;
+else % from Simulink
     loadBaseline = 1; %always load if available
     matFileOutTableTest2 = fullfile(dataDirOut,['OutTableTest2',strFig,'.mat']);
     simMdlname2 = 'test_SimulinkMdl2_Baseline';
     OutTableTest2 = getSimulationOutputTable(matFileOutTableTest2,loadBaseline,OutTable,simMdlname2);    
-else % from Simulink
-    OutTableTest2 = OutTable;
 end
 
 % Check that SI units are used (can be removed, 

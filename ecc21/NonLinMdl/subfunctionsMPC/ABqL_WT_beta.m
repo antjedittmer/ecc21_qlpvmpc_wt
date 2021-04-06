@@ -61,13 +61,12 @@ dlambdadomega= rb/Vbar;
 dlambdadV = - omegabar*rb/Vbar^2;
 
 %% Grid points
-Cqb = interp2(lambdaVec,pitchVec,cQ,Lambda_bar,beta_bar); %,'spline');
-dCqdlambdab = interp2(lambdaVec,pitchVec,Cqdlambda,Lambda_bar,beta_bar);%,'spline');
-dCqdbetab = interp2(lambdaVec,pitchVec,Cqdbeta,Lambda_bar,beta_bar); %'spline');
-
+Cqb = interp2(lambdaVec,pitchVec,cQ,Lambda_bar,beta_bar); 
+dCqdlambdab = interp2(lambdaVec,pitchVec,Cqdlambda,Lambda_bar,beta_bar);
+dCqdbetab = interp2(lambdaVec,pitchVec,Cqdbeta,Lambda_bar,beta_bar); 
 %% Tr=0.5*pi*rb^3*Cq*v^2
 dTrdomega = 0.5*rho*pi*rb^3*(dCqdlambdab*dlambdadomega)*Vbar^2;% br = dTr/domega
-dTrdbeta = 0.5*rho*pi*rb^3*dCqdbetab*Vbar^2;%Krb = dTr/dbeta
+dTrdbeta = 0.5*rho*pi*rb^3*dCqdbetab*Vbar^2;% Krb = dTr/dbeta
 dTrdV =  2*0.5*rho*pi*rb^3*Vbar*Cqb + ...
     0.5*rho*pi*rb^3*Vbar^2*dCqdlambdab*dlambdadV;
 
@@ -77,7 +76,7 @@ dTrdV =  2*0.5*rho*pi*rb^3*Vbar*Cqb + ...
 % x = [ThetaS, OmegaR, OmegaG, Tg, beta,]
 Atemp = [[0,1,-1,0] ;
     [-Ks/Jr, (-Bs + dTrdomega)/Jr, Bs/Jr,0];
-    Ks/Jgr, Bs/Jgr, -Bs/Jgr, - Ng/Jgr; %0.37*Ng/Jgr;
+    Ks/Jgr, Bs/Jgr, -Bs/Jgr, - Ng/Jgr; 
     zeros(1,3), -1/tau_g];
 
 %% Create input matrix B
