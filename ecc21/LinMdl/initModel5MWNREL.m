@@ -88,7 +88,7 @@ wecs.Kt = wecs.wnt^2 * wecs.mt; % Stiffness of the tower s^2 + B/Ms + K/m
 wecs.Bt = 2 * wecs.zetat * wecs.wnt *wecs.mt; % tower 2*6421;
 
 wecs.Kb = wecs.wnb^2 * wecs.mb; %Stiffness of each blade
-wecs.Bb = 2 * wecs.zetab*wecs.wnb *wecs.mb; %Damping of the blade
+wecs.Bb = 2 * wecs.zetab* wecs.wnb *wecs.mb; %Damping of the blade
 wecs.Ks = 867637000; %Nm/rad Stiffness of the transmission
 % 2*zeta*wn = B
 wecs.Bs = 6215000;  %Nm/rad/sec %Damping of the transmission
