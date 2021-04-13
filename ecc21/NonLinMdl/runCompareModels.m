@@ -73,7 +73,7 @@ end
 %% Load data from FAST run
 % Load FASTtool simulation data from dataIn folder.
 
-load(outDataSimulationMat ,'OutTable');%
+load(outDataSimulationMat ,'OutTable');
 
 % Assign data from FAST to variables
 idxTime = 1: height(OutTable);

@@ -172,14 +172,14 @@ for index =  speedVec
     dlambdadV = - omegabar*wecs.rb/Vbar^2; %Vbar = Ve = V-ydot
     dlambdadydotfa = omegabar*wecs.rb/Vbar^2; %s/m   xdotfa m/s
        
-    %% Ft = 0.5*pi*rb^2*Ct*v^2       
+    %% Ft = 0.5*rho*pi*rb^2*Ct*v^2       
     kCT = 0.5*rho*pi*wecs.rb^2; % constant for CT: 0.5*rho*A
     dFtdomega = kCT *dCtdlambdab*dlambdadomega*Vbar^2;
     dFtdV = kCT * Vbar * (dCtdlambdab*dlambdadV*Vbar + 2*Ctb);
     dFtdydotfa = kCT * Vbar *(dCtdlambdab*dlambdadydotfa*Vbar - 2*Ctb);
     dFtdbeta = kCT*dCtdbetab*Vbar^2;
     
-    %% Tr = 0.5*pi*rb^3*Cq*v^2
+    %% Tr = 0.5*rho*pi*rb^3*Cq*v^2
     kCQ = kCT*wecs.rb;
     dTrdomega = kCQ *dCqdlambdab*dlambdadomega*Vbar^2;
     dTrdV = kCQ *Vbar *(dCqdlambdab*dlambdadV*Vbar + 2*Cqb);
@@ -211,10 +211,10 @@ for index =  speedVec
     B12 = 1/wecs.Jr * dTrdbeta;
     B13 = 1/wecs.Jr * dTrdV;
     
-    B22 = 1/wecs.mt *dFtdbeta;
-    B23 = 1/wecs.mt *dFtdV;
+    B22 = 1/wecs.mt * dFtdbeta;
+    B23 = 1/wecs.mt * dFtdV;
     
-    %B31 = 0; % wecs.Ng/wecs.mt *3/(2*wecs.H);
+    % B31 = 0; % wecs.Ng/wecs.mt *3/(2*wecs.H);
     B32 = ksw/wecs.mt * dTrdbeta;
     B33 = ksw/wecs.mt * dTrdV;
     
