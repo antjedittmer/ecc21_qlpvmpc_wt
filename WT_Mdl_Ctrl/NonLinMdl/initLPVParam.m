@@ -24,8 +24,8 @@ if nargin < 4 || isempty(OutList)
 end
 
 if nargin < 5 || isempty(OutTable)
-    load('OutDataSweep.mat','OutData');
-    OutTable = array2table(OutData,'VariableNames', OutList);
+    % Orig code: load('OutDataSweep.mat','OutData'); OutTable = array2table(OutData,'VariableNames', OutList);
+    load('OutDataSweep.mat','OutTable'); %OutTable = array2table(OutData,'VariableNames', OutList);
 end
 v0 = OutTable.Wind1VelX(1);
 

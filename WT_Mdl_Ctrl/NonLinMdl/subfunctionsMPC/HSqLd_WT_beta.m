@@ -16,6 +16,8 @@ function [L,S,H,g] = HSqLd_WT_beta(N,q,R_,p,xk,Xk,DT,ref,us,lambdaVec,pitchVec,c
 %          * g: Derivative dJk/dUk: g = 2*S'*Q*(L*xk-ref) - 2*(R_*Usp);
 
 % Pablo S.G. Cisneros, Herbert Werner, ICS TUHH
+% modified for WECS simulation: Antje Dittmer
+
 nx = length(xk);  
 ni = 2; %;
 
