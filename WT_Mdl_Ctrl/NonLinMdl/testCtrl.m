@@ -9,7 +9,7 @@ addpath(dataInPath);
 addpath(fullfile(pwd,'dataOut'));
 addpath(genpath('C:\Projects\FASTTool'));
 addpath('subfunctionsMPC')
-addpath('MDlWECS')
+addpath('WECSMDl')
 addpath('WECSCtrl')
 onlyInit = 1;
 dataInPath = fullfile(fileparts(pwd),'dataIn');
@@ -17,16 +17,16 @@ load(fullfile(dataInPath,'OutDataSweep.mat'),'OutTable'); %#ok<NASGU>
 DT = 0.008;
 
 [wecs, M, Ce, K, Q, L, rho, tau, kappa, lambda, pitch, Cq, Ct ] = initModel5MWNREL;
-% set local fst file
-FAST_InputFileName = fullfile(pwd,'inputfiles', 'FAST.fst');
+
 selectSteadyState = 1; % 0: OpenLoop FAST, 1: PI CL FAST, 2:PI CL Simulink
 
-load('workSpace.mat')
+%load('workSpace.mat')
 load(fullfile(dataInPath,'OutDataSweep.mat'), 'OutTable');
 % load(fullfile(dataInPath,'OutDataWind18NTM.mat'),'OutData');
 % load('OutDataWind11To14NTM.mat','OutData');
 
 %OutTable = array2table(OutData,'VariableNames', OutList);
+OutList = OutTable.Properties.VariableNames;
 idxWind = contains(OutList, 'Wind');
 vectWind = OutTable{:,idxWind};
 vectAmpWind = sqrt(sum((vectWind.^2),2));
@@ -37,7 +37,11 @@ OutTable.Wind1VelX = vectAmpWind;
 % LUT_omega = Lin_points.RSpeed; %[0.4815, 0.6017,0.7217,0.8413,0.9603,1.0786,1.1949, repmat(1.2671,1,15)]; %Lin_points.RSpeed
 % LUT_beta =  Lin_points.Pitch; % [zeros(1,8), 0.0642    0.1126    0.1493    0.1808    0.2093    0.2356    0.2602...    0.2833    0.3054    0.3269    0.3477    0.3676    0.3868    0.4056];
 % LUT_torque = Lin_points.Torque; [5.0870    7.9450   11.4300   15.5300   20.2400   25.5200   31.3500  ,repmat(43.0900,1,15)];
-load(fullfile(dataInPath,'Lin_points_PICL.mat'),'Lin_points');
+
+% set local fst file
+% FAST_InputFileName = fullfile(pwd,'inputfiles', 'FAST.fst');
+% load(fullfile(dataInPath,'Lin_points_PICL.mat'),'Lin_points');
+
 if onlyInit == 1
     return
 end

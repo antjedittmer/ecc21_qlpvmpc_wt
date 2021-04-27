@@ -1,7 +1,7 @@
 
 %% Add all relevant paths
 
-% Matlab functions 
+% Matlab functions
 addpath('subfunctions');
 
 mainDir = fullfile(pwd);
@@ -40,7 +40,8 @@ else
     testCaseStr = 'Wind, mean 18 m/s';
 end
 matFileOutTableTest1 = fullfile(dataDirOut,['OutTableTest1',strFig,'.mat']);
-load(matFileOutTableTest1,'OutTableTest1');
+load(matFileOutTableTest1,'OutTableTest1NTW18');
+OutTableTest1=  OutTableTest1NTW18;
 
 load('OutDataTestCLNTW18_NoFilt_Simulink_beta_steadyStateCLSim.mat','OutDataTestOL','q_','r_','p');
 figStr = 'RefSimulinkClosedLoopNTW18_beta';

@@ -1,7 +1,7 @@
 clc; clear; bdclose;
 
 % Add Paths for simulation
-addpath('MdlWECS');
+addpath('WECSMdl');
 addpath('subfunctions');
 addpath('subfunctionsMPC');
 
@@ -9,13 +9,15 @@ addpath('subfunctionsMPC');
 testCtrl;
 load(fullfile(dataInPath,'OutDataWind18NTM.mat'),'OutData','OutTable');
 
+loadMat = 0;
+
 onIPC = 0;
 switchIPC = 1;
 initDLRparameter(onIPC,switchIPC);
 [sysd,x0,uoff,xoff,yoff] = initLPVParam;
 
 %% Get the baseline values with PI CPC
-if exist('OutTableWeightsOrig.mat','file') == 2
+if loadMat && exist('OutTableWeightsOrig.mat','file') == 2
     load('OutTableWeightsOrig.mat','W','K','ref','weightVec')
 else
     sim('test_SimulinkMdl3LPV_IPCa');
@@ -34,16 +36,16 @@ switchIPC = 1;
 initDLRparameter(onIPC,switchIPC);
 
 % IPC optimization with X
-if exist('X.mat','file') == 2
+if loadMat && exist('X.mat','file') == 2
     load('X','X')
 else
     x0Ctrl  = zeros(1,3);
-    X = fminsearch(@(xCtrl) runSimIPC(x0Ctrl,ref,OutList),x0Ctrl);
+    X = fminsearch(@(xCtrl) runSimIPC(xCtrl,ref,OutList),x0Ctrl);
     save('X','X');
 end
 [WIPC,KIPC,refOPC,OutTableIPC] = runSimIPC(X,ref,OutList,weightVec);
 
-if exist('xSim.mat','file') == 2
+if loadMat && exist('xSim.mat','file') == 2
     load('xSim','xSim');
 else
     options = optimoptions('simulannealbnd','PlotFcns',...
@@ -56,7 +58,8 @@ end
 
 weightVec = [1,1,1,1,100];
 [W,K,ref100Tower,weightVec100Tower] = getEvalCriteria(OutTableCPC,[],weightVec);
- X100 = fminsearch(@(xCtrl) runSimIPC(x0Ctrl,ref100Tower,OutList,weightVec100Tower),x0Ctrl);
+x0Ctrl  = zeros(1,3);
+X100 = fminsearch(@(xCtrl) runSimIPC(x0Ctrl,ref100Tower,OutList,weightVec100Tower),x0Ctrl);
  
 strNewCtrl = 'IPC_{SimAnn}';
 plotTimeseriesCtrlComparison([], OutTableCPC,OutTableIPC,OutTableIPCSimAn,strNewCtrl)
