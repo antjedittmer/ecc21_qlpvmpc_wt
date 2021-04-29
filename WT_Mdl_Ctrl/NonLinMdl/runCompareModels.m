@@ -90,6 +90,9 @@ vectAmpWind = sqrt(sum((vectWind.^2),2));
 
 % Names of simulation output in order of Simulink bus
 varnames = {'Wind', 'RotSpeed', 'GenPwr', 'GenTq', 'BlPitch1', 'NcIMUTAxs', 'NcIMUTAys'}; 
+% varnames = {'Wind', 'RotSpeed', 'GenPwr', 'GenTq', 'BlPitch1','BlPitch2', 'BlPitch3',...
+%     'NcIMUTAxs', 'NcIMUTAys'}; 
+
 
 % Run simulation for two models or load mat files if available
 matFileOutTableTest1 = fullfile(dataDirOut,['OutTableTest1',strFig,'.mat']);

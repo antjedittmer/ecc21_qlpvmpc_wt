@@ -78,14 +78,17 @@ wecs.H =  87.6;
 wecs.Jg = 534.116; %  kg*m^2; Inertia of the generator
 wecs.Jr = 115926 + 3 * 11.776e6; % kg*m^2; Inertia of the rotor (Hub inertia + 3 blades)
 f0 = 0.324; % Hz, First natural tower fore-aft frequency
-% f0sw = 0.3120; % First natural tower sidewards frequency
+f0sw = 0.3120; % First natural tower sidewards frequency
 wecs.wnb = 0.6993 * 2*pi; % rad/s First natural blade frequency 
 wecs.wnt = f0 * 2*pi; % wecs.wnb; 0.3240
+wecs.wntsw = f0sw * 2*pi; % wecs.wnb; 0.3240
 wecs.zetat = 1/100; %damping ratio of tower (Table 6.2)
 wecs.zetab = 0.477465/100;% damping ratio of blade
 
 wecs.Kt = wecs.wnt^2 * wecs.mt; % Stiffness of the tower s^2 + B/Ms + K/m
 wecs.Bt = 2 * wecs.zetat * wecs.wnt *wecs.mt; % tower 2*6421;
+wecs.Ktsw = wecs.wnt^2 * wecs.mt; % Stiffness of the tower s^2 + B/Ms + K/m
+wecs.Btsw = 2 * wecs.zetat * wecs.wnt *wecs.mt; % tower 2*6421;
 
 wecs.Kb = wecs.wnb^2 * wecs.mb; %Stiffness of each blade
 wecs.Bb = 2 * wecs.zetab* wecs.wnb *wecs.mb; %Damping of the blade
