@@ -63,9 +63,7 @@ dDataSectCtrlObj = getSection(myDictionaryCtrlObj,'Design Data');
 controlCtrlObj = getEntry(dDataSectCtrlObj,'Control');
 controlValue = getValue(controlCtrlObj);
 
-currentOutTableTestCell = cell(nRate,1); % cell with
-tictoc_LPVMPCcell = cell(nRate,1);
-GenPwrRefCell= cell(nRate,1);
+currentOutTablePICell = cell(nRate,1); % cell with
 
 simMdlname = 'test_SimulinkMdl2_Baseline';
 
@@ -79,6 +77,14 @@ for idx = 1: nRate
     matFileOutTableTest1 = fullfile(dataDirOut,...
         sprintf('OutTableTest_rate%02d_PI.mat',maxRate));
     
-    [currentOutTableTestCell{idx}, tictoc_LPVMPCcell{idx},GenPwrRefCell{idx}] = ...
+    currentOutTablePICell{idx} = ...
         getSimulationOutputTable(matFileOutTableTest1,loadData,OutTable,simMdlname);
 end
+
+% Plot qLmpc result
+OutTable4 = currentOutTablePICell{1};
+OutTable4.Time = OutTable.Time(1:height(OutTable4));
+testCaseStr =  'PI CPC Rate Constraints [deg/s]';
+testCaseCell = {'standard (8) ','high (13) ', 'low (4) ',};
+plotOutTable(OutTable4,currentOutTablePICell{5},currentOutTablePICell{end},...
+   testCaseStr,testCaseCell);
