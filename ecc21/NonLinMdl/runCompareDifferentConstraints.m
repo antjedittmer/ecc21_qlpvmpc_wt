@@ -85,6 +85,8 @@ end
 OutTable4 = currentOutTablePICell{1};
 OutTable4.Time = OutTable.Time(1:height(OutTable4));
 testCaseStr =  'PI CPC Rate Constraints [deg/s]';
-testCaseCell = {'standard (8) ','high (13) ', 'low (4) ',};
+figNo2 = 2;
+figDir = '';
+strFig = 'testConstrPI';
 plotOutTable(OutTable4,currentOutTablePICell{5},currentOutTablePICell{end},...
-   testCaseStr,testCaseCell);
+   testCaseStr,testCaseCell, figNo2,figDir,strFig)

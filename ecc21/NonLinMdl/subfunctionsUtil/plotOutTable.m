@@ -1,15 +1,35 @@
-function plotOutTable(OutTable,OutTableTest1,OutTableTest2,testCaseStr, testCaseCell)
+function plotOutTable(OutTable,OutTableTest1,OutTableTest2,testCaseStr, testCaseCell, figNo2,figDir,strFig)
 
+
+%% Set parameters and missing inputs
 yAxCell = {'wind V [m/s]', 'GenTq T_g [kNm]', 'Pitch \beta [°]', 'RotSpd \omega_r [rpm]',...
     'GenPwr P_g [MW]','Twr_{FA} y_t [m/s^2]'};
+
 if nargin < 5 || isempty(testCaseCell)
-    testCaseCell = {'Mdl1: Rot+Twr ', 'Mdl2: Rot,Twr,Bld+Act ','FAST'}
+    testCaseCell = {'Mdl1: Rot+Twr ', 'Mdl2: Rot,Twr,Bld+Act ','FAST'};
 end
 
-figNo2 = 1;
-strFig = 'testConstr';
+if nargin < 6 || isempty(figNo2)
+    figNo2 = 1;
+end
+
+if nargin<7 || isempty(figDir)
+    % Set path  of default figure directory
+    workDir = fileparts(mfilename('fullpath'));
+    mainDir = fileparts(workDir);
+    figDir = fullfile(mainDir,'figDir');
+end
+if ~isfolder(figDir)
+    mkdir(figDir)
+end
+
+if nargin<8 || isempty(strFig)
+    strFig = 'testConstr';
+end
 % Assign data from FAST to variables
-idxTime = 1: height(OutTable);
+
+%% Handle different variable names
+idxTime = 1: min([height(OutTable), height(OutTableTest1),height(OutTableTest2)]);
 OutTable = OutTable(idxTime,:);
 OutTable.BldPitch1 = OutTable.BlPitch1;
 OutTable.Torque = OutTable.GenTq;
@@ -29,13 +49,12 @@ titleStr = [testCaseStr,': ',testCaseCell{1},'{\color[rgb]{',num2str(cl(1,:)),'}
     '\color[rgb]{',num2str(cl(2,:)),'}',testCaseCell{3},'}'];
 
 % Create output plot time reference
-idxTime = 1: min([length(idxTime), height(OutTableTest1),height(OutTableTest2)]);
 time = OutTable.Time(idxTime);
 idxTime = time > 15;
 time = time(idxTime);
 
 
-figure(figNo2+1)
+figure(figNo2)
 axPlotAll(1) = subplot(6,1,1);
 plot(time,vectAmpWind(idxTime),time,OutTableTest1.Wind(idxTime),'--'); 
 axis tight; grid on;
@@ -75,9 +94,9 @@ xlabel('time [s]')
 linkaxes(axPlotAll,'x');
 
 set(gcf,'Name',['cmpTimeDomain_All',strFig])
-posDefault = get(gcf, 'position');
-% set(gcf, 'position', [posDefault(1:3),posDefault(4)*1.5]);
+posDefault = [520   378   560   420]; %get(gcf, 'position');
+set(gcf, 'position', [posDefault(1:3),posDefault(4)*1.5]);
 % set(groot,'defaultLineLineWidth',defaultLineWidth);
 % 
-% print(fullfile(figDir,['cmpTimeDomain_All',strFig]), '-dpng');
-% print(fullfile(figDir,['cmpTimeDomain_All',strFig]), '-depsc');
+print(fullfile(figDir,['cmpTimeDomain_All',strFig]), '-dpng');
+print(fullfile(figDir,['cmpTimeDomain_All',strFig]), '-depsc');
