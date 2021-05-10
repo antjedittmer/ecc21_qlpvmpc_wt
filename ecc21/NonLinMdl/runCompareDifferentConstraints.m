@@ -1,0 +1,84 @@
+clc;
+initWorkspace;
+
+
+%% Set path and parameter names
+simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta'; 
+outDataSimulationMat = 'OutDataWind18NTW.mat';
+loadData = 1;
+
+% Set path to data output directory
+workDir = fileparts(mfilename('fullpath'));
+dataDirOut = fullfile(workDir, 'dataOut');
+if ~isfolder(dataDirOut)
+    mkdir(dataDirOut)
+end
+
+%% Get Data Directory value of pitch actuator rate
+DDName = 'DD_MdlCtrl_qLPVMPC.sldd';
+myDictionaryObj = Simulink.data.dictionary.open(DDName);
+dDataSectObj = getSection(myDictionaryObj,'Design Data');
+controlObj = getEntry(dDataSectObj,'Control');
+controlValue = getValue(controlObj);
+
+%% Set vector which pitch rate constraints to be test
+maxRateVector = 4:13;
+
+%% Loop over pitch rate constraint vector: 
+nRate = length(maxRateVector);
+currentOutTableTestCell = cell(nRate,1); % cell with
+tictoc_LPVMPCcell = cell(nRate,1);
+GenPwrRefCell= cell(nRate,1);
+
+simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta'; 
+
+
+for idx = 1: nRate
+    maxRate = maxRateVector(idx);
+    controlValue.Pitch.Maxrate = maxRate;
+    controlValue.Pitch.Minrate = - maxRate;
+    setValue(controlObj,controlValue);
+    saveChanges(myDictionaryObj)
+    
+    matFileOutTableTest1 = fullfile(dataDirOut,...
+        sprintf('OutTableTest_rate%02d_MPC.mat',maxRate));
+    
+    [currentOutTableTestCell{idx}, tictoc_LPVMPCcell{idx},GenPwrRefCell{idx}] = ...
+        getSimulationOutputTable(matFileOutTableTest1,loadData,OutTable,simMdlname);
+end
+
+% Plot qLmpc result
+OutTable4 = currentOutTableTestCell{1};
+OutTable4.Time = OutTable.Time(1:height(OutTable4));
+testCaseStr =  'qLMPC CPC Rate Constraints [deg/s]';
+testCaseCell = {'standard (8) ','high (13) ', 'low (4) ',};
+plotOutTable(OutTable4,currentOutTableTestCell{5},currentOutTableTestCell{end},...
+   testCaseStr,testCaseCell);
+
+
+%% Get Data Directory value of pitch actuator rate
+DDNameCtrl = 'DD_CtrlBaseline.sldd';
+myDictionaryCtrlObj = Simulink.data.dictionary.open(DDNameCtrl);
+dDataSectCtrlObj = getSection(myDictionaryCtrlObj,'Design Data');
+controlCtrlObj = getEntry(dDataSectCtrlObj,'Control');
+controlValue = getValue(controlCtrlObj);
+
+currentOutTableTestCell = cell(nRate,1); % cell with
+tictoc_LPVMPCcell = cell(nRate,1);
+GenPwrRefCell= cell(nRate,1);
+
+simMdlname = 'test_SimulinkMdl2_Baseline';
+
+for idx = 1: nRate
+    maxRate = maxRateVector(idx);
+    controlValue.Pitch.Maxrate = maxRate;
+    controlValue.Pitch.Minrate = - maxRate;
+    setValue(controlCtrlObj,controlValue);
+    saveChanges(myDictionaryCtrlObj)
+        
+    matFileOutTableTest1 = fullfile(dataDirOut,...
+        sprintf('OutTableTest_rate%02d_PI.mat',maxRate));
+    
+    [currentOutTableTestCell{idx}, tictoc_LPVMPCcell{idx},GenPwrRefCell{idx}] = ...
+        getSimulationOutputTable(matFileOutTableTest1,loadData,OutTable,simMdlname);
+end
