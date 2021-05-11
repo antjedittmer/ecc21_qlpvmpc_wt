@@ -1,4 +1,4 @@
-function [sysd,x0,uoff,xoff,yoff] = initLPVParam(DT,tmpLinStr,OutList,OutTable)
+function [sysd,x0,uoff,xoff,yoff, OutList] = initLPVParam(DT,tmpLinStr,OutList,OutTable)
 %addpath(fullfile(fileparts(pwd),'dataIn'));
 % initModel5MWNREL;
 % load('workSpace.mat')
