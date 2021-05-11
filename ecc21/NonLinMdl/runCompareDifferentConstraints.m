@@ -90,3 +90,39 @@ figDir = '';
 strFig = 'testConstrPI';
 plotOutTable(OutTable4,currentOutTablePICell{5},currentOutTablePICell{end},...
    testCaseStr,testCaseCell, figNo2,figDir,strFig)
+
+%% Extract signals from table
+idxT = 60/DT:height(currentOutTablePICell{1});
+matrixPitchPI = cell2mat(cellfun(@(x) x.BlPitch1(idxT)', currentOutTablePICell, 'UniformOutput',false));
+matrixPitchQLMPC = cell2mat(cellfun(@(x) x.BlPitch1(idxT)', currentOutTableTestCell, 'UniformOutput',false));
+matrixTwrPI = cell2mat(cellfun(@(x) x.NcIMUTAxs(idxT)', currentOutTablePICell, 'UniformOutput',false));
+matrixTwrQLMPC = cell2mat(cellfun(@(x) x.NcIMUTAxs(idxT)', currentOutTableTestCell, 'UniformOutput',false));
+
+diffPitchPI = diff(matrixPitchPI');
+diffPitchQLMPC = diff(matrixPitchQLMPC');
+
+stdDiffPitchPI = std(abs(diff(matrixPitchPI')))*180/pi;
+stdDiffPitchQLMPC = std(abs(diff(matrixPitchqLMPC')))*180/pi;
+stdTowerPI = std(abs(matrixTwrPI'));
+stdTowerQLMPC = std(abs(matrixTwrQLMPC'));
+
+
+figure; 
+subplot(2,1,1);
+plot(maxRateVector,stdDiffPitchPI,'*-',...
+    maxRateVector,stdDiffPitchQLMPC,'o-');
+legend('PI','qLMPC');
+axis tight; grid on;
+ylabel('std_{\Delta Pitch} [deg/s]');
+subplot(2,1,2);
+plot(maxRateVector,stdTowerPI,'*-',...
+    maxRateVector,stdTowerQLMPC,'o-');
+axis tight; grid on;
+ylabel('std_{\Delta Pitch} [deg/s]');
+xlabel('std_{TwrFA} [m/s^2]');
+figure;
+plot(stdDiffPitchPI,stdTowerPI,'*-',...
+stdDiffPitchQLMPC,stdTowerQLMPC,'o-');
+
+
+
