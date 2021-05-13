@@ -22,7 +22,7 @@ selectSteadyState = 1; % 0: OpenLoop FAST, 1: PI CL FAST, 2:PI CL Simulink
 
 %load('workSpace.mat')
 load(fullfile(dataInPath,'OutDataSweep.mat'), 'OutTable');
-% load(fullfile(dataInPath,'OutDataWind18NTM.mat'),'OutData');
+load(fullfile(dataInPath,'OutDataWind18NTM.mat'),'OutData');
 % load('OutDataWind11To14NTM.mat','OutData');
 
 %OutTable = array2table(OutData,'VariableNames', OutList);

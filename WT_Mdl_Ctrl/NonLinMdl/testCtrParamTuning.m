@@ -9,7 +9,7 @@ addpath('subfunctionsMPC');
 testCtrl;
 load(fullfile(dataInPath,'OutDataWind18NTM.mat'),'OutData','OutTable');
 
-loadMat = 0;
+loadMat = 1;
 
 onIPC = 0;
 switchIPC = 1;

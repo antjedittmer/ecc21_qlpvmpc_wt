@@ -41,41 +41,41 @@ end
 %C_damageBlades calculated via Rainflow count w flap. blade RootMyb signals
 % Antje ToDo Using flapping moments only: Also edgewise(x) and pitch (z)?
 % Antje ToDo: Transform from rotating into fixed reference system?
- if isFAST
-idxRootMyb = contains(varNames,'RootMyb') | contains(varNames,'RootMFlp');
-if any(idxRootMyb)
-    m = 10;
-    damageBlades = nan( 1,lenComparison);
-    for idx = 1: lenComparison
-        damageBlades(idx) = calculateDamageBlades(cellOfTable{idx}(idxTime,:),m,idxRootMyb);
+if isFAST
+    idxRootMyb = contains(varNames,'RootMyb') | contains(varNames,'RootMFlp');
+    if any(idxRootMyb)
+        m = 10;
+        damageBlades = nan( 1,lenComparison);
+        for idx = 1: lenComparison
+            damageBlades(idx) = calculateDamageBlades(cellOfTable{idx}(idxTime,:),m,idxRootMyb);
+        end
     end
-end
-
- else
+    
+else
     damageBlades = nan( 1,lenComparison);
     for idx = 1: lenComparison
         damageBlades(idx) = std(cellOfTable{idx}.zeta_dotdot(idxTime,:));
     end
- end
+end
 
 % C_damageTower calculated via Rainflow count with tower base moments
- if isFAST
-idxTowerM = contains(varNames,'TwrBsM');
-if any(idxTowerM) % Antje ToDo What to use for offshore/floating wind turbines?
-    m = 4;
-    damageTower = nan( 1,lenComparison);
-    for idx = 1: lenComparison
-        damageTower(idx) = calculateDamageBlades(cellOfTable{idx}(idxTime,:),m,idxTowerM);
+if isFAST
+    idxTowerM = contains(varNames,'TwrBsM');
+    if any(idxTowerM) % Antje ToDo What to use for offshore/floating wind turbines?
+        m = 4;
+        damageTower = nan( 1,lenComparison);
+        for idx = 1: lenComparison
+            damageTower(idx) = calculateDamageBlades(cellOfTable{idx}(idxTime,:),m,idxTowerM);
+        end
+    else
+        damageTower = nan(size(damageBlades));
     end
 else
-    damageTower = nan(size(damageBlades));
-end
- else
     damageTower = nan( 1,lenComparison);
     for idx = 1: lenComparison
         damageTower(idx) = std(cellOfTable{idx}.NcIMUTAxs(idxTime,:));
     end
- end
+end
 
 % C_actuator is the magnitude of the power consumed by the actuators
 idxBlPitchC = contains(varNames,'BlPitch');
@@ -115,7 +115,7 @@ strMeanGenPwr = sprintf('%2.3f, ', meanGenPwr);
 strKpowerabs = sprintf('%2.3f, ', K_GenPwr);
 %strStdGenSpeed = sprintf('%2.3f, ', stdGenSpeed);
 
-strKpower = sprintf('%2.3f, ', K_GenPwr/max(K_GenPwr));
+strKpower = sprintf('%2.3f, ', K_GenPwr/K_GenPwr(1));
 strKStdGenSpeed = sprintf('%2.3f, ',K_stdGenSpeed);
 strKStdPowSpeed = sprintf('%2.3f, ',K_stdGenPwr);
 strKActPwr = sprintf('%2.3f, ',K_ActPwr);
