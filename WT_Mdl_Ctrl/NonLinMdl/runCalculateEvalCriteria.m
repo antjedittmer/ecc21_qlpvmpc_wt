@@ -6,7 +6,8 @@ addpath('subfunctions');
 
 mainDir = fullfile(pwd);
 addpath(fullfile(fileparts(pwd),'dataIn'));
-addpath(fullfile(pwd,'dataOut'));
+dataDirOut = 'dataOut1';
+
 
 % Set path to figure directory
 %figDir = fullfile(mainDir,'html','figDir');
@@ -17,11 +18,10 @@ end
 
 % Set path to data output directory
 %loadData = 1; %load simulation output data if available;
-dataDirOut = 'dataOut';
 if ~isfolder(dataDirOut)
     mkdir(dataDirOut)
 end
-
+addpath(fullfile(pwd,dataDirOut));
 
 % Load data closed loop simulation PI
 DT = 0.008;
@@ -49,13 +49,28 @@ k_pitch = 1;
 
 maxTime = min(height(OutTableTest1),length(OutDataTestOL));
 
-DT = 0.008;
 timeVec = 0:DT: maxTime*DT - DT;
 OutTableTest1.Time = timeVec';
 OutTableTestCL.Time = timeVec';
 
 cellOfTable{1} = OutTable; %Test1;
 cellOfTable{2} = OutTable; %Test1; %OutTableTestCL;
-calculateEvalCriteria(cellOfTable)
+
+tmp = load('cellOfTable');
+x = load('OutTableTest_rate13_IPC.mat');
+load('OutTableTest_rate08_PI.mat','OutTableTest_rate08_PI');
+load('OutTableTest_rate01_MPC.mat','OutTableTest_rate01_MPC');
+load('OutTableTest_rate13_MPC.mat','OutTableTest_rate13_MPC');
+
+cellOfTable4{1} = cellOfTable{1};
+cellOfTable4{2} = cellOfTable{3};
+strCell = {'PI-CPC','PI-IPC'}; %,'MPC, 13deg/s','MPC, 1deg/s'};
+calculateEvalCriteria(cellOfTable4,strCell)
+
+OutTable4 = OutTableTest_rate08_PI;
+OutTable4.Time = cellOfTable{1}.Time(1:height(OutTable4));
+
+cellOfTable5{1} = OutTableTest_rate08_PI{1};
+cellOfTable5{2} = cellOfTable{3};
 
 

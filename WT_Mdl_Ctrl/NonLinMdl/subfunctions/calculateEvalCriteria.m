@@ -1,14 +1,18 @@
-function calculateEvalCriteria(cellOfTable,summaryTickLabel)
+function [K_matrix, strK] = calculateEvalCriteria(cellOfTable,summaryTickLabel)
 % calculate evaluation criteria for controllers
 
 % epected variablenames: GenPwr,GenSpeed,TwrBsM,BlPitchC
 outTable1 = cellOfTable{1};
 lenComparison = length(cellOfTable);
 % Get quantitative criteria for controller evaluation
-idxTime = outTable1.Time > 15; % 10 : height(outTable1); %;  %
+idxTime = outTable1.Time > 60; % 10 : height(outTable1); %;  %
 varNames = outTable1.Properties.VariableNames;
 
-isFAST = any(contains(varNames,'GenSpeed'));
+isFAST = nan(lenComparison,1);
+for idx = 1: lenComparison
+    varNames = cellOfTable{idx}.Properties.VariableNames;
+isFAST(idx) = any(contains(varNames,'GenSpeed'));
+end
 
 if nargin <2
     summaryTickLabel = {'CPC', 'IPC_{fminsearch}','IPC_{SimAnn}'};
@@ -32,11 +36,11 @@ end
 %Get std generator speed power
 
 stdGenSpeed = nan( 1,lenComparison);
-if isFAST
-for idx = 1: lenComparison
-    stdGenSpeed(idx) = std(cellOfTable{idx}.GenSpeed(idxTime));
-end
-end
+% if isFAST
+% for idx = 1: lenComparison
+%     stdGenSpeed(idx) = std(cellOfTable{idx}.GenSpeed(idxTime));
+% end
+% end
 
 %C_damageBlades calculated via Rainflow count w flap. blade RootMyb signals
 % Antje ToDo Using flapping moments only: Also edgewise(x) and pitch (z)?
@@ -82,16 +86,22 @@ idxBlPitchC = contains(varNames,'BlPitch');
  %flapwise moment (i.e., the moment caused by flapwise forces) at the blade root
 % AD ToDo: Should this be in blade/rotating frame or fixed? Definition P_{act,ref} = P_{act,0} 
 meanActPwr = nan( 1,lenComparison);
- if isFAST
-for idx = 1: lenComparison
-      meanActPwr(idx) = ...
-          mean(mean(abs(diff(cellOfTable{idx}{idxTime,idxBlPitchC}).*cellOfTable{idx}{idxTime,idxRootMyb}(1:end-1,:))));
-end
- else
-     for idx = 1: lenComparison
-      meanActPwr(idx) = ...
-          mean(abs(diff(cellOfTable{idx}{idxTime,idxBlPitchC})));
-     end
+if isFAST
+    idxRootMyz = contains(varNames,'RootMz'); %'RootMzc1') | contains(varNames,'RootMzb1'); RootFzb1
+    for idx = 1: lenComparison
+        if any(idxRootMyz)
+            meanActPwr(idx) = ...
+                mean(mean(abs(diff(cellOfTable{idx}{idxTime,idxBlPitchC}).*cellOfTable{idx}{idxTime,idxRootMyz}(1:end-1,:))));
+        else
+            meanActPwr(idx) = ...
+                mean(abs(diff(cellOfTable{idx}{idxTime,idxBlPitchC})));
+        end
+    end
+else
+    for idx = 1: lenComparison
+        meanActPwr(idx) = ...
+            mean(abs(diff(cellOfTable{idx}{idxTime,idxBlPitchC})));
+    end
 end
 
 % Opt Criteria
@@ -109,45 +119,62 @@ K_ActPwr = meanActPwr/refMeanActPwr;
 K_damageBlades = damageBlades/refDamageBlades;
 K_damageTower = damageTower/refDamageTower;
 
-cl = colormap('lines');
 
 strMeanGenPwr = sprintf('%2.3f, ', meanGenPwr);
-strKpowerabs = sprintf('%2.3f, ', K_GenPwr);
+strK.powerabs = sprintf('%2.3f, ', K_GenPwr);
 %strStdGenSpeed = sprintf('%2.3f, ', stdGenSpeed);
 
-strKpower = sprintf('%2.3f, ', K_GenPwr/K_GenPwr(1));
-strKStdGenSpeed = sprintf('%2.3f, ',K_stdGenSpeed);
-strKStdPowSpeed = sprintf('%2.3f, ',K_stdGenPwr);
-strKActPwr = sprintf('%2.3f, ',K_ActPwr);
-strKDamageBlades = sprintf('%2.3f, ',K_damageBlades);
-strKDamageTower = sprintf('%2.3f, ',K_damageTower);
+K_matrix = [K_GenPwr/K_GenPwr(1); K_stdGenPwr; K_ActPwr; K_damageBlades; K_damageTower]';
 
+strK.power = sprintf('%2.3f, ', K_matrix(:,1));
+%strK.StdGenSpeed = sprintf('%2.3f, ',K_stdGenSpeed);
+strK.StdPowSpeed = sprintf('%2.3f, ',K_matrix(:,2)); %K_stdGenPwr);
+strK.ActPwr = sprintf('%2.3f, ',K_matrix(:,3)); %K_ActPwr);
+strK.DamageBlades = sprintf('%2.3f, ',K_matrix(:,4)); %K_damageBlades);
+strK.DamageTower = sprintf('%2.3f, ',K_matrix(:,5)); %K_damageTower);
+
+% figure;
+% bar([K_GenPwr/max(K_GenPwr);K_stdGenSpeed]');
+% axis tight; grid on;
+% titleCell = {'Comparison PI Torque/CPC Controller',...
+%     ['Mean GenPwr [MW]: ',strMeanGenPwr(1:end-2)],...
+%     ['C_{P}: ', strK.powerabs(1:end-2)],...
+%     ['Power tracking C_{P}', '{\color[rgb]{',num2str(cl(1,:)),'}',strK.power(1:end-2),'}'],...
+%     ['C_{StdGenSpeed} = |STD_{ctrl}/STD_{max}|: ',  '{\color[rgb]{',num2str(cl(2,:)),'}',strK.StdGenSpeed(1:end-2),'}']};
+% title(titleCell)
+% xlabel('Controller');
+% ylabel('Minimization criteria [-]');
+% legend('C_{Power}','C_{StdGenSpd}','Location','SouthEast')
+% ax = gca;
+% ax.XTickLabel = summaryTickLabel;
+
+
+subPlotBar(K_matrix,strK,summaryTickLabel);
+
+function subPlotBar(K_matrix,strK,summaryTickLabel)
 figure;
+cl1 = colormap('lines');
+cl = [0.5,0.5,0.5;
+    cl1(4,:);
+    [1,0,0];
+    cl1(1,:);
+    cl1(5,:)];
 
+b = bar(K_matrix);
+legend('C_{P}','C_{\sigma(P)}','C_{Actuator}','C_{D,Blades}','C_{D,Tower}','Location','NorthWest');
 
-bar([K_GenPwr/max(K_GenPwr);K_stdGenSpeed]');
+for k = 1:5
+    b(k).FaceColor = cl(k,:);
+end
+
 axis tight; grid on;
-titleCell = {'Comparison PI Torque/CPC Controller',...
-    ['Mean GenPwr [MW]: ',strMeanGenPwr(1:end-2)],...
-    ['C_{Power,abs} = |mean(P_{ctrl})/mean(P_{max}) - 1|: ', strKpowerabs(1:end-2)],...
-    ['C_{Power} = C_{Power,abs}/C_{Power,amax}: ', '{\color[rgb]{',num2str(cl(1,:)),'}',strKpower(1:end-2),'}'],...
-    ['C_{StdGenSpeed} = |STD_{ctrl}/STD_{max}|: ',  '{\color[rgb]{',num2str(cl(2,:)),'}',strKStdGenSpeed(1:end-2),'}']};
-title(titleCell)
-xlabel('Controller');
-ylabel('Minimization criteria [-]');
-legend('C_{Power}','C_{StdGenSpd}','Location','SouthEast')
-ax = gca;
-ax.XTickLabel = summaryTickLabel;
-
-figure;
-bar([K_GenPwr/max(K_GenPwr); K_stdGenPwr; K_ActPwr; K_damageBlades; K_damageTower]');
-axis tight; grid on;
-titleCellNew = {titleCell{4},...
-    ['C_{StdPwr} = |STD_{ctrl}/STD_{ref}|: ',  '{\color[rgb]{',num2str(cl(2,:)),'}',strKStdPowSpeed(1:end-2),'}'], ...
-    ['C_{ActPwr} = |ActPwr_{ctrl}/ActPwr_{ref}|: ',  '{\color[rgb]{',num2str(cl(3,:)),'}',strKActPwr(1:end-2),'}'], ...
-    ['C_{D,Blades} = |DBlades_{ctrl}DBlades_{ref}|: ',  '{\color[rgb]{',num2str(cl(4,:)),'}',strKDamageBlades(1:end-2),'}'],...
-    ['C_{D,Tower} = |DBlades_{ctrl}DBlades_{ref}|: ',  '{\color[rgb]{',num2str(cl(5,:)),'}',strKDamageTower(1:end-2),'}']};
+titleCellNew = {['Power tracking C_{P}', '{\color[rgb]{',num2str(cl(1,:)),'}',strK.power(1:end-2),'}'],...
+    ['Power variance C_{\sigma(P)}: ',  '{\color[rgb]{',num2str(cl(2,:)),'}',strK.StdPowSpeed(1:end-2),'}'], ...
+    ['Actuator power C_{Actuator}: ',  '{\color[rgb]{',num2str(cl(3,:)),'}',strK.ActPwr(1:end-2),'}'], ...
+    ['Blade damage C_{D,Blades}: ',  '{\color[rgb]{',num2str(cl(4,:)),'}',strK.DamageBlades(1:end-2),'}'],...
+    ['Tower damage C_{D,Tower}: ',  '{\color[rgb]{',num2str(cl(5,:)),'}',strK.DamageTower(1:end-2),'}']};
 
 title(titleCellNew)
+
 ax = gca;
 ax.XTickLabel = summaryTickLabel;

@@ -11,6 +11,9 @@ if ~nargin
     DT = 0.0080;
 end
 
+tmpLinPI = fullfile(fileparts(pwd),'dataIn','Lin_points_PICL.mat');
+
+
 if nargin < 2 || isempty(tmpLinStr)
     tmpLinStr = fullfile(fileparts(pwd),'dataIn','NREL5MW_linearised_4to25.mat');
 end
@@ -19,11 +22,7 @@ if nargin < 3 || isempty(OutList)
     load('workSpace.mat','OutList');
 end
 
-if nargin < 4 || isempty(OutList)
-    load('workSpace.mat','OutList');
-end
-
-if nargin < 5 || isempty(OutTable)
+if nargin < 4 || isempty(OutTable)
     % Orig code: load('OutDataSweep.mat','OutData'); OutTable = array2table(OutData,'VariableNames', OutList);
     load('OutDataSweep.mat','OutTable'); %OutTable = array2table(OutData,'VariableNames', OutList);
 end
@@ -31,6 +30,7 @@ v0 = OutTable.Wind1VelX(1);
 
 % Load linearized file
 tmpLin = load(tmpLinStr);
+tmpLinPI = load(tmpLinPI);
 
 % Order output, select input
 ssTestOutputName = tmpLin.sysm{1}.OutputName;

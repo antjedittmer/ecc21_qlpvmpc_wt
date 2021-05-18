@@ -1,0 +1,235 @@
+clc;
+initWorkspace;
+addpath('subfunctions');
+
+workDir = pwd;
+mainDir = fileparts(workDir);
+
+% Set path to figure directory
+figDir = fullfile(mainDir,'figDir');
+if ~isfolder(figDir)
+    mkdir(figDir)
+end
+
+
+%% Set path and parameter names
+% simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta'; 
+outDataSimulationMat = 'OutDataWind18NTW.mat';
+loadData = 1;
+
+% Set path to data output directory
+workDir = fileparts(mfilename('fullpath'));
+dataDirOut = fullfile(workDir, 'dataOut');
+if ~isfolder(dataDirOut)
+    mkdir(dataDirOut)
+end
+
+%% Get Data Directory value of pitch actuator rate
+DDName = 'DD_MdlCtrl_qLPVMPC.sldd';
+myDictionaryObj = Simulink.data.dictionary.open(DDName);
+dDataSectObj = getSection(myDictionaryObj,'Design Data');
+controlObj = getEntry(dDataSectObj,'Control');
+controlValue = getValue(controlObj);
+
+%% Set vector which pitch rate constraints to be test
+maxRateVector = 1:13;
+
+%% Loop over pitch rate constraint vector: 
+nRate = length(maxRateVector);
+currentOutTableTestCell = cell(nRate,1); % cell with
+tictoc_LPVMPCcell = cell(nRate,1);
+GenPwrRefCell= cell(nRate,1);
+
+simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta'; 
+%simMdlname = 'test_SimulinkMdl3LPV_MPC_a.slx';
+
+for idx = 1: nRate
+    maxRate = maxRateVector(idx);
+    controlValue.Pitch.Maxrate = maxRate;
+    controlValue.Pitch.Minrate = - maxRate;
+    setValue(controlObj,controlValue);
+    saveChanges(myDictionaryObj)
+    
+    matFileOutTableTest1 = fullfile(dataDirOut,...
+        sprintf('OutTableTest_rate%02d_MPC.mat',maxRate));
+    
+%     if exist('matFileOutTableTest1','
+%     else
+%     end
+    
+    [currentOutTableTestCell{idx}, tictoc_LPVMPCcell{idx},GenPwrRefCell{idx}] = ...
+        getSimulationOutputTable(matFileOutTableTest1,loadData,OutTable,simMdlname);
+end
+
+% Plot qLmpc result
+OutTable4 = currentOutTableTestCell{maxRateVector == 4};
+OutTable4.Time = OutTable.Time(1:height(OutTable4));
+currentOutTableTestCell{1} = OutTable4;
+testCaseStr =  'qLMPC CPC Rate Constraints [deg/s]';
+testCaseCell = {'standard (8) ','high (13) ', 'low (1) ',};
+plotOutTable(OutTable4,currentOutTableTestCell{maxRateVector == 8},currentOutTableTestCell{end},...
+   testCaseStr,testCaseCell);
+
+%% Get Data Directory value of pitch actuator rate
+DDNameCtrl = 'DD_CtrlBaseline.sldd';
+myDictionaryCtrlObj = Simulink.data.dictionary.open(DDNameCtrl);
+dDataSectCtrlObj = getSection(myDictionaryCtrlObj,'Design Data');
+controlCtrlObj = getEntry(dDataSectCtrlObj,'Control');
+controlValue = getValue(controlCtrlObj);
+
+currentOutTablePICell = cell(nRate,1); % cell with
+
+simMdlname = 'test_SimulinkMdl2_Baseline';
+
+for idx = 1: nRate
+    maxRate = maxRateVector(idx);
+    controlValue.Pitch.Maxrate = maxRate;
+    controlValue.Pitch.Minrate = - maxRate;
+    setValue(controlCtrlObj,controlValue);
+    saveChanges(myDictionaryCtrlObj)
+        
+    matFileOutTableTest1 = fullfile(dataDirOut,...
+        sprintf('OutTableTest_rate%02d_PI.mat',maxRate));
+    
+    currentOutTablePICell{idx} = ...
+        getSimulationOutputTable(matFileOutTableTest1,loadData,OutTable,simMdlname);
+end
+
+% Plot qLmpc result
+OutTable4 = currentOutTablePICell{maxRateVector == 4};
+OutTable4.Time = OutTable.Time(1:height(OutTable4));
+testCaseStr =  'PI CPC Rate Constraints [deg/s]';
+figNo2 = 2;
+figDir = '';
+strFig = 'testConstrPI';
+plotOutTable(OutTable4,currentOutTablePICell{maxRateVector == 8},currentOutTablePICell{end},...
+   testCaseStr,testCaseCell, figNo2,figDir,strFig)
+
+%% Extract signals from table
+idxT = 60/DT:height(currentOutTablePICell{1});
+matrixPitchPI = cell2mat(cellfun(@(x) x.BlPitch1(idxT)', currentOutTablePICell, 'UniformOutput',false));
+matrixPitchQLMPC = cell2mat(cellfun(@(x) x.BlPitch1(idxT)', currentOutTableTestCell, 'UniformOutput',false));
+matrixTwrPI = cell2mat(cellfun(@(x) x.NcIMUTAxs(idxT)', currentOutTablePICell, 'UniformOutput',false));
+matrixTwrQLMPC = cell2mat(cellfun(@(x) x.NcIMUTAxs(idxT)', currentOutTableTestCell, 'UniformOutput',false));
+
+diffPitchPI = diff(matrixPitchPI');
+diffPitchQLMPC = diff(matrixPitchQLMPC');
+
+stdDiffPitchPI = std(abs(diff(matrixPitchPI')))*180/pi;
+stdDiffPitchQLMPC = std(abs(diff(matrixPitchQLMPC')))*180/pi;
+stdTowerPI = std(abs(matrixTwrPI'));
+stdTowerQLMPC = std(abs(matrixTwrQLMPC'));
+
+figure; 
+subplot(2,1,1);
+plot(maxRateVector,stdDiffPitchPI,'*-',...
+    maxRateVector,stdDiffPitchQLMPC,'o-');
+legend('PI','qLMPC');
+axis tight; grid on;
+ylabel('std_{\Delta Pitch} [deg/s]');
+subplot(2,1,2);
+plot(maxRateVector,stdTowerPI,'*-',...
+    maxRateVector,stdTowerQLMPC,'o-');
+axis tight; grid on;
+ylabel('std_{\Delta Pitch} [deg/s]');
+xlabel('std_{TwrFA} [m/s^2]');
+figure;
+plot(stdDiffPitchPI,stdTowerPI,'*-',...
+stdDiffPitchQLMPC,stdTowerQLMPC,'o-');
+
+aTestCell{1} = OutTable4;
+aTestCell{2} = currentOutTablePICell{end};
+aTestCell{3} = currentOutTableTestCell{1};
+aTestCell{4} = currentOutTableTestCell{end};
+
+summaryTickLabel = {'PI, limit 4 deg/s', 'PI, limit 13 deg/s',...
+    'MPC, limit 4 deg/s','MPC, limit 13 deg/s'};
+calculateEvalCriteria(aTestCell,summaryTickLabel)
+figStr = 'PI4_13MPC4_13';
+print(gcf,[fullfile(figDir,'optCriteria_PI_MPC'),'_',figStr], '-dpng');
+%print(gcf,[fullfile(figDir,'cmpCtrlSimulink_PI_MPC'),'_',figStr,], '-depsc');
+
+OutTable8 = currentOutTablePICell{end};
+OutTable8.Time = OutTable.Time(1:height(OutTable8));
+
+aTestCell1{1} = OutTable8;
+aTestCell1{2} = currentOutTableTestCell{end};
+
+summaryTickLabel = {'PI, limit 13 deg/s', 'MPC, limit 13 deg/s'};
+calculateEvalCriteria(aTestCell1,summaryTickLabel)
+figStr = 'PI13MPC13';
+print(gcf,[fullfile(figDir,'optCriteria_PI_MPC'),'_',figStr], '-dpng');
+
+aTestCell3 = aTestCell1;
+aTestCell3{2} = currentOutTableTestCell{end};
+aTestCell3{3} = currentOutTableTestCell{1};
+
+summaryTickLabel = {'PI, limit 13 deg/s', 'MPC, limit 13 deg/s', 'MPC, limit 1 deg/s'};
+calculateEvalCriteria(aTestCell3,summaryTickLabel)
+
+[K_matrix_MPC, strK_MPC] = calculateEvalCriteria(aTestCell3,summaryTickLabel);
+
+load('OutTableIPC.mat','OutTableIPC');
+load('OutTableWeightsOrig.mat','OutTableCPC')
+cellOfTable{1} = OutTableCPC;
+cellOfTable{2} = OutTableIPC;
+
+% load('cellOfTable');
+summaryTickLabel = {'PI, limit 8 deg/s', 'IPC, limit 8 deg/s',};
+
+%%ellOfTable{3} = OutTableIPCSimAn;
+[K_matrix_IPC, strK_IPC] = calculateEvalCriteria(cellOfTable,summaryTickLabel);
+
+K_matrix_MPC_IPC = [K_matrix_IPC; K_matrix_MPC(2:end,:)];
+strK.power = sprintf('%2.3f, ', K_matrix_MPC_IPC(:,1));
+%strK.StdGenSpeed = sprintf('%2.3f, ',K_stdGenSpeed);
+strK.StdPowSpeed = sprintf('%2.3f, ',K_matrix_MPC_IPC(:,2)); %K_stdGenPwr);
+strK.ActPwr = sprintf('%2.3f, ',K_matrix_MPC_IPC(:,3)); %K_ActPwr);
+strK.DamageBlades = sprintf('%2.3f, ',K_matrix_MPC_IPC(:,4)); %K_damageBlades);
+strK.DamageTower = sprintf('%2.3f, ',K_matrix_MPC_IPC(:,5)); %K_damageTower);
+
+summaryTickLabel = {'PI, limit 8 deg/s', 'IPC, limit 8 deg/s','MPC, limit 13 deg/s', 'MPC, limit 1 deg/s'};
+
+plotCriteriaBar(K_matrix_MPC_IPC,strK,summaryTickLabel)
+print(gcf,[fullfile(figDir,'optCriteria_PI_MPC_IPC_notitle'),'_',figStr], '-dpng');
+
+K_matrix_MPC_IPC(3:4,:) = NaN;
+
+plotCriteriaBar(K_matrix_MPC_IPC,strK,summaryTickLabel)
+print(gcf,[fullfile(figDir,'optCriteria_PI_MPC_IPC1_notitle'),'_',figStr], '-dpng');
+
+
+%% Plot old results
+load('cellOfTable','cellOfTable');
+
+cellOfTable4{1} = cellOfTable{1};
+cellOfTable4{2} = cellOfTable{3};
+strCell = {'PI-CPC','PI-IPC'}; %,'MPC, 13deg/s','MPC, 1deg/s'};
+[K1_matrix_IPC, strK1_IPC] = calculateEvalCriteria(cellOfTable4,strCell);
+
+x = load('OutTableTest_rate13_IPC.mat');
+load('OutTableTest_rate08_PI.mat','OutTableTest_rate08_PI');
+load('OutTableTest_rate01_MPC_LPV.mat','OutTableTest_rate01_MPC');
+load('OutTableTest_rate13_MPC_LPV.mat','OutTableTest_rate13_MPC');
+cellOfTable5 = cellOfTable4;
+cellOfTable5{3} = OutTableTest_rate13_MPC;
+cellOfTable5{4} = OutTableTest_rate01_MPC;
+summaryTickLabel = {'PI, 8 deg/s', 'PI-IPC, 8 deg/s','MPC, limit 13 deg/s', 'MPC, limit 1 deg/s'};
+[K_matrix_MPC, strK_MPC] = calculateEvalCriteria(cellOfTable5,summaryTickLabel);
+
+% Plot qLmpc result
+OutTable4 = OutTableCPC;
+OutTable4.Wind = OutTable4.Wind1VelX;
+OutTableIPC.Wind = OutTableIPC.Wind1VelX;
+testCaseStr =  'Control Rate Constraints [deg/s]';
+testCaseCell = {'CPC(8) ','IPC(13) ', 'low (1) ',};
+plotOutTable(OutTable4,OutTableIPC,currentOutTableTestCell{end},...
+   testCaseStr,testCaseCell);
+
+
+tmp = load('cellOfTable');
+x = load('OutTableTest_rate13_IPC.mat');
+load('OutTableTest_rate08_PI.mat','OutTableTest_rate08_PI');
+load('OutTableTest_rate01_MPC.mat','OutTableTest_rate01_MPC');
+load('OutTableTest_rate13_MPC.mat','OutTableTest_rate13_MPC');
+
