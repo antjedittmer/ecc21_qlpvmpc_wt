@@ -48,9 +48,9 @@ damageTower = calculateDamageBlades(aTable{idxTime,idxTowerM},mT);
 
 % C_actuator is the magnitude of the power consumed by the actuators
 idxBlPitchC = contains(varNames,'BlPitch');
- %flapwise moment (i.e., the moment caused by flapwise forces) at the blade root
+%flapwise moment (i.e., the moment caused by flapwise forces) at the blade root
 % AD ToDo: Should this be in blade/rotating frame or fixed? Definition P_{act,ref} = P_{act,0} 
-meanActPwr = mean(mean(abs(diff(aTable{idxTime,idxBlPitchC}).*aTable{idxTime,idxRootMyb}(1:end-1,:))));
+meanActPwr = mean(mean(abs(diff(aTable{idxTime,idxBlPitchC})))); %.*aTable{idxTime,idxRootMyb}(1:end-1,:))));
 
 %% Set reference
 refOut.Pw = abs(meanGenPwr/5 - 1); % this only is ok for above rated test signals

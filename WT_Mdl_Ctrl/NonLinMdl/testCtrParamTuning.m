@@ -4,28 +4,34 @@ clc; clear; bdclose;
 addpath('WECSMdl');
 addpath('subfunctions');
 addpath('subfunctionsMPC');
-
+addpath('subfunctions');
 % initialize constants to base workspace for CPC simulation
 testCtrl;
 load(fullfile(dataInPath,'OutDataWind18NTM.mat'),'OutData','OutTable');
 
-loadMat = 1;
+outDataDir = 'OutDataIPC';
 
+if ~isempty(outDataDir) && ~isdir(outDataDir) %#ok<ISDIR>
+    mkdir(outDataDir);
+end
+
+loadMat = 0;
 onIPC = 0;
 switchIPC = 1;
 initDLRparameter(onIPC,switchIPC);
 [sysd,x0,uoff,xoff,yoff] = initLPVParam;
 
 %% Get the baseline values with PI CPC
-if loadMat && exist('OutTableWeightsOrig.mat','file') == 2
-    load('OutTableWeightsOrig.mat','W','K','ref','weightVec','OutTableCPC')
+matWeightsOrig = fullfile(outDataDir,'OutTableWeightsOrig.mat');
+if loadMat && exist(matWeightsOrig,'file') == 2
+    load(matWeightsOrig,'W','K','ref','weightVec','OutTableCPC')
 else
     sim('test_SimulinkMdl3LPV_IPCa');
     OutTableCPC = array2table(OutDataLPV,'VariableNames',OutList);
     
     weightVec = [1.25,1,0.5,1,1.25];
     [W,K,ref,weightVec] = getEvalCriteria(OutTableCPC,[],weightVec);
-    save('OutTableWeightsOrig.mat','W','K','ref','weightVec','OutTableCPC')
+    save(matWeightsOrig,'W','K','ref','weightVec','OutTableCPC')
 end
 
 % plotTimeseriesCtrlComparison(idxTime, outTableNRELorig, outTableNRELnew,outTableDLR, strNewCtrl,figNo1,figNo2,testCaseStr)
@@ -36,12 +42,13 @@ switchIPC = 1;
 initDLRparameter(onIPC,switchIPC);
 
 % IPC optimization with X
-if loadMat && exist('X.mat','file') == 2
-    load('X','X')
+matWeightsIPCfminsearch = fullfile(outDataDir,'X.mat');
+if loadMat && exist(matWeightsIPCfminsearch,'file') == 2
+    load(matWeightsIPCfminsearch,'X')
 else
     x0Ctrl  = zeros(1,3);
     X = fminsearch(@(xCtrl) runSimIPC(xCtrl,ref,OutList),x0Ctrl);
-    save('X','X');
+    save(matWeightsIPCfminsearch,'X');
 end
 [WIPC,KIPC,refOPC,OutTableIPC] = runSimIPC(X,ref,OutList,weightVec);
 
@@ -84,7 +91,7 @@ for idx = 1: nRate
     end
     currentOutTableIPCCell{idx} = xSim;
 end
-load('xSim','xSim');
+%load('xSim','xSim');
 
 [WIPCSimAn,KIPCSimAn,refOPCSimAn,OutTableIPCSimAn] = runSimIPC(xSim,ref,OutList,weightVec);
 
@@ -131,7 +138,7 @@ cellOfTableNew{4} = OutTableTest_rate01_MPC;
 summaryTickLabel = {'PI, limit 8 deg/s', 'IPC, limit 8 deg/s','MPC, limit 13 deg/s', 'MPC, limit 1 deg/s'};
 calculateEvalCriteria(cellOfTableNew,summaryTickLabel)
 
-plotTimeseriesCtrlComparison([], OutTableCPC,OutTableIPC,OutTableMPC,strNewCtrl)
+plotTimeseriesCtrlComparison([], OutTableCPC,OutTableIPC,OutTableIPC,strNewCtrl)
 
 
 %% Unused code; Check results from thesis
