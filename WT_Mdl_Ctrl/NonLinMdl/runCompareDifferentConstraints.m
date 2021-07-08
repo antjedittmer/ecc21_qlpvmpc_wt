@@ -11,7 +11,6 @@ if ~isfolder(figDir)
     mkdir(figDir)
 end
 
-
 %% Set path and parameter names
 % simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta'; 
 outDataSimulationMat = 'OutDataWind18NTW.mat';
@@ -70,7 +69,7 @@ tableForPlotMPC{3} = currentOutTableTestCell{end};
 
 testCaseStrMPC =  'qLMPC CPC Rate Constraints [deg/s]';
 testCaseCell = {'standard (8) ','high (13) ', 'low (4) ',};
-plotOutTable(tableForPlotMPC{1},tableForPlotMPC{2},tableForPlotMPC{3},...
+axPlotAllMPC = plotOutTable(tableForPlotMPC{1},tableForPlotMPC{2},tableForPlotMPC{3},...
    testCaseStrMPC,testCaseCell);
 
 %% Get Data Directory value of pitch actuator rate
@@ -108,11 +107,6 @@ strFig = 'testConstrPI';
 axPlotAll = plotOutTable(OutTable4,currentOutTablePICell{maxRateVector == 8},currentOutTablePICell{end},...
    testCaseStr,testCaseCell, figNo2,figDir,strFig);
 
-figNo2 = 3;
-
-axPlotAllMPC = plotOutTable(tableForPlotMPC{1},tableForPlotMPC{2},tableForPlotMPC{3},...
-   testCaseStrMPC,testCaseCell);
-
 for idx = 1:length(axPlotAllMPC)
     limPI = get(axPlotAll(idx),'YLim');
     limMPC = get(axPlotAllMPC(idx),'YLim');
@@ -124,8 +118,52 @@ figDir = 'figDir';
 strFig = 'MPCNewLim';
 print(fullfile(figDir,['cmpTimeDomain_All5',strFig]), '-dpng');
 strFig = 'PINewLim';
-print(figNo2, fullfile(figDir,['cmpTimeDomain_All5',strFig]), '-dpng');
-return;
+print(gcf, fullfile(figDir,['cmpTimeDomain_All5',strFig]), '-dpng');
+
+%% MPC limited to MPC2
+tableForPlotMPC1{1} = currentOutTableTestCell{1};
+tableForPlotMPC1{1}.Time = OutTable.Time(1:heightT);
+tableForPlotMPC1{2} = currentOutTableTestCell{idx8};
+tableForPlotMPC1{3} = currentOutTableTestCell{end};
+
+testCaseStrMPC =  'qLMPC CPC Rate Constraints [deg/s]';
+testCaseCell = {'standard (8) ','high (13) ', 'very low (2) '};
+axPlotAllMPC1 = plotOutTable(tableForPlotMPC1{1},tableForPlotMPC1{2},tableForPlotMPC1{3},...
+   testCaseStrMPC,testCaseCell);
+
+for idx = 1:length(axPlotAllMPC)
+    limPI = get(axPlotAll(idx),'YLim');
+    limMPC = get(axPlotAllMPC1(idx),'YLim');
+    newLim =[min(limPI(1),limMPC(1)), max(limPI(2),limMPC(2))];
+    set(axPlotAllMPC1(idx),'YLim',newLim ); 
+    set(axPlotAll(idx),'YLim',newLim ); 
+end
+print(gcf, fullfile(figDir,['cmpTimeDomain_All5_2deg_s',strFig]), '-dpng');
+
+%% IPC 
+load('OutTableIPC.mat','OutTableIPC');
+%load('OutTableWeightsOrig.mat','OutTableCPC')
+
+tableForPlotIPC{1} = OutTableIPC;
+tableForPlotIPC{1}.Time = OutTable.Time(1:heightT);
+tableForPlotIPC{2} = currentOutTableTestCell{idx8};
+tableForPlotIPC{3} = currentOutTableTestCell{end};
+
+testCaseStrMPC =  'qLMPC CPC/IPC Rate Constraints [deg/s]';
+testCaseCell = {'CPC (8)','CPC (13)', 'IPC',};
+axPlotAllIPC1 = plotOutTable(tableForPlotIPC{1},tableForPlotIPC{2},tableForPlotIPC{3},...
+   testCaseStrMPC,testCaseCell);
+
+for idx = 1:length(axPlotAllMPC)
+    limPI = get(axPlotAll(idx),'YLim');
+    limMPC = get(axPlotAllMPC(idx),'YLim');
+    newLim =[min(limPI(1),limMPC(1)), max(limPI(2),limMPC(2))];
+    set(axPlotAllIPC1(idx),'YLim',newLim ); 
+    set(axPlotAll(idx),'YLim',newLim ); 
+end
+
+
+
 
 %% Extract signals from table
 idxT = 60/DT:height(currentOutTablePICell{1});

@@ -89,7 +89,8 @@ vectAmpWind = sqrt(sum((vectWind.^2),2));
 %% Run Simulink simulations or load data
 
 % Names of simulation output in order of Simulink bus
-varnames = {'Wind', 'RotSpeed', 'GenPwr', 'GenTq', 'BlPitch1', 'NcIMUTAxs', 'NcIMUTAys'}; 
+% wind [m/s],Rotor Speed [rad/s],Generator Power [kW],Generator Torque  [Nm],Pitch [rad],xdotdotfa [m/s2],xdotdotsw [m/s2]
+varnames = {'Wind', 'RotSpeed', 'GenPwr', 'GenTq', 'BlPitch1', 'NcIMUTAxs', 'NcIMUTAys','zetadotdot'}; 
 
 % Run simulation for two models or load mat files if available
 matFileOutTableTest1 = fullfile(dataDirOut,['OutTableTest1',strFig,'.mat']);

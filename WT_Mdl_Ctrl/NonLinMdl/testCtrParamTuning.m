@@ -9,13 +9,13 @@ addpath('subfunctions');
 testCtrl;
 load(fullfile(dataInPath,'OutDataWind18NTM.mat'),'OutData','OutTable');
 
-outDataDir = 'OutDataIPC';
+outDataDir = 'dataOut3';
 
 if ~isempty(outDataDir) && ~isdir(outDataDir) %#ok<ISDIR>
     mkdir(outDataDir);
 end
 
-loadMat = 0;
+loadMat = 1;
 onIPC = 0;
 switchIPC = 1;
 initDLRparameter(onIPC,switchIPC);
@@ -29,7 +29,7 @@ else
     sim('test_SimulinkMdl3LPV_IPCa');
     OutTableCPC = array2table(OutDataLPV,'VariableNames',OutList);
     
-    weightVec = [1.25,1,0.5,1,1.25];
+    weightVec = [50,1,0.5,5,5];
     [W,K,ref,weightVec] = getEvalCriteria(OutTableCPC,[],weightVec);
     save(matWeightsOrig,'W','K','ref','weightVec','OutTableCPC')
 end
@@ -47,20 +47,20 @@ if loadMat && exist(matWeightsIPCfminsearch,'file') == 2
     load(matWeightsIPCfminsearch,'X')
 else
     x0Ctrl  = zeros(1,3);
-    X = fminsearch(@(xCtrl) runSimIPC(xCtrl,ref,OutList),x0Ctrl);
+    X = fminsearch(@(xCtrl) runSimIPC(xCtrl,ref,OutList,weightVec),x0Ctrl);
     save(matWeightsIPCfminsearch,'X');
 end
 [WIPC,KIPC,refOPC,OutTableIPC] = runSimIPC(X,ref,OutList,weightVec);
 
 
 %% Set vector which pitch rate constraints to be test
-maxRateVector = 13;
+maxRateVector = [13,10,8];
 
 %% Loop over pitch rate constraint vector:
 nRate = length(maxRateVector);
 currentOutTableTestCell = cell(nRate,1); % cell with
 
-dataDirOut = 'dataOut';
+%dataDirOut = 'dataOut';
 
 DDNameCtrl = 'DD_CtrlBaseline.sldd';
 myDictionaryCtrlObj = Simulink.data.dictionary.open(DDNameCtrl);
@@ -71,32 +71,33 @@ controlValue = getValue(controlCtrlObj);
 currentOutTableIPCCell = cell(nRate,1); % cell with
 
 %simMdlname = 'test_SimulinkMdl2_Baseline';
-x0Ctrl = X;
-for idx = 1: nRate
-    maxRate = maxRateVector(idx);
-    controlValue.Pitch.Maxrate = maxRate;
-    controlValue.Pitch.Minrate = - maxRate;
-    setValue(controlCtrlObj,controlValue);
-    saveChanges(myDictionaryCtrlObj)
-    
-    matFileOutTableTest1 = fullfile(dataDirOut,...
-        sprintf('OutTableTest_rate%02d_IPC.mat',maxRate));
-    
-    
-    if exist(matFileOutTableTest1,'file') == 2
-        load(matFileOutTableTest1,'xSim');
-    else
-        xSim = simulannealbnd(@(xCtrl) runSimIPC(xCtrl,ref,OutList),x0Ctrl);
-        save(matFileOutTableTest1,'xSim');
-    end
-    currentOutTableIPCCell{idx} = xSim;
-end
-%load('xSim','xSim');
+% x0Ctrl = X;
+% for idx = 1: nRate
+%     maxRate = maxRateVector(idx);
+%     controlValue.Pitch.Maxrate = maxRate;
+%     controlValue.Pitch.Minrate = - maxRate;
+%     setValue(controlCtrlObj,controlValue);
+%     saveChanges(myDictionaryCtrlObj)
+%     
+%     matFileOutTableTest1 = fullfile(outDataDir,...
+%         sprintf('OutTableTest_rate%02d_IPC.mat',maxRate));
+%     
+%     
+%     if exist(matFileOutTableTest1,'file') == 2
+%         load(matFileOutTableTest1,'xSim');
+%     else
+%         xSim = simulannealbnd(@(xCtrl) runSimIPC(xCtrl,ref,OutList,weightVec),x0Ctrl);
+%         save(matFileOutTableTest1,'xSim');
+%     end
+%     currentOutTableIPCCell{idx} = xSim;
+% end
+load('xSim','xSim');
 
 [WIPCSimAn,KIPCSimAn,refOPCSimAn,OutTableIPCSimAn] = runSimIPC(xSim,ref,OutList,weightVec);
 
-weightVec = [1,1,1,1,100];
+%weightVec = [1,1,1,1,100];
 [W,K,ref100Tower,weightVec100Tower] = getEvalCriteria(OutTableCPC,[],weightVec);
+[WIPC,KIPC,ref100TowerIPC,weightVec100TowerIPC] = getEvalCriteria(OutTableIPC,[],weightVec);
 x0Ctrl  = zeros(1,3);
 %X100 = fminsearch(@(xCtrl) runSimIPC(x0Ctrl,ref100Tower,OutList,weightVec100Tower),x0Ctrl);
 
