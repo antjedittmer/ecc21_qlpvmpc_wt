@@ -102,11 +102,6 @@ OutTableTest2 = getSimulationOutputTable(matFileOutTableTest2,loadData,OutTable,
 %% Create output plots (for use in power point)
 % Two plots are created: 1st plot shows wind, rotor speed, 
 
-% Get color map for 'title legends'
-cl = colormap('lines');
-titleStr = [testCaseStr,': Mdl1: Rot+Twr {\color[rgb]{',num2str(cl(1,:)),'}Mdl2: Rot,Twr,Bld+Act ',...
-    '\color[rgb]{',num2str(cl(2,:)),'}FAST} '];
-
 % Create output plot time reference
 idxTime = 1: min([length(idxTime), height(OutTableTest1),height(OutTableTest2)]);
 time = OutTable.Time(idxTime);
@@ -116,6 +111,25 @@ time = time(idxTime);
 % Change line width
 defaultLineWidth = get(groot,'defaultLineLineWidth');
 set(groot,'defaultLineLineWidth',0.5);
+cmpOnly1 = 2;
+
+
+% Get color map for 'title legends'
+cl = colormap('lines');
+if cmpOnly1 <= 1
+    titleStr = [testCaseStr,': {\color[rgb]{',num2str(cl(1,:)),'} Simulink Model, ',...
+        '\color[rgb]{',num2str(cl(2,:)),'}FAST Model} '];
+    titleStr1 = [testCaseStr,' Inputs: {\color[rgb]{',num2str(cl(1,:)),'} Simulink Model, ',...
+        '\color[rgb]{',num2str(cl(2,:)),'}FAST Model} '];  
+     titleStr2 = [testCaseStr,' Signals: {\color[rgb]{',num2str(cl(1,:)),'} Simulink Model, ',...
+        '\color[rgb]{',num2str(cl(2,:)),'}FAST Model} '];
+    
+else
+    titleStr = [testCaseStr,': Mdl1: Rot+Twr {\color[rgb]{',num2str(cl(1,:)),'}Mdl2: Rot,Twr,Bld+Act ',...
+        '\color[rgb]{',num2str(cl(2,:)),'}FAST} '];
+    titleStr1 = titleStr;
+    titleStr2 = titleStr;
+end
 
 % 1st figure
 figure(figNo1);
@@ -123,47 +137,82 @@ axPlot(1) = subplot(3,1,1);
 plot(time,vectAmpWind(idxTime),time,OutTableTest1.Wind(idxTime),'--'); 
 axis tight; grid on;
 ylabel('wind [m/s]')
-title(titleStr);
+title(titleStr1);
 
 axPlot(2) = subplot(3,1,2);
-plot(time,OutTableTest2.RotSpeed(idxTime), time,OutTable.RotSpeed(idxTime),time,OutTableTest1.RotSpeed(idxTime),'k--');
+if cmpOnly1 <= 1
+    plot(time,OutTableTest2.GenTq(idxTime)/10^3,time,OutTable.GenTq(idxTime),'--');   
+else
+    plot(time,OutTableTest2.GenTq(idxTime)/10^3,time,OutTable.GenTq(idxTime),time,OutTableTest1.GenTq(idxTime)/10^3,'k--');
+end
 axis tight; grid on;
-ylabel('RotSpd \omega_r [rpm]')
+ylabel('GenTq T_g [kNm]') 
 
 axPlot(3) = subplot(3,1,3);
-plot(time,OutTableTest2.GenPwr(idxTime)/1000,time,OutTable.GenPwr(idxTime)/1000,time,OutTableTest1.GenPwr(idxTime)/1000,'k--');
+if cmpOnly1 <= 1
+    plot(time,OutTableTest2.BlPitch1(idxTime),time,OutTable.BlPitch1(idxTime),'--');
+else
+    plot(time,OutTableTest2.BlPitch1(idxTime),time,OutTable.BlPitch1(idxTime),time,OutTableTest1.BlPitch1(idxTime),'k--');
+end
 axis tight; grid on;
-ylabel('GenPwr P_g [MW]')
-xlabel('time [s]')
+ylabel('BldPitch1 \beta [deg]')
+xlabel('Time [s]')
 linkaxes(axPlot,'x');
-set(findall(gcf,'-property','FontSize'),'FontSize',11)
+set(findall(gcf,'-property','FontSize'),'FontSize',12)
+set(findall(gcf,'-property','LineWidth'),'LineWidth',1)
+
+if cmpOnly1 <= 1
+    nameFig =  sprintf('cmpTimeDomain_WindIn%d%s',cmpOnly1,strFig);
+else
+    nameFig = ['cmpTimeDomain_WindIn',strFig];
+end
 set(gcf,'Name',['cmpTimeDomain_Wind',strFig])
 
-print(fullfile(figDir,['cmpTimeDomain_Wind',strFig]), '-dpng');
+print(fullfile(figDir,nameFig), '-dpng');
 
 % 2nd figure
 figure(figNo2)
 axPlot2(1) = subplot(3,1,1);
-plot(time,OutTableTest2.BlPitch1(idxTime),time,OutTable.BlPitch1(idxTime),time,OutTableTest1.BlPitch1(idxTime),'k--'); 
+if cmpOnly1 <= 1
+    plot(time,OutTableTest2.RotSpeed(idxTime), time,OutTable.RotSpeed(idxTime),'--');
+else
+    plot(time,OutTableTest2.RotSpeed(idxTime), time,OutTable.RotSpeed(idxTime),time,OutTableTest1.RotSpeed(idxTime),'k--');
+end
 axis tight; grid on;
-ylabel('BldPitch1 \beta [rad]')
-title(titleStr);
+ylabel('RotSpd \omega_r [rpm]')
+title(titleStr2);
 
 axPlot2(2) = subplot(3,1,2);
-plot(time,OutTableTest2.GenTq(idxTime)/10^3,time,OutTable.GenTq(idxTime),time,OutTableTest1.GenTq(idxTime)/10^3,'k--');
-axis tight; grid on;
-ylabel('GenTq T_g [kNm]') 
-
-axPlot2(3) = subplot(3,1,3);
-plot(time,OutTableTest2.NcIMUTAxs(idxTime),time,OutTable.NcIMUTAxs(idxTime),time,OutTableTest1.NcIMUTAxs(idxTime),'k--');
+if cmpOnly1 <= 1
+    plot(time,OutTableTest2.NcIMUTAxs(idxTime),time,OutTable.NcIMUTAxs(idxTime),'--');
+else
+    plot(time,OutTableTest2.NcIMUTAxs(idxTime),time,OutTable.NcIMUTAxs(idxTime),time,OutTableTest1.NcIMUTAxs(idxTime),'k--');
+end
 axis tight; grid on;
 ylabel('Twr_{FA} y_t[m/s^2]')
-xlabel('time [s]')
-set(findall(gcf,'-property','FontSize'),'FontSize',11)
-linkaxes(axPlot2,'x');
-set(gcf,'Name',['cmpTimeDomain_BlPitchTqTwr',strFig])
 
-print(fullfile(figDir,['cmpTimeDomain_BlPitchTqTwr',strFig]), '-dpng');
+axPlot2(3) = subplot(3,1,3);
+if cmpOnly1 <= 1
+    plot(time,OutTableTest2.GenPwr(idxTime)/1000,time,OutTable.GenPwr(idxTime)/1000,'--');
+else
+    plot(time,OutTableTest2.GenPwr(idxTime)/1000,time,OutTable.GenPwr(idxTime)/1000,time,OutTableTest1.GenPwr(idxTime)/1000,'k--');
+end
+axis tight; grid on;
+ylabel('GenPwr P_g [MW]')
+xlabel('Time [s]')
+set(findall(gcf,'-property','FontSize'),'FontSize',12)
+set(findall(gcf,'-property','LineWidth'),'LineWidth',1)
+linkaxes(axPlot2,'x');
+
+if cmpOnly1 <= 1
+    nameFig = sprintf('cmpTimeDomain_WindSig1%d%s',cmpOnly1,strFig);
+else
+    nameFig = ['cmpTimeDomain_WindSig',strFig];
+end
+
+set(gcf,'Name',nameFig)
+
+print(fullfile(figDir,nameFig), '-dpng');
 
 
 %% Figure for paper

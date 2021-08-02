@@ -166,7 +166,6 @@ print(fullfile(figDir,['cmpTimeDomain_BlPitchTqTwr',strFig]), '-dpng');
 
 
 %% Figure for paper
-
 figure(figNo2+1)
 axPlotAll(1) = subplot(6,1,1);
 plot(time,vectAmpWind(idxTime),time,OutTableTest1.Wind(idxTime),'--'); 

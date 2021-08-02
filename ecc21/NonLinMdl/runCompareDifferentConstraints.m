@@ -22,7 +22,7 @@ controlObj = getEntry(dDataSectObj,'Control');
 controlValue = getValue(controlObj);
 
 %% Set vector which pitch rate constraints to be test
-maxRateVector = 4:13;
+maxRateVector = 1:13;
 
 %% Loop over pitch rate constraint vector: 
 nRate = length(maxRateVector);
@@ -105,7 +105,6 @@ stdDiffPitchPI = std(abs(diff(matrixPitchPI')))*180/pi;
 stdDiffPitchQLMPC = std(abs(diff(matrixPitchqLMPC')))*180/pi;
 stdTowerPI = std(abs(matrixTwrPI'));
 stdTowerQLMPC = std(abs(matrixTwrQLMPC'));
-
 
 figure; 
 subplot(2,1,1);
