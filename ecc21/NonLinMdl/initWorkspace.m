@@ -1,9 +1,9 @@
 %% Clear workspace
 clear; close all; clc; 
 restoredefaultpath;
-bdclose all;
+%bdclose all;
 clear ABgL_WT; % LUT variables saved as persistent variables
-Simulink.data.dictionary.closeAll;
+%Simulink.data.dictionary.closeAll;
 
 %% Set paths
 dataIn = 'dataIn'; % external data from FAST linearization, FASTtool
@@ -44,9 +44,9 @@ DT = 0.008; % one sample time
 load(fullfile(dataInPath,'OutDataWind18NTW.mat'),'OutTable');
 
 %% Clean-up
-clear RESTORE*
-clear data*
-clear dir*
+% clear RESTORE*
+% clear data*
+% clear dir*
 
 
 

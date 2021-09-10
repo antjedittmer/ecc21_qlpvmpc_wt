@@ -1,4 +1,4 @@
-function [L,S,H,g] = HSqLd_WT_beta(N,q,R_,p,xk,Xk,DT,ref,us,lambdaVec,pitchVec,cQ,rhoP,Udot)
+function [L,S,H,g] = HSqLd_WT_beta(N,q,R_,p,xk,Xk,DT,ref,us,lambdaCt,pitchCt,CqCt,rhoP,Udot)
 % HSqLd calculate matrices L, S, H and g for Lemke's algorithm
 %
 % Inputs: * N: number of samples optimization (N = 40)
@@ -26,7 +26,7 @@ p2 = [rhoP(2);cumsum(Udot(2:ni:end)) + rhoP(2)]; %repmat(rhoP(2), size(p1,1),1);
 p3 = repmat(rhoP(3), size(p1,1),1); %V:  % p3 = [xk(4);Xk(4:nx:end)]; % V
 
 %%%%%%%%% Build L, S matrices Xk = L*xk+S*Uk%%
-[Aj,Bj] = ABqLd_WT_beta(DT,[p1(1),p2(1),p3(1)],lambdaVec,pitchVec,cQ);
+[Aj,Bj] = ABqLd_WT_beta(DT,[p1(1),p2(1),p3(1)],lambdaCt,pitchCt,CqCt);
 
 L = zeros(nx*N,nx);
 S = zeros(nx*N,ni*N);
@@ -34,7 +34,7 @@ L(1:nx,1:nx) = Aj;
 S(1:nx,1:ni) = Bj;
 
 for idx = 1:N-1
-    [Aj,Bj] = ABqLd_WT_beta(DT,[p1(idx+1),p2(idx+1),p3(idx+1)],lambdaVec,pitchVec,cQ);  
+    [Aj,Bj] = ABqLd_WT_beta(DT,[p1(idx+1),p2(idx+1),p3(idx+1)],lambdaCt,pitchCt,CqCt);  
     L(idx*nx+1:(idx+1)*nx,1:nx) = Aj*L((idx-1)*nx+1:idx*nx,1:nx);
     S(idx*nx+1:(idx+1)*nx,1:(idx+1)*ni) = [Aj*S((idx-1)*nx+1:idx*nx,1:idx*ni),Bj];
 end

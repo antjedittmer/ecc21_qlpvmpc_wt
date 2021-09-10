@@ -152,7 +152,9 @@ titleStdqLPV_Pwr = sprintf('%2.2e',varqLPV_Pwr);
 ratioStd_Pwr = sprintf('%2.1f ', varPI_Pwr/varqLPV_Pwr);
 
 % axis for plot
-yAxCell = {'wind [m/s]', 'Twr_{FA} [m/s^2]','GenPwr [kW]'};
+%yAxCell = {'wind [m/s]', 'Twr_{FA} [m/s^2]','GenPwr [kW]'};
+
+yAxCell = {'Wind [m/s]', 'Turmbeschl. [m/s^2]','Leistung [kW]'};
 
 %% Plot
 % Plot input wind, tower fore-aft acceleration and generator power
@@ -164,7 +166,8 @@ ax1(1) = subplot(3,1,1);
 plot(timeVecPlot, OutTableMPCPlot.Wind);
 ylabel(yAxCell{1}); 
 axis tight; grid on;
-title({'Baseline (P-PI) vs. qLPV MPC; ', meanOpt})
+%title({'Baseline (P-PI) vs. qLPV MPC; ', meanOpt})
+title('Standardregler (PI) und modell-prädiktiver Regler (MPC)')
 set(ax1(1),'FontSize',myFont)
 
 % Tower fore-aft acceleration
@@ -177,14 +180,18 @@ set(ax1(2),'FontSize',myFont)
 
 % Generator power
 ax1(3) = subplot(3,1,3);
-plot(timeVecPlot, OutTableTest2Plot.GenPwr, timeVecPlot,OutTableMPCPlot.GenPwr,'-.',timeVecPlot,PGRef,'k:');
+plot(timeVecPlot, OutTableTest2Plot.GenPwr, timeVecPlot,OutTableMPCPlot.GenPwr,'-.');
+hold on; plot(timeVecPlot,PGRef,'k:','Linewidth',1.5);
 %title(['|P_{g,ref}  - P_g| [kW]: var_{P-Pi} = ',titleStdPI_Pwr, ', var_{qLPVMPC} = ' ,...
     %titleStdqLPV_Pwr,', ratio: ' ,ratioStd_Pwr])
 ylabel(yAxCell{3}); %'P_g [kW]')
 axis tight; grid on;
-legend('P-PI','MPC','P_{g,ref}','Location','SouthEast')
+hold off;
+%legend('P-PI','MPC','P_{g,ref}','Location','SouthEast')
+legend('PI','MPC','Referenz','Location','SouthEast')
 set(ax1(3),'FontSize',myFont)
-xlabel('time [s]');
+%xlabel('time [s]');
+xlabel('Zeit[s]');
 
 % Link axes and set poisition
 linkaxes(ax1,'x')
