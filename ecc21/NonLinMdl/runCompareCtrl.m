@@ -92,8 +92,10 @@ if mean(OutTableTest2.RotSpeed) >1
 end
 
 % Run or load qLPV controller
-simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta.slx'; %
-matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPC',strFig,'.mat']);
+%simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta.slx'; %
+simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta_UIO.slx';
+simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta_UIO_inside.slx';
+matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPCUIO2',strFig,'.mat']);
 [OutTableMPC, tictoc_LPVMPC,GenPwrRef] = getSimulationOutputTable(matFileOutTableTest1,loadData,OutTable,simMdlname,varnames);
 
 %% Prepare information for plots and plot data
@@ -101,7 +103,7 @@ matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPC',strFig,'.mat']);
 % Information for plot
 figStr = ['RefSimulinkClosedLoop',strFig,'_beta'];
 meanOpt = strrep(sprintf(' mean cputime MPC: %1.2e s',mean(tictoc_LPVMPC.Data)),'e-0','e-');
-timeForPlot = [15,400];
+timeForPlot = [60,400];
 DT = 0.008;
 r = GenPwrRef;
 
