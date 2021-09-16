@@ -9,8 +9,8 @@ rhoP = 18; %Wind speed: Scheduling parameter, alternative [V,omega,beta]
 useFASTmdl = 0; % 0 (Default) 5th order model used, 1 9th order
 useFASTwind = 1; % 0 Wind speed step function, 1: NTW Wind from FASTTool
 varWind = 0; % Wind variance
-multTau = 0.025; %Factor for time constant wind speed low pass ( tau = 1/DT)
-multVar = 0.5; % Change variance NTW
+multTau = 0.0175; %Factor for time constant wind speed low pass ( tau = 1/DT)
+multVar = 1; % Change variance NTW
 
 %% Set-up wind test signal
 % Get time and input vectors to simulate with lsim
@@ -25,9 +25,8 @@ else % cut wind to length of time vector
     load(fullfile(dataInPath,'OutDataWind18NTW.mat'),'OutTable');
     
     windTest = OutTable.Wind1VelX;
-    meanWindTest = mean(windTest);
-    varWindTest = var(windTest);
-    OutTable.Wind1VelX = 0.5*(windTest - meanWindTest) + meanWindTest;
+    meanWindTest = mean(windTest); % varWindTest = var(windTest);
+    OutTable.Wind1VelX = multVar*(windTest - meanWindTest) + meanWindTest;
     
     V = OutTable.Wind1VelX(1:length(t));
     
@@ -133,9 +132,19 @@ T = eye(nx)-H*C
 A1 = T*A
 
 % Pole placement with Q and R
-Qe = eye(nx); %B*B'; %
+Qe = B*B'; %
 Re = C*C';
-K1 = lqr(A',C',Qe,Re)';
+%K1 = lqr(A',C',Qe,Re)'; % lqr not supported in Simulink
+
+Ham = [A', -C'* Re^(-1) * C; % Hamiltonion matrix -lambda to make it stabizable
+    -Qe, -A]; 
+[V,D] = eig(Ham); % Divide into stable and unstable eigenvalues
+idxS = diag(D) < 0; % get stable eigenvalues
+Vs = V(:,idxS);% get eigenvectors of stable eigenvalues
+Vus = V(:,~idxS); % not stable
+n11 = sum(idxS);
+P = Vs(n11+1:end,:)/(Vs(1:n11,:));
+K1 = real(Re^(-1) * C * P)';
 
 % Calculate F and K
 F = A1 - K1*C; %T*A -K1*C

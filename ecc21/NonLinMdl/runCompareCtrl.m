@@ -18,7 +18,7 @@ if ~nargin || isempty(strWindType)
 end
 
 if nargin < 2 || isempty(loadData)
-    loadData = 1; %load simulation output data if available;
+    loadData = 0; %load simulation output data if available;
 end
 
 if nargin < 3 || isempty(figNo1) 
@@ -93,9 +93,9 @@ end
 
 % Run or load qLPV controller
 %simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta.slx'; %
-simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta_UIO.slx';
+%simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta_UIO.slx';
 simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta_UIO_inside.slx';
-matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPCUIO2',strFig,'.mat']);
+matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPCUION',strFig,'.mat']);
 [OutTableMPC, tictoc_LPVMPC,GenPwrRef] = getSimulationOutputTable(matFileOutTableTest1,loadData,OutTable,simMdlname,varnames);
 
 %% Prepare information for plots and plot data
