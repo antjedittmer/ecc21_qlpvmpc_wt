@@ -255,5 +255,27 @@ print(gcf,fullfile('figDir','windEst'), '-dpng');
 vafState = 1 - var(x(:,end)- d)/var(d)
 vafStateEst = 1 - var(xest(:,end)-d)/var(d)
 
+betaLUT = unique(Lin_points.Pitch); %Select all pitch angle in eq. points
+lambdaOP = Lin_points.RSpeed * wecs.rb ./ Lin_points.V; % Calculate TSR in OP
+idxLambda = (lambda >= min(lambdaOP) & lambda <= max(lambdaOP)); %index TSR
+
+lambdaLUT = lambda(idxLambda); %select all relevant TSR with index TSR
+CqPitch = interp2(lambda,beta,Cq,lambdaLUT,betaLUT);
+lambdaInvMat = repmat((lambdaLUT .^ (-2))', size(CqPitch,1),1);
+lambdaMat = repmat((lambdaLUT .^ (-2))', size(CqPitch,1),1);
+lambdaCqMat = lambdaInvMat .* CqPitch;
+
+lambdaCqVecMin = min(lambdaCqMat(:));
+lambdaCqVecMax = max(lambdaCqMat(:));
+dLlambdaCqVec = (lambdaCqVecMax - lambdaCqVecMin)/(length(lambdaLUT)-1);
+lambdaCqVecLUT = lambdaCqVecMin : dLlambdaCqVec:lambdaCqVecMax;
+
+lambdaTildaMat = lambdaCqVecMax *ones(size(lambdaCqMat));
+for idx = 1: length(betaLUT)
+    [lambdaCqbeta, idxUnique] = unique(lambdaCqMat(idx,:));  
+    lambdaTildaMat(idx,:) = interp1(lambdaCqbeta,lambdaLUT(idxUnique),lambdaCqVecLUT,'linear','extrap');
+end
+
+
 
 
