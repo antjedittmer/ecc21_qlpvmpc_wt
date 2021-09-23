@@ -20,10 +20,10 @@ if isempty(lambdaVec)
     %% Compute gradients %%[Cpdlambda,Cpdbeta] = gradient(Cp,mean(diff(Xq(1,:))),mean(diff(Yq(:,1))));
     [Cqdlambda,Cqdbeta] = gradient(Rotor_cQ,mean(diff(Rotor_Lambda)),mean(diff(Rotor_Pitch))); %dcQ/dbetaDeg * dbetaDeg/dbetaRad *betaRAd
 end
-   
+
 
 %% Parameters
-if length(rhoP) == 1 
+if length(rhoP) == 1
     Vbar = rhoP; % Vbar
     LUT_V = 4:25; % LUT table rows
     LUT_omega = ...%[0.4815, 0.6017,0.7217,0.8413,0.9603,1.0786,1.1949, repmat(1.2671,1,15)];
@@ -35,16 +35,16 @@ if length(rhoP) == 1
         1.2545426663335242 1.2545426663335242 1.2545426663335242 ...
         1.2545426663335242 1.2545426663335242 1.2545426663335242 ...
         1.2545426663335242];
-
-%     LUT_beta = [zeros(1,8),0.0642    0.1126    0.1493    0.1808    0.2093    0.2356    0.2602...
-%         0.2833    0.3054    0.3269    0.3477    0.3676    0.3868    0.4056];  
-
-LUT_beta =  [0 0 0 0 0 0 0 0 0.064193209888351435 0.11259119004615419 ...
-                    0.14929546421559495 0.18081611050661253 0.20926497731412011 ...
-                    0.23701571242082992 0.26197392072434883 0.28536133270107289 ...
-                    0.30770154712660031 0.32934362985133 0.35028758087526196 ...
-                    0.37035886727319672 0.38973202197033374 0.40858157789187255 ...
-                    ];
+    
+    %     LUT_beta = [zeros(1,8),0.0642    0.1126    0.1493    0.1808    0.2093    0.2356    0.2602...
+    %         0.2833    0.3054    0.3269    0.3477    0.3676    0.3868    0.4056];
+    
+    LUT_beta =  [0 0 0 0 0 0 0 0 0.064193209888351435 0.11259119004615419 ...
+        0.14929546421559495 0.18081611050661253 0.20926497731412011 ...
+        0.23701571242082992 0.26197392072434883 0.28536133270107289 ...
+        0.30770154712660031 0.32934362985133 0.35028758087526196 ...
+        0.37035886727319672 0.38973202197033374 0.40858157789187255 ...
+        ];
     
     % Get omegabar and beta
     omegabar = interp1(LUT_V,LUT_omega,Vbar,'pchip');
@@ -71,15 +71,15 @@ Ks = 867637000; %Nm/rad Stiffness of the transmission
 Bs = 6215000;  %Nm/rad/sec        %Damping of the transmission
 tau_g = 0.01; % for pitch actuator and airspeed
 
-%% Lambda 
+%% Lambda
 Lambda_bar = omegabar*rb/Vbar;
 dlambdadomega= rb/Vbar;
 dlambdadV = - omegabar*rb/Vbar^2;
 
 %% Grid points
-Cqb = interp2(lambdaVec,pitchVec,cQ,Lambda_bar,beta_bar); 
+Cqb = interp2(lambdaVec,pitchVec,cQ,Lambda_bar,beta_bar);
 dCqdlambdab = interp2(lambdaVec,pitchVec,Cqdlambda,Lambda_bar,beta_bar);
-dCqdbetab = interp2(lambdaVec,pitchVec,Cqdbeta,Lambda_bar,beta_bar); 
+dCqdbetab = interp2(lambdaVec,pitchVec,Cqdbeta,Lambda_bar,beta_bar);
 %% Tr=0.5*pi*rb^3*Cq*v^2
 dTrdomega = 0.5*rho*pi*rb^3*(dCqdlambdab*dlambdadomega)*Vbar^2;% br = dTr/domega
 dTrdbeta = 0.5*rho*pi*rb^3*dCqdbetab*Vbar^2;% Krb = dTr/dbeta
@@ -91,15 +91,16 @@ dTrdV =  2*0.5*rho*pi*rb^3*Vbar*Cqb + ...
 % States for model xA = [y, xdot] with y = [Tg, beta]
 % x = [ThetaS, OmegaR, OmegaG, Tg, beta,]
 Atemp = [[0,1,-1,0] ;
-    [-Ks/Jr, (-Bs + 0.35*dTrdomega)/Jr, Bs/Jr,0];
-    Ks/Jgr, Bs/Jgr, -Bs/Jgr, - Ng/Jgr; 
+    [-Ks/Jr, (-Bs + dTrdomega)/Jr, Bs/Jr,0];
+    Ks/Jgr, Bs/Jgr, -Bs/Jgr, -Ng/Jgr;
     zeros(1,3), -1/tau_g];
 
 %% Create input matrix B
 % Input orig model: V [m/s], T_g_ref [Nm], beta [rad],
-% -> vel model: Vdot [m/s^2]  , T_g_refDot [Nm/s] 
-% for beta: Vdot [m/s^2]  T_g_refDot [Nm/s] betaDot [rad/s], 
+% -> vel model: Vdot [m/s^2]  , T_g_refDot [Nm/s]
+% for beta: Vdot [m/s^2]  T_g_refDot [Nm/s] betaDot [rad/s],
 Btemp = [zeros(1,3); dTrdV/Jr, 0 dTrdbeta/Jr; zeros(1,3);  0,  1/tau_g,0];
+
 
 % With Beta
 Aeval = [Atemp,Btemp(:,3); zeros(1, size(Atemp,2)), -1/tau_g];
