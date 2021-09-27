@@ -1,4 +1,4 @@
-function compareLinearModels(speedVec,figFolder, useActuatorStates,figNoAdd,createBodePlots,plotVisible)
+function sysOut = compareLinearModels(speedVec,figFolder,useActuatorStates,figNoAdd,createBodePlots,plotVisible,noOut)
 % compareLinearModels compares two sets of linearized turbine models with
 % linearized FASTTool models at different wind speeds. 
 % All inputs are optional.
@@ -41,6 +41,7 @@ if nargin == 0 || isempty(speedVec)
     speedVec = [1,22]; %[1,22]; % variations of wind speed
 end
 
+% Default fig folder
 if nargin < 2 || isempty(figFolder)
     figFolder = fullfile(mainDir,'figDir');
 end
@@ -49,12 +50,29 @@ if ~isfolder(figFolder)
     mkdir(figFolder);
 end
 
-if nargin < 3
+% Default: Do not use actuatorstates
+if nargin < 3 || isempty(useActuatorStates)
     useActuatorStates = 0;
+end
+
+% Default: Close all figures and start with figure 1
+if nargin < 4 || isempty(figNoAdd) || figNoAdd == 0
     figNoAdd = 0;
     close all;
+end
+
+% Default draw bode plots
+if nargin < 5 || isempty(createBodePlots) 
     createBodePlots = 1;
+end
+
+% Default make plots visible
+if nargin < 6 || isempty(plotVisible) 
     plotVisible = 'on';
+end
+
+if nargin < 7 || isempty(noOut) 
+    noOut = 2; 
 end
 
 %% Load 
@@ -65,6 +83,7 @@ load('NREL5MW_CPdata','Rotor_Lamda', 'Rotor_Pitch', 'Rotor_cQ', 'Rotor_cT');
 idxModel = 1; %in case several linearized models are provided
 modelNames ={'NREL5MW_linearised_4to25'};
 modelNames = modelNames(idxModel);
+load(modelNames{1},'sysm','Lin');
 
 modelsL = {'FAST 30 states'};
 modelsL = modelsL(idxModel);
@@ -72,7 +91,7 @@ modelsL = modelsL(idxModel);
 lenModelNames = length(modelNames);
 sysmCell = cell(lenModelNames,1);
 
-load(modelNames{1},'sysm','Lin'); % 1st model: state space and input OP
+ % 1st model: state space and input OP
 sysmCell{1} = sysm;
 for idxModels = 2 : lenModelNames
     load(modelNames{idxModels},'sysm');
@@ -122,13 +141,12 @@ y_bar_cell = cell(lenLinV,1);
 %% Get and check FAST input and output names
 
 % Get index FAST outputs
-noOut = 2;
-idxFASTOutputAll = [38 12 13]; 
+idxFASTOutputAll = [38 12 13 6]; 
 idxFASTOutput = idxFASTOutputAll(1:noOut);  
 idxFASTInput = [8 9 1];
 
 % Set plot outputs 
-sysOutputname =[{'omega [rad/s]'};{'ydotdot_{fa} [m/s^2]'}; {'xdotdot_{sw} [m/s^2]'}];
+sysOutputname =[{'omega [rad/s]'};{'ydotdot_{fa} [m/s^2]'}; {'xdotdot_{sw} [m/s^2]'}; {'zeta * R [m]'}];
 sysOutputname = sysOutputname(1:noOut);
 sysInputname =[{'Torque [kNm]'}; {'\beta [rad]'};{'V [m/s]'}];
 
@@ -144,7 +162,7 @@ disp('FAST sysInputnames: ');
 fprintf('%s\n', sysInNamesOrig{:})
 
 % Set output gains for FAST accordingly
-multFASTOutputAll = [pi/30,1, 1];
+multFASTOutputAll = [pi/30,1, 1,1];
 multFASTOutput = multFASTOutputAll(1:noOut);
 multFASTInput = [1000,1,1];
 
@@ -233,8 +251,14 @@ for index =  speedVec
     % testMatrix = ones(3); testMatrix(3,1) = 100;
     % tfSYS =  testMatrix .* tf(sys5DoF); sys5DoF = ss(tfSYS);
 
-    sys5DoF.OutputName = sysOutputname;
+    sys5DoF.OutputName = sysOutputname(1:nO);
     sys5DoF.InputName = sysInputname;
+    
+    u0 = [Lin.Torque(index); beta_bar;  Vbar];
+    x0_sys5DoF = - inv(sys5DoF.A) * sys5DoF.B * u0;
+    
+    yTestFTAll =  -  sysm{index}.C * sysm{index}.A * sysm{index}.B * Lin.u_op{index};
+    yTestRotGen = yTestFTAll(contains(sysm{index}.Outputname, {'RotSpeed'}))* pi/30
     
     %% Linear Model Mdl2: System and input matrices
     % Set up system and input matrices dependent on airspeed, pitch and rotor speed  
@@ -269,8 +293,8 @@ for index =  speedVec
         A1(8,9), ...
         B1(8,1),B1(8,3)*dTrdbeta];
         [A1(9,1:6), A1(9,7) , A1(9,8:9) ,B1(9,4) ,0];
-        zeros(1,9),  -1/kappa, 0;...
-        zeros(1,10),  -1/tau];
+        zeros(1,9), -1/kappa, 0;...
+        zeros(1,10), -1/tau];
     
     A7DoF = A9DoF(1:9,1:9);
        
@@ -289,15 +313,24 @@ for index =  speedVec
     
     if noOut == 2
         idxOut = 5; % ouput: ydotdot_fa
-    else
+        Czeta = [];
+        Dzeta = [];
+    elseif noOut == 3
         idxOut = [5,7];% ouput: ydotdot_fa, xdotdot_sw
+        Czeta = [];
+        Dzeta = zeros(1,3);
+    elseif noOut == 4
+        idxOut = [5,7];% ouput: ydotdot_fa, xdotdot_sw
+        Czeta = [zeros(1,2),     wecs.rb,    zeros(1,8)];
+        Dzeta = zeros(1,3);
     end
     C9DoF = [zeros(1,5+2),     1     zeros(1,3) % state 8: omega_r
-        A9DoF(idxOut,:)]; % state 5: xdot_FA: output xdotdot_FA
+        A9DoF(idxOut,:);... % state 5 (+ 7) : xdot_FA: output xdotdot_FA + (SW)
+        Czeta];% state 5 (+ 7) : xdot_FA: output xdotdot_FA + (SW)
     C7DoF = C9DoF(:,1:9);
     
-    D9DoF = [zeros(1,3); B9DoF(idxOut,:)];
-    D7DoF = [zeros(1,3); B7DoF(idxOut,:)];
+    D9DoF = [zeros(1,3); B9DoF(idxOut,:); Dzeta];
+    D7DoF = [zeros(1,3); B7DoF(idxOut,:); Dzeta];
     
     %% Create state-space model for Mdl2 
     if useActuatorStates == 1
@@ -305,7 +338,7 @@ for index =  speedVec
         Mdl2Str = ' Rot,Twr,Bld+Act ';
     else
         sysLagrange = ss(A7DoF,B7DoF*diag([1000,1,1]),C7DoF,D7DoF); % to give input Tg in kN/m
-        Mdl2Str = ' Rot,Twr + Bld ';
+        Mdl2Str = ' Rot,Twr+Bld ';
     end
     
     sysLagrange.Outputname = sysOutputname;

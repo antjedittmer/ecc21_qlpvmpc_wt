@@ -1,5 +1,5 @@
 %% Proof-of concept for unknown input observer for WECS
-close all; clear;
+close all; %clear;
 addpath(genpath(pwd))
 parentDir = fileparts(pwd);
 
@@ -8,9 +8,9 @@ rhoP = 18; %Wind speed: Scheduling parameter, alternative [V,omega,beta]
 useFASTmdl = 0; % 0 (Default) 5th order model used, 1 9th order
 useFASTwind = 1; % 0 Wind speed step function, 1: NTW Wind from FASTTool
 varWind = 0; % Wind variance
-multTau = 0.0175; %0.0175; %Factor for time constant wind speed low pass ( tau = 1/DT)
+multTau = 1; %0.0175; %Factor for time constant wind speed low pass ( tau = 1/DT)
 multVar = 1; % Change variance NTW
-idxS = 3; 
+idxS = 3;  % 3 states for default model: Thetas, omegar, omegag
 
 %% Set-up wind test signal
 % Get time and input vectors to simulate with lsim
@@ -276,6 +276,20 @@ for idx = 1: length(betaLUT)
     lambdaTildaMat(idx,:) = interp1(lambdaCqbeta,lambdaLUT(idxUnique),lambdaCqVecLUT,'linear','extrap');
 end
 
+
+myfig = figure;
+
+[YLambdaFun,XBeta] = meshgrid(lambdaCqVecLUT,betaLUT);
+ax = surf(XBeta,YLambdaFun,lambdaTildaMat);
+axis tight;
+az = 55;
+el = 45;
+view(az,el);
+
+xlabel('pitch \beta [rad]');
+ylabel('\lambda^{-2} C_{Q,\beta}(\lambda) [-]');
+zlabel('TSR \lambda [-]')
+title('2D Look-up-Table for \lambda = f(\beta,T_r)');
 
 
 

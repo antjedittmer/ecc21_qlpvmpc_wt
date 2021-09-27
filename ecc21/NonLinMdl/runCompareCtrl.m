@@ -1,4 +1,4 @@
-function runCompareCtrl(strWindType,loadData,figNo1,useFASTForComparison)
+function runCompareCtrl(strWindType,loadData,figNo1,useFASTForComparison,EKFstr)
 % runComparCtrl compares simulation results for baseline and qLPV MPC
 % controller in closed loop with the Simulink WECS model.
 %
@@ -22,13 +22,16 @@ if nargin < 2 || isempty(loadData)
 end
 
 if nargin < 3 || isempty(figNo1)
-    figNo1 = 1;
+    figNo1 = 0;
 end
 
 if nargin < 4 || isempty(useFASTForComparison)
-    useFASTForComparison = 0;
+    useFASTForComparison = 1;
 end
 
+if nargin < 5 || isempty(EKFstr)
+    EKFstr = '';
+end
 %% Set path to directories
 
 % Set path to inputdata directory
@@ -100,7 +103,8 @@ if mean(OutTableTest2.RotSpeed) >1
 end
 
 % Run or load qLPV controller
-%simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta.slx'; %
+% simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta.slx'; %
+% matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPC',strFig,strMultVar,'.mat']);
 %simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta_UIO.slx';
 simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta_UIO_inside2.slx';
 matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPCUIO2',strFig,strMultVar,'.mat']);
@@ -111,7 +115,7 @@ matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPCUIO2',strFig,strMultVar,
 % Information for plot
 figStr = ['RefSimulinkClosedLoop',strFig,'_beta'];
 meanOpt = strrep(sprintf(' mean cputime MPC: %1.2e s',mean(tictoc_LPVMPC.Data)),'e-0','e-');
-timeForPlot = [60,200];
+timeForPlot = [60,400];
 DT = 0.008;
 r = GenPwrRef;
 
@@ -168,7 +172,6 @@ yAxCell = {'wind V [m/s]', 'Twr_{FA} y_t [m/s^2]','GenPwr P_g [kW]'};
 % Plot input wind, tower fore-aft acceleration and generator power
 
 figure(figNo1);
-
 % Plot wind
 ax1(1) = subplot(3,1,1);
 plot(timeVecPlot, OutTableMPCPlot.Wind);
