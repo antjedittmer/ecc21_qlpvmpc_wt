@@ -1,5 +1,5 @@
 %% Proof-of concept for unknown input observer for WECS
-close all; %clear;
+close all; clear;
 addpath(genpath(pwd))
 parentDir = fileparts(pwd);
 
@@ -17,8 +17,7 @@ idxS = 3;  % 3 states for default model: Thetas, omegar, omegag
 DT = 0.008; % sample time
 t = 0:DT:100; % default time vector
 
-if useFASTwind == 0 %create step function
-   
+if useFASTwind == 0 %create step function 
     t1L = round(length(t)/2);
     V = [rhoP*ones(1,t1L),(rhoP+2) * ones(1,length(t) - t1L)]';
     
@@ -48,21 +47,14 @@ MdlMFile;
 % u = [Tg_ref beta_ref V]'
 
 % Get torque, pitch and and rotor speed corresponding to wind input
-u1 = nan(size(d));
-u2 = nan(size(d));
-rhoP1 = nan(size(d));
-for idx = 1: length(d)
-    idxVec = abs(Lin_points.V - d(idx)); % difference to wind speed
-    idxNearestV =  min(idxVec) == idxVec; % index of nearest wind speed
-    u1(idx) = Lin_points.Torque(idxNearestV )*10^3; % Torque [Nm]
-    u2(idx) = Lin_points.Pitch(idxNearestV ); % Pitch [rad]
-    rhoP1(idx) = Lin_points.RSpeed(idxNearestV ); %Rotor speed [rad/s]
-end
+u1 = interp1(Lin_points.V,Lin_points.Torque,d)*10^3;
+u2 = interp1(Lin_points.V,Lin_points.Pitch,d);
+rhoP1 = interp1(Lin_points.V,Lin_points.RSpeed,d);
 
 %% Set up Simulation model
 % The input and output vectors are:
-%  u = [Tg_ref beta_ref V]'
-%  sysOut.InputName' {'Torque [kNm]'}    {'\beta [rad]'}    {'V [m/s]'}
+% u = [Tg_ref beta_ref V]'
+% sysOut.InputName' {'Torque [kNm]'}    {'\beta [rad]'}    {'V [m/s]'}
 % y = [yt_dot zeta_dot omega_r omega_gr]'
 % {'omega [rad/s]'}    {'ydotdot_{fa} [m/s^2]'}    {'beta'}    {'Tg'}
 
@@ -134,8 +126,8 @@ fprintf('rank(C*E) is %d; rank(E) is %d\n', rank(C*E),rank(E));
 %% Calculate observer matrices
 H = E*inv((C*E)'*(C*E))*(C*E)' %#ok<MINV,*NOPTS> display output, inv is fast enough
 nx = size(A,1);
-T = eye(nx)-H*C
-A1 = T*A
+T = eye(nx)-H*C;
+A1 = T*A;
 
 % Pole placement with Q and R
 Qe = [E,B]*[E,B]'; %
@@ -155,12 +147,12 @@ K1 = real(Re^(-1) * C * P)';
 % Calculate F and K
 F = A1 - K1*C; %T*A -K1*C
 K = K1 + F*H;
-T = eye(size(H*C)) - H*C
+T = eye(size(H*C)) - H*C;
 
 % Sys with no ctrl input: xdot = Ax + Ed, y = Cx
 nd = size(E,2); %nu = 0;
 nu = size(B,2);
-ny = size(C,1)
+ny = size(C,1);
 sys = c2d(ss(A,[E,B],C,zeros(ny,nd+nu)),DT,'zoh'); % ss(A,[E,B],C,zeros(ny,nd+2));
 
 % Est with no control input: zdot = Fz + Ky, xhat = z + Hy
@@ -176,7 +168,7 @@ y1 = yhat + y0';
 x1 = xhat + x0';
 
 [dy,~,dx] = lsim(sys,diffIn,t(1:end-1));
-ytemp = y0'+cumsum(dy);
+ytemp = y0' + cumsum(dy);
 y = [ytemp;ytemp(end,:)];
 xtemp = x0' + cumsum(dx);
 x = [xtemp;xtemp(end,:)];
@@ -219,7 +211,8 @@ for idx = 1:idxEnd
     subplot(idxEnd,1,idx)
     plot(t,x(:,idx),'-','Color',cl(1,:));
     hold on;
-    plot(t,xest(:,idx),'k--');
+    plot(t,x1(:,idx),'--','Color',cl(2,:));
+    plot(t,xest(:,idx),'k-.');
     axis tight; grid on;
     if idx == 1
         title('WECS states and estimates');
@@ -276,7 +269,6 @@ for idx = 1: length(betaLUT)
     lambdaTildaMat(idx,:) = interp1(lambdaCqbeta,lambdaLUT(idxUnique),lambdaCqVecLUT,'linear','extrap');
 end
 
-
 myfig = figure;
 
 [YLambdaFun,XBeta] = meshgrid(lambdaCqVecLUT,betaLUT);
@@ -288,8 +280,8 @@ view(az,el);
 
 xlabel('pitch \beta [rad]');
 ylabel('\lambda^{-2} C_{Q,\beta}(\lambda) [-]');
-zlabel('TSR \lambda [-]')
-title('2D Look-up-Table for \lambda = f(\beta,T_r)');
+zlabel('tip speed ratio \lambda [-]')
+% title('2D Look-up-Table for \lambda = f(\beta,T_r)');
 
 
 
