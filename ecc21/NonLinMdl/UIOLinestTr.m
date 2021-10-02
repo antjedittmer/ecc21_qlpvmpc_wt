@@ -1,5 +1,5 @@
 %% Prepare workspace
-clear; close all; clc
+ close all; clc %clear;
 addpath(genpath(pwd))
 parentDir = fileparts(pwd);
 
@@ -30,18 +30,15 @@ Bs = 6215000;  %Nm/rad/sec        %Damping of the transmission
 tau_g = 0.01; % for pitch actuator and airspeed
 
 %% Create system matrices A B C E D:
-% States: [Theta_s [rad], omega_r [rad/s], omega_gr [rad/s]]
-% u = [Tg]
-% d = [Tr(omega_r,beta,V)]
-% y = [omega_r [rad/s], omega_gr [rad/s]]
+% States: [Theta_s [rad], omega_r [rad/s], omega_gr [rad/s]], u = [Tg]
+% d = [Tr(omega_r,beta,V)] y = [omega_r [rad/s], omega_gr [rad/s]]
 
 A = [0,1,-1 ;
     -Ks/Jr, -Bs/Jr , Bs/Jr;
     Ks/Jgr, Bs/Jgr, -Bs/Jgr];
 B = [0; 0; -Ng/Jgr];
 E = [0; 1/Jr;0 ];
-C = [0 1 0;0 0 1];
-
+C = [0 1 0;0 0 1]; % 
 fprintf('rank(C*E) is %d; rank(E) is %d\n', rank(C*E),rank(E));
 
 H = E*inv((C*E)'*(C*E))*(C*E)' %#ok<MINV,*NOPTS> display output, inv is fast enough
@@ -67,8 +64,8 @@ ny = size(C,1);
 sys = ss(A,[E,B],C,zeros(ny,nd+nu)); %c2d(ss(A,[E,B],C,zeros(ny,nd+nu)),DT,'zoh'); % ss(A,[E,B],C,zeros(ny,nd+2));
 
 % Est with with control input: zdot = Fz + TBu + Ky, xhat = z + Hy
-sysEst = ss(F,[T*B,K],eye(nx),[zeros(size(T*B)),H]); %c2d(ss(F,[T*B,K],eye(nx),[zeros(size(T*B)),H]),DT,'zoh'); %ss(F,[T*B,K],eye(nx),[zeros(size(T*B)),H]); %
-sysEstCont = ss(F,[T*B,K],eye(nx),[zeros(size(T*B)),H]);
+sysEstTr = c2d(ss(F,[T*B,K],eye(nx),[zeros(size(T*B)),H]),DT,'zoh'); %ss(F,[T*B,K],eye(nx),[zeros(size(T*B)),H]); %
+sysEstContTr = ss(F,[T*B,K],eye(nx),[zeros(size(T*B)),H]);
 
 %% To estimate the aerodynamic Torque Tr, use the equation
 %      Tr = 0.5 *rho *pi*R^3 *C_Q *V^2
@@ -198,7 +195,7 @@ x1 = xhat;%+ x0';
 inEst = [Tg,y1];
 %
 z0 = T*x0; %(eye(size(H*C))- H*C);
-[xesthat,~,zhat] = lsim(sysEst,inEst,t,z0);
+[xesthat,~,zhat] = lsim(sysEstTr,inEst,t,z0);
 z1 = zhat;% + z0';
 xest1 = xesthat;% + x0';
 
@@ -244,7 +241,7 @@ xlabel('time [s]');
 
 % J*omega_r_hat_dot = -Ks*Theta_s - Bs*omega_r_hat + Bs*omega_gr_hat + Tr
 % => Tr = Jr*omega_r_hat_dot + Ks*Theta_s + Bs*omega_r_hat - Bs*omega_gr_hat
-sysEstAug = ss(sysEst.A,sysEst.B,[sysEst.C;sysEst.A(2,:)],[sysEst.D;sysEst.B(2,:)]);
+sysEstAug = ss(sysEstTr.A,sysEstTr.B,[sysEstTr.C;sysEstTr.A(2,:)],[sysEstTr.D;sysEstTr.B(2,:)]);
 [xesthatAug,~,zhatAug] = lsim(sysEstAug,inEst,t,z0);
 
 omegaRhat_dot = xesthatAug(:,4);
