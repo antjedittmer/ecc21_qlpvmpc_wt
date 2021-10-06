@@ -3,6 +3,15 @@ close all; clear;
 addpath(genpath(pwd))
 parentDir = fileparts(pwd);
 
+% dataInDir = fullfile( mainDir,'dataIn');
+% addpath(dataInDir);
+
+% Set path to figure directory
+figDir = fullfile(parentDir,'figDirUIO');
+if ~isfolder(figDir)
+    mkdir(figDir)
+end
+
 %% Define user input
 rhoP = 18; %Wind speed: Scheduling parameter, alternative [V,omega,beta]
 useFASTmdl = 0; % 0 (Default) 5th order model used, 1 9th order
@@ -278,10 +287,11 @@ az = 55;
 el = 45;
 view(az,el);
 
-xlabel('pitch \beta [rad]');
+xlabel('Pitch \beta [rad]');
 ylabel('\lambda^{-2} C_{Q,\beta}(\lambda) [-]');
-zlabel('tip speed ratio \lambda [-]')
+zlabel('Tip Speed Ratio \lambda [-]')
 % title('2D Look-up-Table for \lambda = f(\beta,T_r)');
+print(gcf,fullfile(figDir,'nonMonotone3D'), '-dpng');
 
 Jgr = wecs.Jg * wecs.Ng^2;
 
@@ -316,4 +326,70 @@ sys = ss(A,[E,B],C,zeros(ny,nd+nu)); %c2d(ss(A,[E,B],C,zeros(ny,nd+nu)),DT,'zoh'
 
 % Est with with control input: zdot = Fz + TBu + Ky, xhat = z + Hy
 sysEstTr = c2d(ss(F,[T*B,K],eye(nx),[zeros(size(T*B)),H]),DT,'zoh'); %ss(F,[T*B,K],eye(nx),[zeros(size(T*B)),H]); %
+
+
+load(fullfile('dataOut', 'OutDataWind'));
+
+timeVec = OutTable.Time;
+timeForPlot(1) = 15;
+timeForPlot(2) = min(400,timeVec(end));
+idxPlot = timeVec >= timeForPlot(1) & timeVec <= timeForPlot(2);
+timeVecPlot = timeVec(idxPlot);
+
+idxPlotData = idxPlot(1: length(OutDataWind));
+estErr = OutDataWind(idxPlotData,1) -OutDataWind(idxPlotData,2);
+
+figure; 
+subplot(2,1,1)
+plot(timeVecPlot, OutDataWind(idxPlotData,1),'color',cl(1,:));
+hold on
+plot(timeVecPlot, OutDataWind(idxPlotData,2),'--','color',cl(2,:));
+legend('True','Estimate');
+ylabel ('Wind [m/s]')
+axis tight; grid on;
+subplot(2,1,2)
+plot(timeVecPlot,estErr);
+legend('True - Estimate');
+ylabel ('Wind [m/s]')
+xlabel('time [s]')
+axis tight; grid on;
+
+print(gcf,fullfile(figDir,'WindEst'), '-dpng');
+print(gcf,fullfile(figDir,'WindEst'), '-depsc');
+
+
+estErrTr = OutDataTr(idxPlotData,1) - OutDataTr(idxPlotData,2);
+figure; 
+subplot(2,2,1)
+plot(timeVecPlot, OutDataTr(idxPlotData,1),'color',cl(1,:));
+hold on
+plot(timeVecPlot, OutDataTr(idxPlotData,2),'--','color',cl(2,:));
+legend('True','Estimate');
+ylabel ('Torque T_r [Nm]')
+axis tight; grid on;
+subplot(2,2,2)
+plot(timeVecPlot,estErrTr);
+legend('True - Estimate');
+%ylabel ('Wind [m/s]') xlabel('time [s]')
+axis tight; grid on;
+
+subplot(2,2,3)
+plot(timeVecPlot, OutDataWind(idxPlotData,1),'color',cl(1,:));
+hold on
+plot(timeVecPlot, OutDataWind(idxPlotData,2),'--','color',cl(2,:));
+legend('True','Estimate');
+ylabel ('Wind V [m/s]')
+xlabel('time [s]')
+axis tight; grid on;
+subplot(2,2,4)
+plot(timeVecPlot,estErr);
+legend('True - Estimate');
+%ylabel ('Wind [m/s]') 
+xlabel('time [s]')
+axis tight; grid on;
+
+print(gcf,fullfile(figDir,'WindTrEst'), '-dpng');
+print(gcf,fullfile(figDir,'WindTrEst'), '-depsc');
+
+1 - var(estErrTr)/var(OutDataTr(idxPlotData,1))
 

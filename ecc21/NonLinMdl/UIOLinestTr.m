@@ -1,5 +1,5 @@
 %% Prepare workspace
- close all; clc %clear;
+close all; clc %clear;
 addpath(genpath(pwd))
 parentDir = fileparts(pwd);
 
@@ -74,15 +74,16 @@ sysEstContTr = ss(F,[T*B,K],eye(nx),[zeros(size(T*B)),H]);
 
 % Get C_Q,beta as a function of TSR lambda at all relevant pitch angle
 
-betaLUT = unique(Lin_points.Pitch); %Select all pitch angle in eq. points
+[betaLUT,idxLUT] = unique(Lin_points.Pitch); %Select all pitch angle in eq. points
 lambdaOP = Lin_points.RSpeed * wecs.rb ./ Lin_points.V; % Calculate TSR in OP
-idxLambda = (lambda >= min(lambdaOP) & lambda <= max(lambdaOP)); %index TSR
+lambdaOPLUT = lambdaOP(idxLUT);
+idxLambda1 = 1; %min(lambdaOP) 
+idxLambda = (lambda >= idxLambda1 & lambda <= max(lambdaOP)); %index TSR
 
 lambdaLUT = lambda(idxLambda); %select all relevant TSR with index TSR
 CqPitch = interp2(lambda,beta,Cq,lambdaLUT,betaLUT);
 lambdaInvMat = repmat((lambdaLUT .^ (-2))', size(CqPitch,1),1);
 lambdaCqMat = lambdaInvMat .* CqPitch;
-
 
 lambdaCqFun = nan(length(betaLUT), length(lambdaLUT)); %init lambda^-2 C_Q,beta
 CqPitch = nan(length(betaLUT),sum(idxLambda)); % initialize C_Q,beta
@@ -93,9 +94,6 @@ for idx = 1: length(betaLUT)
     lambdaCqFun(idx,:) = (lambdaLUT .^ (-2)) .* CqPitch(idx,:)';
 end
 
-
-
-
 % Plot tip speed ratio lambda vs. function lambda^-2 C_Q,beta
 cl = colormap('lines');
 numCl = numel(unique(cl(:,1)));
@@ -104,19 +102,33 @@ noDiffLineStyles = ceil(numPitch/numCl);
 diffLineStyles = {'-','--','-.'};
 
 figure;
-idxSpacing = 1;
 for idx = 1: noDiffLineStyles
     nvecAll = (1:numCl) + (idx -1)*numCl;
     nvec = nvecAll(nvecAll<= numPitch);
     plot(lambdaLUT,lambdaCqFun(nvec,:),'LineStyle',diffLineStyles{idx});
     hold on;
 end
+
+X = [1, min(lambdaOP), min(lambdaOP),1];
+Y = [0,0, max(lambdaCqMat(:)),  max(lambdaCqMat(:))];
+fill(X,Y,'k','FaceAlpha',0.2,'LineStyle','none');
 axis tight; grid on
+
 xlabel('Tip Speed Ratio \lambda [-]');
 ylabel('\lambda^{-2} C_{Q,\beta}(\lambda)[-]');
+
+% 
+% idxSpacing = 1;
+% for idx = 1: idxSpacing: length(lambdaOPLUT)
+%     idxVec = abs(lambdaLUT - lambdaOPLUT(idx));
+%     idxOP = idxVec  == min(idxVec)
+%     plot(lambdaOPLUT(idx),lambdaCqFun(idx,idxOP),'o','MarkerFaceColor',cl(idx,:),'MarkerEdgeColor',cl(idx,:) );
+% end
+
+
 cellLeg = regexp(sprintf('Pitch: %2.2f [deg],', betaLUT(1:idxSpacing:end)*180/pi),',','split');
 legend(cellLeg(1:end-1));
-title('Monotonically non-increasing function \lambda^{-2}C_{Q,\beta}(\lambda)');
+%title('Monotonically non-increasing function \lambda^{-2}C_{Q,\beta}(\lambda)');
 
 figure; plot(Lin_points.V, lambdaOP)
 

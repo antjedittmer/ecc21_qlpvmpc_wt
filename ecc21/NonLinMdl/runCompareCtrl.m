@@ -1,4 +1,4 @@
-function runCompareCtrl(strWindType,loadData,figNo1,useFASTForComparison,EKFstr)
+function runCompareCtrl(strWindType,loadData,figNo1,useFASTForComparison,UIOstr)
 % runComparCtrl compares simulation results for baseline and qLPV MPC
 % controller in closed loop with the Simulink WECS model.
 %
@@ -18,7 +18,7 @@ if ~nargin || isempty(strWindType)
 end
 
 if nargin < 2 || isempty(loadData)
-    loadData = 0; %load simulation output data if available;
+    loadData = 1; %load simulation output data if available;
 end
 
 if nargin < 3 || isempty(figNo1)
@@ -29,8 +29,8 @@ if nargin < 4 || isempty(useFASTForComparison)
     useFASTForComparison = 1;
 end
 
-if nargin < 5 || isempty(EKFstr)
-    EKFstr = '';
+if nargin < 5 || isempty(UIOstr)
+    UIOstr = '';
 end
 %% Set path to directories
 
@@ -41,7 +41,7 @@ dataInDir = fullfile( mainDir,'dataIn');
 addpath(dataInDir);
 
 % Set path to figure directory
-figDir = fullfile(mainDir,'figDir');
+figDir = fullfile(mainDir,'figDirUIO');
 if ~isfolder(figDir)
     mkdir(figDir)
 end
@@ -103,13 +103,16 @@ if mean(OutTableTest2.RotSpeed) >1
 end
 
 % Run or load qLPV controller
+if isempty(UIOstr)
 simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta.slx'; %
 matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPC',strFig,strMultVar,'.mat']);
-%simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta_UIO.slx';
+else
+ simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta_UIO.slx';
 % simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta_UIO_inside2.slx';
 % matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPCUIO2',strFig,strMultVar,'.mat']);
 % simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta_UIO_inside3.slx';
-% matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPCUIO3',strFig,strMultVar,'.mat']);
+ matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPCUIO3',strFig,strMultVar,'.mat']);
+end
 
 [OutTableMPC, tictoc_LPVMPC,GenPwrRef] = getSimulationOutputTable(matFileOutTableTest1,loadData,OutTable,simMdlname,varnames);
 
@@ -118,15 +121,15 @@ matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPC',strFig,strMultVar,'.ma
 % Information for plot
 figStr = ['RefSimulinkClosedLoop',strFig,'_beta'];
 meanOpt = strrep(sprintf(' mean cputime MPC: %1.2e s',mean(tictoc_LPVMPC.Data)),'e-0','e-');
-timeForPlot = [15,400];
+timeForPlot = [60,300];
 DT = 0.008;
 r = GenPwrRef;
 
 % Plot and compare closed-loop results
-plotComparison(OutTableTest2,OutTableMPC,q_,r_,p,DT,figStr,figDir,r,timeForPlot,meanOpt,figNo1)
+plotComparison(OutTableTest2,OutTableMPC,q_,r_,p,DT,figStr,figDir,r,timeForPlot,meanOpt,figNo1,UIOstr)
 
 
-function plotComparison(OutTableTest2,OutTableMPC,q_,r_,p,DT,figStr,figDir,r,timeForPlot,meanOpt,figNo1)
+function plotComparison(OutTableTest2,OutTableMPC,q_,r_,p,DT,figStr,figDir,r,timeForPlot,meanOpt,figNo1,UIOstr)
 %plotComparison plots the time series obtained with baseline and qLPVMPC
 
 %% Handle optional inputs
@@ -207,6 +210,6 @@ posDefault = [520   378   560   420]; %get(gcf, 'position');
 set(gcf, 'position', [posDefault(1:3),posDefault(4)*1.1]);
 
 save
-print(gcf,[fullfile(figDir,'cmpCtrlSimulink_PI_MPC'),'_',figStr,'_',num2str(timeVecPlot(end))], '-dpng');
-print(gcf,[fullfile(figDir,'cmpCtrlSimulink_PI_MPC'),'_',figStr,'_',num2str(timeVecPlot(end))], '-depsc');
+print(gcf,[fullfile(figDir,'cmpCtrlSimulink_PI_MPC'),UIOstr,'_',figStr,'_',num2str(timeVecPlot(end))], '-dpng');
+print(gcf,[fullfile(figDir,'cmpCtrlSimulink_PI_MPC'),UIOstr,'_',figStr,'_',num2str(timeVecPlot(end))], '-depsc');
 
