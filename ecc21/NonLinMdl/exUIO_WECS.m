@@ -337,7 +337,10 @@ idxPlot = timeVec >= timeForPlot(1) & timeVec <= timeForPlot(2);
 timeVecPlot = timeVec(idxPlot);
 
 idxPlotData = idxPlot(1: length(OutDataWind));
-estErr = OutDataWind(idxPlotData,1) -OutDataWind(idxPlotData,2);
+
+windTrue = OutDataWind(idxPlotData,1);
+windEst = 
+estErr = OutDataWind(idxPlotData,1)-OutDataWind(idxPlotData,2);
 
 figure; 
 subplot(2,1,1)

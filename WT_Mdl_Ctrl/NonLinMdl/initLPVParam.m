@@ -1,4 +1,4 @@
-function [sysd,x0,uoff,xoff,yoff, OutList] = initLPVParam(DT,tmpLinStr,OutList,OutTable)
+function [sysd,x0,uoff,xoff,yoff, OutList] = initLPVParam(DT,tmpLinStr,OutTable)
 %addpath(fullfile(fileparts(pwd),'dataIn'));
 % initModel5MWNREL;
 % load('workSpace.mat')
@@ -18,13 +18,12 @@ if nargin < 2 || isempty(tmpLinStr)
     tmpLinStr = fullfile(fileparts(pwd),'dataIn','NREL5MW_linearised_4to25.mat');
 end
 
-if nargin < 3 || isempty(OutList)
-    load('workSpace.mat','OutList');
-end
 
-if nargin < 4 || isempty(OutTable)
+if nargin < 3 || isempty(OutTable)
     % Orig code: load('OutDataSweep.mat','OutData'); OutTable = array2table(OutData,'VariableNames', OutList);
     load('OutDataSweep.mat','OutTable'); %OutTable = array2table(OutData,'VariableNames', OutList);
+    
+    OutList = OutTable.Properties.VariableNames;
 end
 v0 = OutTable.Wind1VelX(1);
 

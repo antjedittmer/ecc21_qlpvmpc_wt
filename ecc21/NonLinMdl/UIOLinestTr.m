@@ -73,7 +73,6 @@ sysEstContTr = ss(F,[T*B,K],eye(nx),[zeros(size(T*B)),H]);
 % =>  2* Tr /(rho *pi * R^5 omega^2) = lambda^(-2) C_Q
 
 % Get C_Q,beta as a function of TSR lambda at all relevant pitch angle
-
 [betaLUT,idxLUT] = unique(Lin_points.Pitch); %Select all pitch angle in eq. points
 lambdaOP = Lin_points.RSpeed * wecs.rb ./ Lin_points.V; % Calculate TSR in OP
 lambdaOPLUT = lambdaOP(idxLUT);
@@ -108,6 +107,11 @@ for idx = 1: noDiffLineStyles
     plot(lambdaLUT,lambdaCqFun(nvec,:),'LineStyle',diffLineStyles{idx});
     hold on;
 end
+
+
+%% Check monotonocity
+diffLambdaCqFun = diff(lambdaCqFun);
+
 
 X = [1, min(lambdaOP), min(lambdaOP),1];
 Y = [0,0, max(lambdaCqMat(:)),  max(lambdaCqMat(:))];
