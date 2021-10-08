@@ -104,17 +104,35 @@ end
 
 % Run or load qLPV controller
 if isempty(UIOstr)
-simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta.slx'; %
-matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPC',strFig,strMultVar,'.mat']);
+    simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta.slx'; %
+    matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPC',strFig,strMultVar,'.mat']);
+    simMdlnameCompare = '';
+    OutTableMPCCompare = '';
+    
+elseif strcmp(UIOstr,'UIO')
+    simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta_UIO_inside.slx';
+    % simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta_UIO_inside2.slx';
+    % matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPCUIO2',strFig,strMultVar,'.mat']);
+    % simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta_UIO_inside3.slx';
+    matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPCUIO',strFig,strMultVar,'.mat']);
+    simMdlnameCompare = '';
+    OutTableMPCCompare = '';
 else
- simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta_UIO.slx';
-% simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta_UIO_inside2.slx';
-% matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPCUIO2',strFig,strMultVar,'.mat']);
-% simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta_UIO_inside3.slx';
- matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPCUIO3',strFig,strMultVar,'.mat']);
+    simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta_UIO.slx'; %
+    matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPCUIO3',strFig,strMultVar,'.mat']);
+
+    simMdlnameCompare = 'test_SimulinkMdl2_qLPVMPCbeta.slx';
+    matFileOutTableTestCompare = fullfile(dataDirOut,['OutTableMPC',strFig,strMultVar,'.mat']);
+  
 end
 
 [OutTableMPC, tictoc_LPVMPC,GenPwrRef] = getSimulationOutputTable(matFileOutTableTest1,loadData,OutTable,simMdlname,varnames);
+
+if ~isempty(simMdlnameCompare)
+    
+    [OutTableMPCCompare, tictoc_LPVMPC_C,GenPwrRef_C] = getSimulationOutputTable(matFileOutTableTestCompare,loadData,OutTable,simMdlnameCompare,varnames);
+
+end
 
 %% Prepare information for plots and plot data
 
@@ -126,10 +144,10 @@ DT = 0.008;
 r = GenPwrRef;
 
 % Plot and compare closed-loop results
-plotComparison(OutTableTest2,OutTableMPC,q_,r_,p,DT,figStr,figDir,r,timeForPlot,meanOpt,figNo1,UIOstr)
+plotComparison(OutTableTest2,OutTableMPC,OutTableMPCCompare,q_,r_,p,DT,figStr,figDir,r,timeForPlot,meanOpt,figNo1,UIOstr)
 
 
-function plotComparison(OutTableTest2,OutTableMPC,q_,r_,p,DT,figStr,figDir,r,timeForPlot,meanOpt,figNo1,UIOstr)
+function plotComparison(OutTableTest2,OutTableMPC,OutTableMPCCompare,q_,r_,p,DT,figStr,figDir,r,timeForPlot,meanOpt,figNo1,UIOstr)
 %plotComparison plots the time series obtained with baseline and qLPVMPC
 
 %% Handle optional inputs

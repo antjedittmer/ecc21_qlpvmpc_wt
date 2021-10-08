@@ -121,16 +121,23 @@ axis tight; grid on
 xlabel('Tip Speed Ratio \lambda [-]');
 ylabel('\lambda^{-2} C_{Q,\beta}(\lambda)[-]');
 
-% 
-% idxSpacing = 1;
-% for idx = 1: idxSpacing: length(lambdaOPLUT)
-%     idxVec = abs(lambdaLUT - lambdaOPLUT(idx));
-%     idxOP = idxVec  == min(idxVec)
-%     plot(lambdaOPLUT(idx),lambdaCqFun(idx,idxOP),'o','MarkerFaceColor',cl(idx,:),'MarkerEdgeColor',cl(idx,:) );
-% end
+vecV = [4,11,25];
+mCell = {'o','d','s'};
+%idxSpacing = 1;
+for idx = 1: length(vecV)%: idxSpacing: length(lambdaOPLUT)
+    lamdaVecPlot = lambdaOP(Lin_points.V == vecV(idx));
+    betaVecPlot = Lin_points.Pitch(Lin_points.V == vecV(idx));
+    idxOP = idxVec  == min(idxVec);
+    
+    idxVecBeta = abs(betaLUT - betaVecPlot)
+    idxB = idxVecBeta == min(idxVecBeta);
+    plot(lambdaOPLUT(idx),lambdaCqFun(idxB,idxOP),mCell{idx},'MarkerFaceColor',cl(idxB,:),'MarkerEdgeColor','k');
+end
 
 
 cellLeg = regexp(sprintf('Pitch: %2.2f [deg],', betaLUT(1:idxSpacing:end)*180/pi),',','split');
+
+
 legend(cellLeg(1:end-1));
 %title('Monotonically non-increasing function \lambda^{-2}C_{Q,\beta}(\lambda)');
 

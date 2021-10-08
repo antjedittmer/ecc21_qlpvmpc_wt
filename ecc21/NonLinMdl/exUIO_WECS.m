@@ -339,7 +339,6 @@ timeVecPlot = timeVec(idxPlot);
 idxPlotData = idxPlot(1: length(OutDataWind));
 
 windTrue = OutDataWind(idxPlotData,1);
-windEst = 
 estErr = OutDataWind(idxPlotData,1)-OutDataWind(idxPlotData,2);
 
 figure; 
@@ -360,6 +359,7 @@ axis tight; grid on;
 print(gcf,fullfile(figDir,'WindEst'), '-dpng');
 print(gcf,fullfile(figDir,'WindEst'), '-depsc');
 
+return;
 
 estErrTr = OutDataTr(idxPlotData,1) - OutDataTr(idxPlotData,2);
 figure; 
