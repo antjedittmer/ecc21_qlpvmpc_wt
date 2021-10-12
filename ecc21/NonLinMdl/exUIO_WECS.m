@@ -32,7 +32,7 @@ if useFASTwind == 0 %create step function
     
 else % cut wind to length of time vector
     dataInPath = fullfile(parentDir ,'dataIn');
-    load(fullfile(dataInPath,'OutDataWind18NTW.mat'),'OutTable');
+    load(fullfile(dataInPath,'OutDataWind18NTWnoise.mat'),'OutTable');
     %load(fullfile(dataInPath,'OutDataSweep.mat'),'OutTable');
     
     windTest = OutTable.Wind1VelX;
@@ -141,17 +141,17 @@ A1 = T*A;
 % Pole placement with Q and R
 Qe = [E,B]*[E,B]'; %
 Re = C*C';
-%K1 = lqr(A',C',Qe,Re)'; % lqr not supported in Simulink
+K1 = lqr(A',C',Qe,Re)'; % lqr not supported in Simulink
 
-Ham = [A', -C'* Re^(-1) * C; % Hamiltonion matrix -lambda to make it stabizable
-      -Qe, -A]; 
-[V,D] = eig(Ham); % Divide into stable and unstable eigenvalues
-idxS = diag(D) < 0; % get stable eigenvalues
-Vs = V(:,idxS);% get eigenvectors of stable eigenvalues
-Vus = V(:,~idxS); % not stable
-n11 = sum(idxS);
-P = Vs(n11+1:end,:)/(Vs(1:n11,:));
-K1 = real(Re^(-1) * C * P)';
+% Ham = [A', -C'* Re^(-1) * C; % Hamiltonion matrix -lambda to make it stabizable
+%       -Qe, -A]; 
+% [V,D] = eig(Ham); % Divide into stable and unstable eigenvalues
+% idxS = diag(D) < 0; % get stable eigenvalues
+% Vs = V(:,idxS);% get eigenvectors of stable eigenvalues
+% Vus = V(:,~idxS); % not stable
+% n11 = sum(idxS);
+% P = Vs(n11+1:end,:)/(Vs(1:n11,:));
+% K1 = real(Re^(-1) * C * P)';
 
 % Calculate F and K
 F = A1 - K1*C; %T*A -K1*C
@@ -309,9 +309,21 @@ T = eye(nx)-H*C
 A1 = T*A
 
 % Pole placement with Q and R
-Qe = eye(nx); %B*B'; %
-Re = C*C';
+%Qe = eye(nx); %B*B'; %
+%Re = C*C';
+Qe = eye(nx); %diag([1,10^11,10^9])*[B,E]*[B,E]'; %eye(nx); %
+% r1 = 10^-2;
+% r2 = 10^-2;
+Re = eye(2); %diag([r1,r2]); %*100;
+
+var1 = var(d)
+
+QXU = diag([10^-4;10^-6;diag([E,B]*[E,B]')]);
+QWV = diag([var(d);diag([E,B]*[E,B]');10^(-4);10^(-6)]);
+
 K1 = lqr(A',C',Qe,Re)';
+
+K1a = lqg(ss(A',C', eye(size(A)), zeros(size(C'))),QXU,QWV);
 
 % Calculate F and K
 F = A1 - K1*C; %T*A -K1*C
@@ -327,30 +339,30 @@ sys = ss(A,[E,B],C,zeros(ny,nd+nu)); %c2d(ss(A,[E,B],C,zeros(ny,nd+nu)),DT,'zoh'
 % Est with with control input: zdot = Fz + TBu + Ky, xhat = z + Hy
 sysEstTr = c2d(ss(F,[T*B,K],eye(nx),[zeros(size(T*B)),H]),DT,'zoh'); %ss(F,[T*B,K],eye(nx),[zeros(size(T*B)),H]); %
 
-
 load(fullfile('dataOut', 'OutDataWind'));
 
 timeVec = OutTable.Time;
 timeForPlot(1) = 15;
 timeForPlot(2) = min(400,timeVec(end));
 idxPlot = timeVec >= timeForPlot(1) & timeVec <= timeForPlot(2);
-timeVecPlot = timeVec(idxPlot);
+timeVec = timeVec(idxPlot);
 
 idxPlotData = idxPlot(1: length(OutDataWind));
+timeVecPlot = timeVec(1: length(OutDataWind));
 
 windTrue = OutDataWind(idxPlotData,1);
-estErr = OutDataWind(idxPlotData,1)-OutDataWind(idxPlotData,2);
+estErr = OutDataWind(idxPlotData,1) - OutDataWind(idxPlotData,2);
 
 figure; 
 subplot(2,1,1)
-plot(timeVecPlot, OutDataWind(idxPlotData,1),'color',cl(1,:));
+plot(timeVecPlot(idxPlotData), OutDataWind(idxPlotData,1),'color',cl(1,:));
 hold on
-plot(timeVecPlot, OutDataWind(idxPlotData,2),'--','color',cl(2,:));
+plot(timeVecPlot(idxPlotData), OutDataWind(idxPlotData,2),'--','color',cl(2,:));
 legend('True','Estimate');
 ylabel ('Wind [m/s]')
 axis tight; grid on;
 subplot(2,1,2)
-plot(timeVecPlot,estErr);
+plot(timeVecPlot(idxPlotData),estErr);
 legend('True - Estimate');
 ylabel ('Wind [m/s]')
 xlabel('time [s]')

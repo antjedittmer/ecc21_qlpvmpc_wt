@@ -41,7 +41,7 @@ dataInDir = fullfile( mainDir,'dataIn');
 addpath(dataInDir);
 
 % Set path to figure directory
-figDir = fullfile(mainDir,'figDirUIO');
+figDir = fullfile(mainDir,'figDirUIONoise');
 if ~isfolder(figDir)
     mkdir(figDir)
 end
@@ -66,7 +66,7 @@ if strcmp(strWindType,'Sweep') == 1 % sweep from 4 to 25 in steps
     outDataSimulationMat = 'OutDataSweep.mat';
     strFig = '';
 else % wind with average 18 m/s
-    outDataSimulationMat = 'OutDataWind18NTW.mat';
+    outDataSimulationMat = 'OutDataWind18NTWnoise.mat';
     strFig = 'NTW18';
 end
 
@@ -114,15 +114,15 @@ elseif strcmp(UIOstr,'UIO')
     % simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta_UIO_inside2.slx';
     % matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPCUIO2',strFig,strMultVar,'.mat']);
     % simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta_UIO_inside3.slx';
-    matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPCUIO',strFig,strMultVar,'.mat']);
+    matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPCUIO1',strFig,strMultVar,'.mat']);
     simMdlnameCompare = '';
     OutTableMPCCompare = '';
 else
-    simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta_UIO.slx'; %
+    simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta_UIO_inside.slx'; %
     matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPCUIO3',strFig,strMultVar,'.mat']);
 
     simMdlnameCompare = 'test_SimulinkMdl2_qLPVMPCbeta.slx';
-    matFileOutTableTestCompare = fullfile(dataDirOut,['OutTableMPC',strFig,strMultVar,'.mat']);
+    matFileOutTableTestCompare = fullfile(dataDirOut,['OutTableMPC_N_',strFig,strMultVar,'.mat']);
   
 end
 
@@ -139,7 +139,7 @@ end
 % Information for plot
 figStr = ['RefSimulinkClosedLoop',strFig,'_beta'];
 meanOpt = strrep(sprintf(' mean cputime MPC: %1.2e s',mean(tictoc_LPVMPC.Data)),'e-0','e-');
-timeForPlot = [60,300];
+timeForPlot = [15,400];
 DT = 0.008;
 r = GenPwrRef;
 
