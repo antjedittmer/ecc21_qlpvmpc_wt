@@ -65,7 +65,7 @@ if strcmp(strWindType,'Sweep') == 1 % sweep from 4 to 25 in steps
     strFig = '';
     testCaseStr = 'Wind Sweep';
 else  % wind with average 18 m/s
-    outDataSimulationMat = 'OutDataWind18NTW.mat';
+    outDataSimulationMat = 'OutDataWind18NTWNoise.mat';
     strFig = 'NTW18';
     testCaseStr = 'Wind, mean 18 m/s';
 end
