@@ -18,7 +18,7 @@ if ~nargin || isempty(strWindType)
 end
 
 if nargin < 2 || isempty(loadData)
-    loadData = 1; %load simulation output data if available;
+    loadData = 0; %load simulation output data if available;
 end
 
 if nargin < 3 || isempty(figNo1)
@@ -26,7 +26,7 @@ if nargin < 3 || isempty(figNo1)
 end
 
 if nargin < 4 || isempty(useFASTForComparison)
-    useFASTForComparison = 1;
+    useFASTForComparison = 0;
 end
 
 if nargin < 5 || isempty(UIOstr)
@@ -66,7 +66,7 @@ if strcmp(strWindType,'Sweep') == 1 % sweep from 4 to 25 in steps
     outDataSimulationMat = 'OutDataSweep.mat';
     strFig = '';
 else % wind with average 18 m/s
-    outDataSimulationMat = 'OutDataWind18NTW.mat';
+    outDataSimulationMat = 'OutDataWind18NTWnoise.mat';
     strFig = 'NTW18';
 end
 
@@ -87,7 +87,7 @@ OutTable.Wind1VelX = multVar*(windTest - meanWindTest) + meanWindTest;
 if useFASTForComparison % from FAST
     OutTableTest2 = OutTable;
 else % from Simulink
-    loadBaseline = 1; %always load if available
+    loadBaseline = 0; %always load if available
     matFileOutTableTest2 = fullfile(dataDirOut,['OutTableTest2',strFig,strMultVar,'.mat']);
     simMdlname2 = 'test_SimulinkMdl2_Baseline';
     OutTableTest2 = getSimulationOutputTable(matFileOutTableTest2,loadBaseline,OutTable,simMdlname2);
