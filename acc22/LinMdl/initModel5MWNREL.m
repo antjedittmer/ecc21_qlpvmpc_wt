@@ -44,7 +44,7 @@ end
 
 % Set path to figure directory
 if nargin < 6
-    figDir = fullfile(mainDir,'figDir');
+    figDir = fullfile(mainDir,'figDirUIO');
     if ~isfolder(figDir)
         mkdir(figDir)
     end
@@ -142,28 +142,28 @@ if plotOn
     [Xq,Yq] = meshgrid(lambda,betaDeg);
     
     % Plot aerodynamic force C_T
-    xlabelStr = 'tip speed ratio \lambda [-]';
-    ylabelStr = 'pitch angle \beta [deg]';
-    zlabelStr = 'Force coefficient C_T [-]';
-    titleStrData1Interp = ['Aerodynamique ',zlabelStr,'  from NREL FAST 5 MW'];
+    xlabelStr = 'Tip Speed Ratio \lambda [-]';
+    ylabelStr = 'Pitch Angle \beta [deg]';
+    zlabelStr = 'Force Coefficient C_T [-]';
+    % titleStrData1Interp = ['Aerodynamique ',zlabelStr,'  from NREL FAST 5 MW'];
     
     figure(1); surf(Xq,Yq,Ct,'FaceColor','interp','EdgeColor','none'); hold on
     axis tight;
     xlabel(xlabelStr); ylabel(ylabelStr ); zlabel(zlabelStr);
-    title(titleStrData1Interp);
+    %title(titleStrData1Interp);
     view(60,30)
     
     print(gcf,fullfile(figDir,'Ct_NRRLFAST5MW'), '-dpng');
     print(gcf,fullfile(figDir,'Ct_NRRLFAST5MW'), '-depsc');
     
     % Plot aerodynamic torque C_Q
-    zlabelStr = 'Torque coefficient C_Q [-]';
-    titleStrData1Interp = ['Aerodynamique ',zlabelStr,' from NREL FAST 5 MW'];
+    zlabelStr = 'Torque Coefficient C_Q [-]';
+    %titleStrData1Interp = ['Aerodynamique ',zlabelStr,' from NREL FAST 5 MW'];
     
     figure(2); surf(Xq,Yq,Cq,'FaceColor','interp','EdgeColor','none'); hold on
     axis tight;
     xlabel(xlabelStr); ylabel(ylabelStr ); zlabel(zlabelStr);
-    title(titleStrData1Interp)
+    %title(titleStrData1Interp)
     view(60,30)
     
     print(gcf,fullfile(figDir,'Cq_NRRLFAST5MW'), '-dpng');

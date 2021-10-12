@@ -355,7 +355,7 @@ idxPlot = timeVec >= timeForPlot(1) & timeVec <= timeForPlot(2);
 timeVec = timeVec(idxPlot);
 
 idxPlotData = idxPlot(1:length(OutDataWind));
-timeVecPlot = timeVec; %(1:length(OutDataWind));
+timeVecPlot = timeVec(1:length(OutDataWind));
 
 windTrue = OutDataWind(idxPlotData,1);
 estErr = OutDataWind(idxPlotData,1) - OutDataWind(idxPlotData,2);

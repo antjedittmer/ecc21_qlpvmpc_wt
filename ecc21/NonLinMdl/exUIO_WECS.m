@@ -339,7 +339,11 @@ sys = ss(A,[E,B],C,zeros(ny,nd+nu)); %c2d(ss(A,[E,B],C,zeros(ny,nd+nu)),DT,'zoh'
 % Est with with control input: zdot = Fz + TBu + Ky, xhat = z + Hy
 sysEstTr = c2d(ss(F,[T*B,K],eye(nx),[zeros(size(T*B)),H]),DT,'zoh'); %ss(F,[T*B,K],eye(nx),[zeros(size(T*B)),H]); %
 
-load(fullfile('dataOut', 'OutDataWind'));
+try
+    load(fullfile('dataOut', 'OutDataWind'));
+catch
+    return
+end
 
 timeVec = OutTable.Time;
 timeForPlot(1) = 15;
@@ -347,22 +351,22 @@ timeForPlot(2) = min(400,timeVec(end));
 idxPlot = timeVec >= timeForPlot(1) & timeVec <= timeForPlot(2);
 timeVec = timeVec(idxPlot);
 
-idxPlotData = idxPlot(1: length(OutDataWind));
-timeVecPlot = timeVec(1: length(OutDataWind));
+idxPlotData = idxPlot(1:length(OutDataWind));
+timeVecPlot = timeVec; %(1:length(OutDataWind));
 
 windTrue = OutDataWind(idxPlotData,1);
 estErr = OutDataWind(idxPlotData,1) - OutDataWind(idxPlotData,2);
 
 figure; 
 subplot(2,1,1)
-plot(timeVecPlot(idxPlotData), OutDataWind(idxPlotData,1),'color',cl(1,:));
+plot(timeVecPlot, OutDataWind(idxPlotData,1),'color',cl(1,:));
 hold on
-plot(timeVecPlot(idxPlotData), OutDataWind(idxPlotData,2),'--','color',cl(2,:));
+plot(timeVecPlot, OutDataWind(idxPlotData,2),'--','color',cl(2,:));
 legend('True','Estimate');
 ylabel ('Wind [m/s]')
 axis tight; grid on;
 subplot(2,1,2)
-plot(timeVecPlot(idxPlotData),estErr);
+plot(timeVecPlot,estErr);
 legend('True - Estimate');
 ylabel ('Wind [m/s]')
 xlabel('time [s]')

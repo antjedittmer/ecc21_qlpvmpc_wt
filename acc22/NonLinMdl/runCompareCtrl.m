@@ -109,7 +109,7 @@ if isempty(UIOstr)
     %simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta_UIO.slx';
 else
     simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta_UIO_inside.slx';
-    matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPCUI',strFig,strMultVar,'.mat']);
+    matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPCUI_2',strFig,strMultVar,'.mat']);
 end
 % simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta_UIO_inside3.slx';
 % matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPCUIO3',strFig,strMultVar,'.mat']);
@@ -209,7 +209,7 @@ set(gcf,'Name', figStr)
 posDefault = [520   378   560   420]; %get(gcf, 'position');
 set(gcf, 'position', [posDefault(1:3),posDefault(4)*1.1]);
 
-save
+%save
 print(gcf,[fullfile(figDir,'cmpCtrlSimulink_PI_MPC'),UIOstr,'_',figStr,'_',num2str(timeVecPlot(end))], '-dpng');
 print(gcf,[fullfile(figDir,'cmpCtrlSimulink_PI_MPC'),UIOstr,'_',figStr,'_',num2str(timeVecPlot(end))], '-depsc');
 

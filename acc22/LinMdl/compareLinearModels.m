@@ -1,4 +1,4 @@
-function compareLinearModels(speedVec,figFolder, useActuatorStates,figNoAdd,createBodePlots,plotVisible)
+function sysOut = compareLinearModels(speedVec,figFolder,useActuatorStates,figNoAdd,createBodePlots,plotVisible,noOut)
 % compareLinearModels compares two sets of linearized turbine models with
 % linearized FASTTool models at different wind speeds. 
 % All inputs are optional.
@@ -38,9 +38,10 @@ mainDir = fileparts(workDir);
 
 % speedVec: index vector for 22 windspeeds, 4 to 25 m/s (Default: [1, 22])
 if nargin == 0 || isempty(speedVec)
-    speedVec = [1, 22]; %[1,22]; % variations of wind speed
+    speedVec = [1,22]; %[1,22]; % variations of wind speed
 end
 
+% Default fig folder
 if nargin < 2 || isempty(figFolder)
     figFolder = fullfile(mainDir,'figDir');
 end
@@ -49,12 +50,29 @@ if ~isfolder(figFolder)
     mkdir(figFolder);
 end
 
-if nargin < 3
+% Default: Do not use actuatorstates
+if nargin < 3 || isempty(useActuatorStates)
     useActuatorStates = 0;
+end
+
+% Default: Close all figures and start with figure 1
+if nargin < 4 || isempty(figNoAdd) || figNoAdd == 0
     figNoAdd = 0;
     close all;
+end
+
+% Default draw bode plots
+if nargin < 5 || isempty(createBodePlots) 
     createBodePlots = 1;
+end
+
+% Default make plots visible
+if nargin < 6 || isempty(plotVisible) 
     plotVisible = 'on';
+end
+
+if nargin < 7 || isempty(noOut) 
+    noOut = 2; 
 end
 
 %% Load 
@@ -65,6 +83,7 @@ load('NREL5MW_CPdata','Rotor_Lamda', 'Rotor_Pitch', 'Rotor_cQ', 'Rotor_cT');
 idxModel = 1; %in case several linearized models are provided
 modelNames ={'NREL5MW_linearised_4to25'};
 modelNames = modelNames(idxModel);
+load(modelNames{1},'sysm','Lin');
 
 modelsL = {'FAST 30 states'};
 modelsL = modelsL(idxModel);
@@ -72,7 +91,7 @@ modelsL = modelsL(idxModel);
 lenModelNames = length(modelNames);
 sysmCell = cell(lenModelNames,1);
 
-load(modelNames{1},'sysm','Lin'); % 1st model: state space and input OP
+ % 1st model: state space and input OP
 sysmCell{1} = sysm;
 for idxModels = 2 : lenModelNames
     load(modelNames{idxModels},'sysm');
@@ -88,9 +107,9 @@ end
 % Wind energy conversion system (WECS) parameters
 [wecs, M, Ce, K, Q, L, rho, tau, kappa, lambda, pitch, Cq, Ct ] = ...
     initModel5MWNREL(0, Rotor_Lamda, Rotor_Pitch, Rotor_cQ, Rotor_cT, figFolder);
-ksw = 3/(2* wecs.H);
 
 %% Compute aerodynamic force and torque gradients
+ksw = 3/(2* wecs.H);
 dLambda = mean(diff(lambda));
 dBeta = mean(diff(pitch));
 [Cqdlambda,Cqdbeta] = gradient(Cq,dLambda,dBeta);
@@ -116,22 +135,23 @@ opts.FreqUnits = 'Hz'; opts.MagUnits ='Abs'; opts.MagScale ='log'; opts.XLim ={[
 lenLinV = length(Lin.V);
 sysCell = cell(lenLinV,1);
 u_bar_cell = cell(lenLinV,1);
-x_bar_cell =  cell(lenLinV,1); % X(s) = (sI - A)^1 *B *U(s), xdot = 0 = Ax +Bu
-y_bar_cell =  cell(lenLinV,1);
+x_bar_cell = cell(lenLinV,1); % X(s) = (sI - A)^1 *B *U(s), xdot = 0 = Ax +Bu
+y_bar_cell = cell(lenLinV,1);
 
 %% Get and check FAST input and output names
 
 % Get index FAST outputs
-idxFASTOutput = [38 12] ; % [38 12 6]
+idxFASTOutputAll = [38 12 13 6]; 
+idxFASTOutput = idxFASTOutputAll(1:noOut);  
 idxFASTInput = [8 9 1];
 
 % Set plot outputs 
-sysOutputname =[{'omega [rad/s]'};{'ydotdot_{fa} [m/s^2]'}; {'xdotdot_{fa} [m/s^2]'}];
-sysOutputname = sysOutputname(1:length(idxFASTOutput));
+sysOutputname =[{'omega [rad/s]'};{'ydotdot_{fa} [m/s^2]'}; {'xdotdot_{sw} [m/s^2]'}; {'zeta * R [m]'}];
+sysOutputname = sysOutputname(1:noOut);
 sysInputname =[{'Torque [kNm]'}; {'\beta [rad]'};{'V [m/s]'}];
 
 % Check FAst names
-sysOutNamesOrig = sysm{1}.OutputName([idxFASTOutput,6]);
+sysOutNamesOrig = sysm{1}.OutputName(idxFASTOutput);
 disp(['TU Delft sysOutputnames: ', sprintf('%s, ', sysOutputname{:})])
 disp('FAST sysOutputnames:')
 fprintf('%s\n', sysOutNamesOrig{:});
@@ -141,6 +161,10 @@ sysInNamesOrig = sysm{1}.InputName(idxFASTInput);
 disp('FAST sysInputnames: ');
 fprintf('%s\n', sysInNamesOrig{:})
 
+% Set output gains for FAST accordingly
+multFASTOutputAll = [pi/30,1, 1,1];
+multFASTOutput = multFASTOutputAll(1:noOut);
+multFASTInput = [1000,1,1];
 
 %% Loop over all air speeds in LinV
 for index =  speedVec 
@@ -151,77 +175,89 @@ for index =  speedVec
     omegabar = Lin.RSpeed(index);
     beta_bar = Lin.Pitch(index); % rad
     
-    dlambdadomega = wecs.rb/Vbar;
-    dlambdadV = -omegabar*wecs.rb/Vbar^2;
-    % dlambdadxfa = omegabar*wecs.rb/Vbar^2; %s/m
-    dlambdadxdotfa = -1*omegabar*wecs.rb/Vbar^2; %s/m   xdotfa m/s
-    
     %% Grid points
     Cqb = interp2(lambda,pitch,Cq,Lambda_bar,beta_bar,'cubic');
     Ctb = interp2(lambda,pitch,Ct,Lambda_bar,beta_bar,'cubic');
     dCqdlambdab = interp2(lambda,pitch,Cqdlambda,Lambda_bar,beta_bar,'cubic');
     dCtdlambdab = interp2(lambda,pitch,Ctdlambda,Lambda_bar,beta_bar,'cubic');
     dCqdbetab = interp2(lambda,pitch,Cqdbeta,Lambda_bar,beta_bar,'cubic'); 
-    dCtdbetab = interp2(lambda,pitch,Ctdbeta,Lambda_bar,beta_bar,'cubic'); 
+    dCtdbetab = interp2(lambda,pitch,Ctdbeta,Lambda_bar,beta_bar,'cubic');
     
-    %% Ft = 0.5*pi*rb^2*Ct*v^2
-    dFtdomega = 0.5*rho*pi*wecs.rb^2*dCtdlambdab*dlambdadomega*Vbar^2;
-    dFtdV = 0.5*rho*pi*wecs.rb^2*(dCtdlambdab*dlambdadV*Vbar^2+2*Vbar*Ctb);
-    dFtdbeta = 0.5*rho*pi*wecs.rb^2*dCtdbetab*Vbar^2;
+    %% Tip speed ratio lambda = (rb * omega)/Ve =  (rb * omega)/(V - ydotfa)
+    dlambdadomega = wecs.rb/Vbar;
+    dlambdadV = - omegabar*wecs.rb/Vbar^2; %Vbar = Ve = V-ydot
+    dlambdadydotfa = omegabar*wecs.rb/Vbar^2; %s/m   xdotfa m/s
+       
+    %% Ft = 0.5*rho*pi*rb^2*Ct*v^2       
+    kCT = 0.5*rho*pi*wecs.rb^2; % constant for CT: 0.5*rho*A
+    dFtdomega = kCT *dCtdlambdab*dlambdadomega*Vbar^2;
+    dFtdV = kCT * Vbar * (dCtdlambdab*dlambdadV*Vbar + 2*Ctb);
+    dFtdydotfa = kCT * Vbar *(dCtdlambdab*dlambdadydotfa*Vbar - 2*Ctb);
+    dFtdbeta = kCT*dCtdbetab*Vbar^2;
     
-    %% Tr = 0.5*pi*rb^3*Cq*v^2
-    dTrdomega = 0.5*rho*pi*wecs.rb^3*(dCqdlambdab*dlambdadomega)*Vbar^2;%dTr/domega
-    dTrdV = 0.5*rho*pi*wecs.rb^3*(dCqdlambdab*dlambdadV*Vbar^2+2*Vbar*Cqb);%dTr/dV
-    dTrdbeta = 0.5*rho*pi*wecs.rb^3*dCqdbetab*Vbar^2;%dTr/dbeta
+    %% Tr = 0.5*rho*pi*rb^3*Cq*v^2
+    kCQ = kCT*wecs.rb;
+    dTrdomega = kCQ *dCqdlambdab*dlambdadomega*Vbar^2;
+    dTrdV = kCQ *Vbar *(dCqdlambdab*dlambdadV*Vbar + 2*Cqb);
+    dTrdydotfa = kCQ *Vbar*(dCqdlambdab*dlambdadydotfa*Vbar - 2*Cqb);
+    dTrdbeta = kCQ *dCqdbetab*Vbar^2; 
     
     %% Linear Model Mdl1: System, input matrices and state space model
     % States omega xdotfa xdotsw xfa xss
+
+    % dotomega = (Tr - Ng * Tg)/J
+    A11 = 1/wecs.Jr * dTrdomega;
+    A12 = 1/wecs.Jr * dTrdydotfa;
     
-    % constant for CT: 0.5*rho*A
-    kCT = 1/2*rho*pi*wecs.rb^2;
+    % ydotdotfa = 1/Mt( -Bt * ydotfa - Kt* yfa +Ft)
+    A21 = 1/wecs.mt * dFtdomega;
+    A22 = 1/wecs.mt * dFtdydotfa;
     
-    % dotomega = (1/Ng * Tr - Tg)/J
-    A11 = 1/wecs.Jr*kCT* wecs.rb*Vbar^2*dCqdlambdab*dlambdadomega;
-    A12 = 1/wecs.Jr*kCT*wecs.rb*(Vbar^2*dCqdlambdab*dlambdadxdotfa-2*Vbar*Cqb);
+    % xdotdotsw = 1/Mt( -Bt * xdotsw - Kt* xsw + 3/(2*H)Tg)
+    A31 = ksw/wecs.mt * dTrdomega; 
+    A32 = ksw/wecs.mt * dTrdydotfa;
     
-    % xdotdotfa = 1/Mt( -Bt * xdotfa - Kt* xfa +Ft)
-    A21 = 1/wecs.mt*kCT*Vbar^2*dCtdlambdab*dlambdadomega;
-    A22 = 1/wecs.mt*kCT*Vbar^2*dCtdlambdab*dlambdadxdotfa-2*1/wecs.mt*kCT*Vbar*Ctb;
-    
-    % xdotdotfa = 1/Mt( -Bt * xdotfa - Kt* xfa + 3/(2*H)Tg)
-    A31 = 0; %A31 = 1/wecs.mt*kCT*wecs.rb*Vbar^2*dCqdlambdab*dlambdadomega;
-    A32 = 0; %A32 = kss/wecs.mt*kCT*wecs.rb*Vbar^2*dCqdlambdab*dlambdadxdotfa-2*kss*1/wecs.mt*kCT*wecs.rb*Vbar*Cqb;
-    
-    A = [A11 A12 0 0 0;
-        A21 (A22-wecs.Bt/wecs.mt) 0 -wecs.Kt/wecs.mt 0;
-        A31 A32  -wecs.Bt/wecs.mt 0 -wecs.Kt/wecs.mt ;
+    A = [A11  A12                  0                 0                0;
+         A21 (A22-wecs.Bt/wecs.mt) 0                -wecs.Kt/wecs.mt  0;
+         A31  A32                  -wecs.Bt/wecs.mt  0               -wecs.Kt/wecs.mt ;
         [0 1 0 0 0; 0 0 1 0 0]];
     
-    % Inputs: Torque [wecs.N/m], pitch angle beta [rad], wind speed V [m/s]
-    B11 = -wecs.Ng/wecs.Jr;
-    B12 = 1/wecs.Jr*kCT*wecs.rb*Vbar^2*dCqdbetab;
-    B13 = 1/wecs.Jr*kCT*wecs.rb*Vbar^2*dCqdlambdab*dlambdadV+2/wecs.Jr*kCT*wecs.rb*Vbar*Cqb;
+    % Inputs: Torque [Nm], pitch angle beta [rad], wind speed V [m/s]
+    B11 = - wecs.Ng/wecs.Jr;
+    B12 = 1/wecs.Jr * dTrdbeta;
+    B13 = 1/wecs.Jr * dTrdV;
     
-    B22 = 1/wecs.mt*kCT*Vbar^2*dCtdbetab;
-    B23 = 1/wecs.mt*kCT*Vbar^2*dCtdlambdab*dlambdadV+2/wecs.mt*kCT*Vbar*Ctb;
+    B22 = 1/wecs.mt * dFtdbeta;
+    B23 = 1/wecs.mt * dFtdV;
     
-    B31 = wecs.Ng/wecs.mt *3/(2*wecs.H);
-    B32 = 0; %B32 = kss/wecs.mt*kCT*wecs.rb*Vbar^2*dCqdbetab;
-    B33 = 0; %B33 = kss/wecs.mt*kCT*wecs.rb*Vbar^2*dCqdlambdab*dlambdadV+kss*2/wecs.mt*kCT*wecs.rb*Vbar*Cqb;
+    % B31 = 0; % wecs.Ng/wecs.mt *3/(2*wecs.H);
+    B32 = ksw/wecs.mt * dTrdbeta;
+    B33 = ksw/wecs.mt * dTrdV;
     
     B = [B11 B12 B13;
-        0   B22 B23;
-        B31 B32 B33;
+        0 B22 B23;
+        0 B32 B33;
         zeros(2,3);];
     
     % Outputs: omega [rad/s], fore-aft dx_dot_f, fore-aft dx_dot_fa [m/s^2]
-    C(2,:) = A(2,:);
+    nO = min(noOut,3);
+    C(2:nO,:) = A(2:nO,:);
     C(1,1) = 1;
-    D(2,:)= B(2,:);
-        
-    sys5DoF = ss(A,B*diag([1000,1,1]),C,D);
-    sys5DoF.OutputName = sysOutputname;
+    D(2:nO,:)= B(2:nO,:);
+      
+    sys5DoF = ss(A,B*diag(multFASTInput),C,D);
+    
+    % For debugging
+    % testMatrix = ones(3); testMatrix(3,1) = 100;
+    % tfSYS =  testMatrix .* tf(sys5DoF); sys5DoF = ss(tfSYS);
+
+    sys5DoF.OutputName = sysOutputname(1:nO);
     sys5DoF.InputName = sysInputname;
+    
+    % u0 = [Lin.Torque(index); beta_bar;  Vbar]; % For debugging
+    % x0_sys5DoF = - inv(sys5DoF.A) * sys5DoF.B * u0;
+    % yTestFTAll =  -  sysm{index}.C * sysm{index}.A * sysm{index}.B * Lin.u_op{index};
+    % yTestRotGen = yTestFTAll(contains(sysm{index}.Outputname, {'RotSpeed'}))* pi/30
     
     %% Linear Model Mdl2: System and input matrices
     % Set up system and input matrices dependent on airspeed, pitch and rotor speed  
@@ -256,8 +292,8 @@ for index =  speedVec
         A1(8,9), ...
         B1(8,1),B1(8,3)*dTrdbeta];
         [A1(9,1:6), A1(9,7) , A1(9,8:9) ,B1(9,4) ,0];
-        zeros(1,9),  -1/kappa, 0;...
-        zeros(1,10),  -1/tau];
+        zeros(1,9), -1/kappa, 0;...
+        zeros(1,10), -1/tau];
     
     A7DoF = A9DoF(1:9,1:9);
        
@@ -274,12 +310,26 @@ for index =  speedVec
     B7DoF(:,1) = A9DoF(1:9,8+2); % Torque Tg as input
     B7DoF(:,2) = A9DoF(1:9,9+2); % Pitch beta as input
     
+    if noOut == 2
+        idxOut = 5; % ouput: ydotdot_fa
+        Czeta = [];
+        Dzeta = [];
+    elseif noOut == 3
+        idxOut = [5,7];% ouput: ydotdot_fa, xdotdot_sw
+        Czeta = [];
+        Dzeta = zeros(1,3);
+    elseif noOut == 4
+        idxOut = [5,7];% ouput: ydotdot_fa, xdotdot_sw
+        Czeta = [zeros(1,2),     wecs.rb,    zeros(1,8)];
+        Dzeta = zeros(1,3);
+    end
     C9DoF = [zeros(1,5+2),     1     zeros(1,3) % state 8: omega_r
-        A9DoF(5,:)]; % state 5: xdot_FA: output xdotdot_FA
+        A9DoF(idxOut,:);... % state 5 (+ 7) : xdot_FA: output xdotdot_FA + (SW)
+        Czeta];% state 5 (+ 7) : xdot_FA: output xdotdot_FA + (SW)
     C7DoF = C9DoF(:,1:9);
     
-    D9DoF = [zeros(size(C9DoF,1)-1,3); B9DoF(5,:)];
-    D7DoF = [zeros(size(C7DoF,1)-1,3); B7DoF(5,:)];
+    D9DoF = [zeros(1,3); B9DoF(idxOut,:); Dzeta];
+    D7DoF = [zeros(1,3); B7DoF(idxOut,:); Dzeta];
     
     %% Create state-space model for Mdl2 
     if useActuatorStates == 1
@@ -287,7 +337,7 @@ for index =  speedVec
         Mdl2Str = ' Rot,Twr,Bld+Act ';
     else
         sysLagrange = ss(A7DoF,B7DoF*diag([1000,1,1]),C7DoF,D7DoF); % to give input Tg in kN/m
-        Mdl2Str = ' Rot,Twr + Bld ';
+        Mdl2Str = ' Rot,Twr+Bld ';
     end
     
     sysLagrange.Outputname = sysOutputname;
@@ -297,7 +347,7 @@ for index =  speedVec
         [zeros(1,7+2) 1 zeros(1,1)];  % beta
         [zeros(1,8+2) 1]];% torque
     Dout = [D9DoF; zeros(2,3)];
-    sysOut = ss(A9DoF,B9DoF*diag([1000,1,1]),Cout,Dout); % to give input Tg in kN/m
+    sysOut = ss(A9DoF,B9DoF*diag(multFASTInput),Cout,Dout); % to give input Tg in kN/m
     
     sysOut.Outputname = [sysOutputname;{'beta'};{'Tg'}];
     sysOut.Inputname = sysInputname;
@@ -319,7 +369,7 @@ for index =  speedVec
         
         for indexModels=1:lenModelNames
             sysm =  sysmCell{indexModels};
-            model = [pi/30 0; 0 1]*sysm{index}([38 12],[8 9 1])*[1000 0 0; 0 1 0; 0 0 1]; 
+            model = diag(multFASTOutput)*sysm{index}(idxFASTOutput,idxFASTInput)* diag(multFASTInput); 
             model.OutputName = sysOutputname;
             model.InputName = sysInputname;
             bodemag(model,opts); hold on
