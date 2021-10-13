@@ -26,7 +26,7 @@ if nargin < 3 || isempty(figNo1)
 end
 
 if nargin < 4 || isempty(useFASTForComparison)
-    useFASTForComparison = 0;
+    useFASTForComparison = 1;
 end
 
 if nargin < 5 || isempty(UIOstr)
@@ -87,7 +87,7 @@ OutTable.Wind1VelX = multVar*(windTest - meanWindTest) + meanWindTest;
 if useFASTForComparison % from FAST
     OutTableTest2 = OutTable;
 else % from Simulink
-    loadBaseline = 0; %always load if available
+    loadBaseline = 1; %always load if available
     matFileOutTableTest2 = fullfile(dataDirOut,['OutTableTest2',strFig,strMultVar,'.mat']);
     simMdlname2 = 'test_SimulinkMdl2_Baseline';
     OutTableTest2 = getSimulationOutputTable(matFileOutTableTest2,loadBaseline,OutTable,simMdlname2);
@@ -109,7 +109,7 @@ if isempty(UIOstr)
     %simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta_UIO.slx';
 else
     simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta_UIO_inside.slx';
-    matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPCUI_2',strFig,strMultVar,'.mat']);
+    matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPCUI_noNoise',strFig,strMultVar,'.mat']);
 end
 % simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta_UIO_inside3.slx';
 % matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPCUIO3',strFig,strMultVar,'.mat']);
@@ -126,7 +126,7 @@ DT = 0.008;
 r = GenPwrRef;
 
 % Plot and compare closed-loop results
-plotComparison(OutTableTest2,OutTableMPC,q_,r_,p,DT,figStr,figDir,r,timeForPlot,meanOpt,figNo1)
+plotComparison(OutTableTest2,OutTableMPC,q_,r_,p,DT,figStr,figDir,r,timeForPlot,meanOpt,figNo1,UIOstr)
 
 
 function plotComparison(OutTableTest2,OutTableMPC,q_,r_,p,DT,figStr,figDir,r,timeForPlot,meanOpt,figNo1,UIOstr)
