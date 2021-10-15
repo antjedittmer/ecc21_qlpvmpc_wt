@@ -112,7 +112,6 @@ end
 %% Check monotonocity
 diffLambdaCqFun = diff(lambdaCqFun);
 
-
 X = [1, min(lambdaOP), min(lambdaOP),1];
 Y = [0,0, max(lambdaCqMat(:)),  max(lambdaCqMat(:))];
 fill(X,Y,'k','FaceAlpha',0.2,'LineStyle','none');
@@ -121,22 +120,28 @@ axis tight; grid on
 xlabel('Tip Speed Ratio \lambda [-]');
 ylabel('\lambda^{-2} C_{Q,\beta}(\lambda)[-]');
 
+idxVec = lambdaLUT;
+
 vecV = [4,11,25];
 mCell = {'o','d','s'};
-%idxSpacing = 1;
+idxSpacing = 1;
+
 for idx = 1: length(vecV)%: idxSpacing: length(lambdaOPLUT)
     lamdaVecPlot = lambdaOP(Lin_points.V == vecV(idx));
     betaVecPlot = Lin_points.Pitch(Lin_points.V == vecV(idx));
+    
+    idxVec = abs(lambdaLUT - lamdaVecPlot);
     idxOP = idxVec  == min(idxVec);
     
-    idxVecBeta = abs(betaLUT - betaVecPlot)
+    idxVecBeta = abs(betaLUT - betaVecPlot);
     idxB = idxVecBeta == min(idxVecBeta);
+    
     plot(lambdaOPLUT(idx),lambdaCqFun(idxB,idxOP),mCell{idx},'MarkerFaceColor',cl(idxB,:),'MarkerEdgeColor','k');
 end
 
 
-cellLeg = regexp(sprintf('Pitch: %2.2f [deg],', betaLUT(1:idxSpacing:end)*180/pi),',','split');
-
+cellLeg = regexp(sprintf('Pitch: %2.2f [deg],',...
+    betaLUT(1:idxSpacing:end)*180/pi),',','split');
 
 legend(cellLeg(1:end-1));
 %title('Monotonically non-increasing function \lambda^{-2}C_{Q,\beta}(\lambda)');
