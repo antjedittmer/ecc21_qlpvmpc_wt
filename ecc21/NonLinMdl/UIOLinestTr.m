@@ -120,8 +120,7 @@ axis tight; grid on
 xlabel('Tip Speed Ratio \lambda [-]');
 ylabel('\lambda^{-2} C_{Q,\beta}(\lambda)[-]');
 
-idxVec = lambdaLUT;
-
+% for operating points
 vecV = [4,11,25];
 mCell = {'o','d','s'};
 idxSpacing = 1;
@@ -136,12 +135,14 @@ for idx = 1: length(vecV)%: idxSpacing: length(lambdaOPLUT)
     idxVecBeta = abs(betaLUT - betaVecPlot);
     idxB = idxVecBeta == min(idxVecBeta);
     
-    plot(lambdaOPLUT(idx),lambdaCqFun(idxB,idxOP),mCell{idx},'MarkerFaceColor',cl(idxB,:),'MarkerEdgeColor','k');
+    plot(lambdaLUT(idxOP),lambdaCqFun(idxB,idxOP),mCell{idx},'MarkerFaceColor',cl(idxB,:),'MarkerEdgeColor','k');
 end
 
 
 cellLeg = regexp(sprintf('Pitch: %2.2f [deg],',...
     betaLUT(1:idxSpacing:end)*180/pi),',','split');
+cellLeg1 = regexp(sprintf('OP %d m/s:',...
+     vecV),',','split');
 
 legend(cellLeg(1:end-1));
 %title('Monotonically non-increasing function \lambda^{-2}C_{Q,\beta}(\lambda)');
