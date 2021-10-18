@@ -51,6 +51,8 @@ d = V + d1;  % wind input load('d'); d = d';
 % The data dictionaries of  WECS test harness with the lookup table (LUT)
 LinPointsMFile;
 MdlMFile;
+ControllerMFile;
+switchNoise = 1;
 
 %% Set up control inputs as feedforward  and initial state rotor speed
 % u = [Tg_ref beta_ref V]'
@@ -343,28 +345,37 @@ sysEstTr = c2d(ss(F,[T*B,K],eye(nx),[zeros(size(T*B)),H]),DT,'zoh'); %ss(F,[T*B,
 windSimFile = fullfile('dataOut', 'OutDataWind');
 
 if exist(windSimFile,'file') == 2
-    load(fullfile('dataOut', 'OutDataWind'));
+    load(windSimFile,'OutDataWind');
 else
     return
 end
 
+
+% Get and cut out time vector
 timeVec = OutTable.Time;
 timeForPlot(1) = 15;
 timeForPlot(2) = min(400,timeVec(end));
 idxPlot = timeVec >= timeForPlot(1) & timeVec <= timeForPlot(2);
-timeVec = timeVec(idxPlot);
+timeVec = timeVec(idxPlot);  % dismiss intiialization
 
+% Set to length of data
 idxPlotData = idxPlot(1:length(OutDataWind));
-timeVecPlot = timeVec(1:length(OutDataWind));
+OutDataWindPlot = OutDataWind(idxPlotData,:);
+timeVecPlot = timeVec(1:length(OutDataWindPlot));
 
-windTrue = OutDataWind(idxPlotData,1);
-estErr = OutDataWind(idxPlotData,1) - OutDataWind(idxPlotData,2);
+% wind true for all of relevant times
+windTrue = OutDataWindPlot(:,1);
+estErr = OutDataWindPlot(:,1) - OutDataWindPlot(:,2);
 
+std(estErr)
+1 - var(estErr)/var(windTrue)
+
+% 
 figure; 
 subplot(2,1,1)
-plot(timeVecPlot, OutDataWind(idxPlotData,1),'color',cl(1,:));
+plot(timeVecPlot, windTrue,'color',cl(1,:));
 hold on
-plot(timeVecPlot, OutDataWind(idxPlotData,2),'--','color',cl(2,:));
+plot(timeVecPlot, OutDataWindPlot(:,2),'--','color',cl(2,:));
 legend('True','Estimate');
 ylabel ('Wind [m/s]')
 axis tight; grid on;
