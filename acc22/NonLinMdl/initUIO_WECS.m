@@ -1,10 +1,13 @@
 %% Proof-of concept for unknown input observer for WECS
-close all; clear;
+close all; clear; clc;
+restoredefaultpath;
+
 addpath(genpath(pwd))
 parentDir = fileparts(pwd);
+mainDir = parentDir;
 
-% dataInDir = fullfile( mainDir,'dataIn');
-% addpath(dataInDir);
+dataInDir = fullfile( mainDir,'dataIn');
+addpath(dataInDir);
 
 % Set path to figure directory
 figDir = fullfile(parentDir,'figDirUIO');
@@ -135,7 +138,7 @@ B = [Bu; zeros(1,2)];
 fprintf('rank(C*E) is %d; rank(E) is %d\n', rank(C*E),rank(E));
 
 %% Calculate observer matrices
-H = E*inv((C*E)'*(C*E))*(C*E)' %#ok<MINV,*NOPTS> display output, inv is fast enough
+H = E*inv((C*E)'*(C*E))*(C*E)'; %#ok<MINV> % inv is fast enough
 nx = size(A,1);
 T = eye(nx)-H*C;
 A1 = T*A;
@@ -145,7 +148,7 @@ Qe = [E,B]*[E,B]'; %
 Re = C*C';
 K1 = lqr(A',C',Qe,Re)'; % lqr not supported in Simulink
 
-% Ham = [A', -C'* Re^(-1) * C; % Hamiltonion matrix -lambda to make it stabizable
+% Ham = [A', -C'* Re^(-1) * C; % Hamiltonion matrix -lambda to make it stablizable
 %       -Qe, -A]; 
 % [V,D] = eig(Ham); % Divide into stable and unstable eigenvalues
 % idxS = diag(D) < 0; % get stable eigenvalues
@@ -197,6 +200,7 @@ diffInEnst = diff(inEst);
 xtempEst = x0' + cumsum(dXest);
 xest = [xtempEst;xtempEst(end,:)];
 
+%% Plot output
 figure(1)
 cl = colormap('lines');
 
@@ -256,8 +260,8 @@ axis tight;
 grid on;
 print(gcf,fullfile(figDir,'windEst'), '-dpng');
 
-vafState = 1 - var(x(:,end)- d)/var(d)
-vafStateEst = 1 - var(xest(:,end)-d)/var(d)
+vafState = 1 - var(x(:,end)- d)/var(d);
+vafStateEst = 1 - var(xest(:,end)-d)/var(d);
 
 betaLUT = unique(Lin_points.Pitch); %Select all pitch angle in eq. points
 lambdaOP = Lin_points.RSpeed * wecs.rb ./ Lin_points.V; % Calculate TSR in OP
@@ -340,7 +344,6 @@ sys = ss(A,[E,B],C,zeros(ny,nd+nu)); %c2d(ss(A,[E,B],C,zeros(ny,nd+nu)),DT,'zoh'
 
 % Est with with control input: zdot = Fz + TBu + Ky, xhat = z + Hy
 sysEstTr = c2d(ss(F,[T*B,K],eye(nx),[zeros(size(T*B)),H]),DT,'zoh'); %ss(F,[T*B,K],eye(nx),[zeros(size(T*B)),H]); %
-
 
 windSimFile = fullfile('dataOut', 'OutDataWind');
 
