@@ -311,8 +311,8 @@ fprintf('rank(C*E) is %d; rank(E) is %d\n', rank(C*E),rank(E));
 
 H = E*inv((C*E)'*(C*E))*(C*E)' %#ok<MINV,*NOPTS> display output, inv is fast enough
 nx = size(A,1);
-T = eye(nx)-H*C
-A1 = T*A
+T = eye(nx)-H*C;
+A1 = T*A;
 
 % Pole placement with Q and R
 %Qe = eye(nx); %B*B'; %
