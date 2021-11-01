@@ -318,9 +318,9 @@ A1 = T*A;
 %Qe = eye(nx); %B*B'; %
 %Re = C*C';
 Qe = eye(nx); %diag([1,10^11,10^9])*[B,E]*[B,E]'; %eye(nx); %
-% r1 = 10^-2;
-% r2 = 10^-2;
-Re = eye(2); %diag([r1,r2]); %*100;
+ r1 = 1;
+ r2 = 1;
+Re = diag([r1,r2]); %*100;eye(2); %
 
 var1 = var(d)
 
