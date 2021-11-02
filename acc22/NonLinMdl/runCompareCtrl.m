@@ -18,7 +18,7 @@ if ~nargin || isempty(strWindType)
 end
 
 if nargin < 2 || isempty(loadData)
-    loadData = 0; %load simulation output data if available;
+    loadData = 1; %load simulation output data if available;
 end
 
 if nargin < 3 || isempty(figNo1)
@@ -66,7 +66,7 @@ if strcmp(strWindType,'Sweep') == 1 % sweep from 4 to 25 in steps
     outDataSimulationMat = 'OutDataSweep.mat';
     strFig = '';
 else % wind with average 18 m/s
-    outDataSimulationMat = 'OutDataWind18NTWnoise.mat';
+    outDataSimulationMat = 'OutDataWind18NTWnoise'; %'OutDataWind18NTW.mat';
     strFig = 'NTW18';
 end
 
@@ -109,7 +109,7 @@ if isempty(UIOstr)
     %simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta_UIO.slx';
 else
     simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta_UIO_inside.slx';
-    matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPCUI_noNoise',strFig,strMultVar,'.mat']);
+    matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPCUI_2',strFig,strMultVar,'.mat']);
 end
 % simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta_UIO_inside3.slx';
 % matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPCUIO3',strFig,strMultVar,'.mat']);

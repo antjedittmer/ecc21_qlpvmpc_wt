@@ -86,6 +86,7 @@ lambdaCqMat = lambdaInvMat .* CqPitch;
 
 lambdaCqFun = nan(length(betaLUT), length(lambdaLUT)); %init lambda^-2 C_Q,beta
 CqPitch = nan(length(betaLUT),sum(idxLambda)); % initialize C_Q,beta
+pitchCt = beta;
 for idx = 1: length(betaLUT)
     diffPitch = abs(pitchCt-betaLUT(idx)); % difference to LUT pitch vector
     idxNearestPitch =  min(diffPitch) == diffPitch; % index of nearest pitch
@@ -93,7 +94,7 @@ for idx = 1: length(betaLUT)
     lambdaCqFun(idx,:) = (lambdaLUT .^ (-2)) .* CqPitch(idx,:)';
 end
 
-% Plot tip speed ratio lambda vs. function lambda^-2 C_Q,beta
+%% Plot tip speed ratio lambda vs. function lambda^-2 C_Q,beta
 cl = colormap('lines');
 numCl = numel(unique(cl(:,1)));
 numPitch = length(betaLUT);
@@ -108,8 +109,7 @@ for idx = 1: noDiffLineStyles
     hold on;
 end
 
-
-%% Check monotonocity
+% Check monotonocity
 diffLambdaCqFun = diff(lambdaCqFun);
 
 xlabel('Tip Speed Ratio \lambda [-]');
@@ -143,7 +143,6 @@ temp = [vecV', lambdaOPPlot']';
 
 cellLeg1 = regexp(sprintf('OP %d m/s: %2.2f,',...
      temp(:)),',','split');
-
 
 X = [1, min(lambdaOP), min(lambdaOP),1];
 Y = [0,0, max(lambdaCqMat(:)),  max(lambdaCqMat(:))];

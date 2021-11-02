@@ -318,9 +318,9 @@ A1 = T*A;
 %Qe = eye(nx); %B*B'; %
 %Re = C*C';
 Qe = eye(nx); %diag([1,10^11,10^9])*[B,E]*[B,E]'; %eye(nx); %
- r1 = 1;
- r2 = 1;
-Re = diag([r1,r2]); %*100;eye(2); %
+% r1 = 10^-2;
+% r2 = 10^-2;
+Re = eye(2); %diag([r1,r2]); %*100;
 
 var1 = var(d)
 
@@ -345,14 +345,13 @@ sys = ss(A,[E,B],C,zeros(ny,nd+nu)); %c2d(ss(A,[E,B],C,zeros(ny,nd+nu)),DT,'zoh'
 % Est with with control input: zdot = Fz + TBu + Ky, xhat = z + Hy
 sysEstTr = c2d(ss(F,[T*B,K],eye(nx),[zeros(size(T*B)),H]),DT,'zoh'); %ss(F,[T*B,K],eye(nx),[zeros(size(T*B)),H]); %
 
+%%
 windSimFile = fullfile('dataOut', 'OutDataWind');
-
 if exist(windSimFile,'file') == 2
     load(windSimFile,'OutDataWind');
 else
     return
 end
-
 
 % Get and cut out time vector
 timeVec = OutTable.Time;
@@ -392,7 +391,7 @@ axis tight; grid on;
 print(gcf,fullfile(figDir,'WindEst'), '-dpng');
 print(gcf,fullfile(figDir,'WindEst'), '-depsc');
 
-return;
+% return;
 
 estErrTr = OutDataTr(idxPlotData,1) - OutDataTr(idxPlotData,2);
 figure; 
@@ -427,5 +426,4 @@ axis tight; grid on;
 print(gcf,fullfile(figDir,'WindTrEst'), '-dpng');
 print(gcf,fullfile(figDir,'WindTrEst'), '-depsc');
 
-1 - var(estErrTr)/var(OutDataTr(idxPlotData,1))
-
+% 1 - var(estErrTr)/var(OutDataTr(idxPlotData,1))
