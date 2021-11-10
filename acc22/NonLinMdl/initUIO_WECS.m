@@ -1,9 +1,16 @@
-%% Proof-of concept for unknown input observer for WECS
-close all; clear; clc;
-restoredefaultpath;
+%function  initUIO_WECS(idxFig)
 
-addpath(genpath(pwd))
-parentDir = fileparts(pwd);
+%% Proof-of concept for unknown input observer for WECS
+%if ~nargin
+    
+    close all; clear; clc;
+    restoredefaultpath;
+%end
+
+pwd1 = fileparts(mfilename('fullpath'));
+idxFig = 10;
+addpath(genpath(pwd1))
+parentDir = fileparts(pwd1);
 mainDir = parentDir;
 
 dataInDir = fullfile( mainDir,'dataIn');
@@ -14,6 +21,7 @@ figDir = fullfile(parentDir,'figDirUIO');
 if ~isfolder(figDir)
     mkdir(figDir)
 end
+
 
 %% Define user input
 rhoP = 18; %Wind speed: Scheduling parameter, alternative [V,omega,beta]
@@ -201,7 +209,7 @@ xtempEst = x0' + cumsum(dXest);
 xest = [xtempEst;xtempEst(end,:)];
 
 %% Plot output
-figure(1)
+figure(1+idxFig)
 cl = colormap('lines');
 
 ny = size(y,2);
@@ -220,7 +228,7 @@ end
 xlabel('time [s]');
 
 
-figure(2)
+figure(2 + idxFig)
 idxEnd = size(x,2)-1;
 for idx = 1:idxEnd
     subplot(idxEnd,1,idx)
@@ -244,7 +252,7 @@ sysMeasDel = c2d(ss(tf(tauMeas,[1,tauMeas])),DT,'zoh');
 %[dXest,~,z] = lsim(sysEst,diffInEnst,t(1:end-1));
 windMeas = lsim(sysMeasDel,d,t,d(1)/sysMeasDel.C);
 
-figure(3)
+figure(3 + idxFig)
 idx = size(x,2);
 
 plot(t, d,'k','Linewidth',1);
@@ -284,7 +292,8 @@ for idx = 1: length(betaLUT)
     lambdaTildaMat(idx,:) = interp1(lambdaCqbeta,lambdaLUT(idxUnique),lambdaCqVecLUT,'linear','extrap');
 end
 
-myfig = figure;
+%% 3-D Figure
+figure(4 + idxFig);
 
 [YLambdaFun,XBeta] = meshgrid(lambdaCqVecLUT,betaLUT);
 ax = surf(XBeta,YLambdaFun,lambdaTildaMat);
@@ -345,7 +354,12 @@ sys = ss(A,[E,B],C,zeros(ny,nd+nu)); %c2d(ss(A,[E,B],C,zeros(ny,nd+nu)),DT,'zoh'
 % Est with with control input: zdot = Fz + TBu + Ky, xhat = z + Hy
 sysEstTr = c2d(ss(F,[T*B,K],eye(nx),[zeros(size(T*B)),H]),DT,'zoh'); %ss(F,[T*B,K],eye(nx),[zeros(size(T*B)),H]); %
 
-%%
+%% Plot lambda for Cqlambda^(-1) for different pitch angles
+plotCqlambda2D(Lin_points,wecs,beta,lambda,Cq,cl,idxFig);
+print(gcf,fullfile(figDir,'nonMonotone2D'), '-dpng');
+
+
+%% Plot wind comparison
 windSimFile = fullfile('dataOut', 'OutDataWind');
 if exist(windSimFile,'file') == 2
     load(windSimFile,'OutDataWind');

@@ -108,7 +108,7 @@ if isempty(UIOstr)
     matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPC',strFig,strMultVar,'.mat']);
     %simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta_UIO.slx';
 else
-    simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta_UIO_inside.slx';
+    simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta_UIO.slx';
     matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPCUI_2',strFig,strMultVar,'.mat']);
 end
 % simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta_UIO_inside3.slx';

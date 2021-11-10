@@ -1,4 +1,4 @@
-function plotCqlambda2D(Lin_points,wecs,beta,lambda,Cq)
+function plotCqlambda2D(Lin_points,wecs,beta,lambda,Cq,cl, idxFig)
 % plotCqlambda2D plots lambda^(-2) C_Q as a functiof lambda for different
 % beta
 %
@@ -10,7 +10,7 @@ function plotCqlambda2D(Lin_points,wecs,beta,lambda,Cq)
 % Get C_Q,beta as a function of TSR lambda at all relevant pitch angle
 [betaLUT,idxLUT] = unique(Lin_points.Pitch); %Select all pitch angle in eq. points
 lambdaOP = Lin_points.RSpeed * wecs.rb ./ Lin_points.V; % Calculate TSR in OP
-lambdaOPLUT = lambdaOP(idxLUT);
+%lambdaOPLUT = lambdaOP(idxLUT);
 idxLambda1 = 1; %min(lambdaOP) 
 idxLambda = (lambda >= idxLambda1 & lambda <= max(lambdaOP)); %index TSR
 
@@ -30,13 +30,13 @@ for idx = 1: length(betaLUT)
 end
 
 %% Plot tip speed ratio lambda vs. function lambda^-2 C_Q,beta
-cl = colormap('lines');
+%cl = colormap('lines');
 numCl = numel(unique(cl(:,1)));
 numPitch = length(betaLUT);
 noDiffLineStyles = ceil(numPitch/numCl);
 diffLineStyles = {'-','--','-.'};
 
-figure;
+figure(5 + idxFig);
 for idx = 1: noDiffLineStyles
     nvecAll = (1:numCl) + (idx -1)*numCl;
     nvec = nvecAll(nvecAll<= numPitch);
@@ -45,7 +45,7 @@ for idx = 1: noDiffLineStyles
 end
 
 % Check monotonocity
-diffLambdaCqFun = diff(lambdaCqFun);
+%diffLambdaCqFun = diff(lambdaCqFun);
 
 xlabel('Tip Speed Ratio \lambda [-]');
 ylabel('\lambda^{-2} C_{Q,\beta}(\lambda)[-]');
