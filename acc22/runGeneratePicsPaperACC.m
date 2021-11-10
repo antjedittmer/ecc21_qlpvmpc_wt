@@ -1,21 +1,19 @@
 %% Script to generate pictures for paper
 clc; clear; close all;
-% restoredefaultpath;
+restoredefaultpath;
 
 %% Set path to initialization script initWorkspace and run it
 addpath('LinMdl');
+
+%% Create cq and ct curves
 plotOn = 1;
 initModel5MWNREL(plotOn);
 
+%% 
 addpath('NonLinMdl');
-initWorkspace;
+%initWorkspace;
+initUIO_WECS;
 
-%% Matlab analysis: Bode plots linearized FAST models (reference)
-% Bode plots of two linearized non-linear wind turbine models with linearized 
-% FAST models. 
-
-% Create Bode plots for comparison
-compareLinearModels;
 
 %% Simulink simulations 
 % Simulink models are compared with FAST (NREL) references.
@@ -23,18 +21,19 @@ compareLinearModels;
 % mat-files in dataIn folder. 
 
 %Load data if available from previous simulation.
-loadData = 0;
+strWindType = ''; %Default wind: nomal turbulent wind, 18 
+loadData = 1; %use data if available
+useFASTForComparison = 1; % use data recorded with FAST in closed loop with PI
 
-% Run Simulink models in closed loop w baseline controller( Torque controller
-% k-omega-squared, Pitch controller: Gainscheduled Pi)
-figNo = 1;
-runCompareModels('Sweep',loadData,figNo);
-figNo = 4;
-runCompareModels('NTW18',loadData,figNo);
+figNo1 = 100;
+UIOstr = '';
+runCompareCtrl(strWindType,loadData,figNo1,useFASTForComparison,UIOstr);
 
-% Run models in closed loop with qLPV MPC
-figNo1 = 7;
-runCompareCtrl('Sweep',loadData,figNo1);
-figNo1 = 8;
-runCompareCtrl('NTW18',loadData,figNo1);
+
+figNo1 = 101;
+UIOstr = 'UIO';
+runCompareCtrl(strWindType,loadData,figNo1,useFASTForComparison,UIOstr);
+
+
+
 
