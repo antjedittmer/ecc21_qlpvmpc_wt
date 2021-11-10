@@ -105,6 +105,10 @@ end
 % Run or load qLPV controller
 if isempty(UIOstr)
     simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta.slx'; %
+    if exist(simMdlname,'file')
+        simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta_UIO.slx';       
+        assignin('base','switchWind', 0); %switchWind = 0;
+    end
     matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPC',strFig,strMultVar,'.mat']);
     %simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta_UIO.slx';
 else

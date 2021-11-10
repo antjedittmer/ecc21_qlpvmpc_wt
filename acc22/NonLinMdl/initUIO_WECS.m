@@ -64,6 +64,7 @@ LinPointsMFile;
 MdlMFile;
 ControllerMFile;
 switchNoise = 1;
+switchWind = 1;
 
 %% Set up control inputs as feedforward  and initial state rotor speed
 % u = [Tg_ref beta_ref V]'
