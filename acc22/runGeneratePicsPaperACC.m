@@ -10,7 +10,7 @@ plotOn = 1;
 initModel5MWNREL(plotOn);
 
 %% 
-addpath('NonLinMdl');
+addpath(genpath('NonLinMdl'));
 %initWorkspace;
 initUIO_WECS;
 
@@ -28,7 +28,6 @@ useFASTForComparison = 1; % use data recorded with FAST in closed loop with PI
 figNo1 = 100;
 UIOstr = '';
 runCompareCtrl(strWindType,loadData,figNo1,useFASTForComparison,UIOstr);
-
 
 figNo1 = 101;
 UIOstr = 'UIO';

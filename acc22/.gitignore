@@ -2,10 +2,14 @@ build/
 codegen/
 slprj/
 figDir/
+figDirUIO/
+NonLinMdl1/
 
 *.asv
 *.csv
 *.m~
+*.slxc
+
 
 *.mexa64
 *.mexmaci64
