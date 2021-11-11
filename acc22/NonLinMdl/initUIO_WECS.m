@@ -361,7 +361,7 @@ print(gcf,fullfile(figDir,'nonMonotone2D'), '-dpng');
 
 
 %% Plot wind comparison
-windSimFile = fullfile('dataOut', 'OutDataWind');
+windSimFile = fullfile('dataOut', 'OutDataWind.mat');
 if exist(windSimFile,'file') == 2
     load(windSimFile,'OutDataWind');
 else
