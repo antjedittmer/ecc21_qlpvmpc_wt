@@ -1,6 +1,6 @@
 clc;
 initWorkspace;
-addpath('subfunctions');
+addpath('subfunctionsMPC');
 
 workDir = pwd;
 mainDir = fileparts(workDir);
