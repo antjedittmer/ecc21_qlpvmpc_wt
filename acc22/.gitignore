@@ -9,6 +9,8 @@ NonLinMdl1/
 *.csv
 *.m~
 *.slxc
+*.png
+*.eps
 
 
 *.mexa64
