@@ -10,21 +10,21 @@ if ~nargin
 end
 
 if nargin < 2 || isempty(aBackgroundColorOut)
-    aBackgroundColorOut = 'lightblue'; %'magenta';
+    aBackgroundColorOut = 'yellow'; % 'lightblue'; %'magenta';
 end
 
 if nargin < 3 || isempty(aBackgroundColorIn)
-    aBackgroundColorIn = 'green';% 'cyan';
+    aBackgroundColorIn = 'gray'; %'green';% 'cyan';
 end
 
 % BlockType, 'Inport'; BackgroundColor, 'magenta'
 aBlockType = 'Inport';
-colorInports(aSimulinkMdl, aBlockType, aBackgroundColorOut)
+colorInports(aSimulinkMdl, aBlockType, aBackgroundColorIn)
 
 % BlockType, 'Outport'; BackgroundColor, 'cyan'
 aBlockType = 'Outport';
 
-colorInports(aSimulinkMdl, aBlockType, aBackgroundColorIn)
+colorInports(aSimulinkMdl, aBlockType, aBackgroundColorOut)
 
 function colorInports(aSimulinkMdl, aBlockType, aBackgroundColor)
 
