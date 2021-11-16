@@ -1,0 +1,20 @@
+% S-function 
+which FAST_SFunc
+% S-parameter
+FAST_InputFileName, TMax, 0
+
+C:\Projects\FASTLinTUDelft\gitWT\Wind-Turbine\WT_Mdl_Ctrl\NonLinMdl\FAST_SFunc.mexw64
+
+FAST_InputFileName =
+
+    'C:\Projects\FASTTool\subfunctions\inputfiles\FAST.fst'
+
+
+TMax =
+
+   400
+
+
+ans =
+
+     0

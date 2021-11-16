@@ -10,6 +10,7 @@ OutData*
 slprj/
 **/slprj
 **/NonLinMdl1/
+**/html
 
 *.asv
 *.csv
@@ -18,6 +19,8 @@ slprj/
 *.png
 *.eps
 *.fig
+*.original
+*.autosave
 
 *.mexa64
 *.mexmaci64
