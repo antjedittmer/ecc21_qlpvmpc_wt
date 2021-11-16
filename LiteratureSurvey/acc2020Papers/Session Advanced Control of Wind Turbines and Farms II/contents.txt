@@ -1,0 +1,6 @@
+Wake Deflection Control with Wind Direction Changes: Wind Tunnel Comparison of Different Wind Farm Flow Models (I)
+Stochastic Dynamic Programming for Wind Farm Power Maximization (I)
+A Distributed Reinforcement Learning Yaw Control Approach for Wind Farm Energy Capture Maximization
+Real-Time Energy Market Arbitrage Via Aerodynamic Energy Storage in Wind Farms (I)
+Resilient Autonomous Wind Farms (I)
+Distributed Control of Wind Farm Power Set Points to Minimise Fatigue Loads (I)

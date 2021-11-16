@@ -6,7 +6,7 @@ addpath('subfunctions');
 
 mainDir = fullfile(pwd);
 addpath(fullfile(fileparts(pwd),'dataIn'));
-dataDirOut = 'dataOut1';
+dataDirOut = 'dataOut';
 
 
 % Set path to figure directory
