@@ -1,12 +1,14 @@
 build/
 codegen/
 slprj/
-figDir/
-**/figDir
-dataOut/
-**/dataOut
+figDir*/
+**/figDir*
+dataOut*/
+**/dataOut*
+OutData*
+**/OutData*
 slprj/
-figDirUIO/
+**/slprj
 **/NonLinMdl1/
 
 *.asv
@@ -15,6 +17,7 @@ figDirUIO/
 *.slxc
 *.png
 *.eps
+*.fig
 
 *.mexa64
 *.mexmaci64
