@@ -1,0 +1,14 @@
+build/
+codegen/
+slprj/
+figDir/
+dataOut/
+
+*.asv
+*.csv
+*.m~
+
+*.mexa64
+*.mexmaci64
+*.mexw32
+*.mexw64

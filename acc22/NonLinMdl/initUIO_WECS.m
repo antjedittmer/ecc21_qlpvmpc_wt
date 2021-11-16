@@ -2,9 +2,9 @@
 
 %% Proof-of concept for unknown input observer for WECS
 %if ~nargin
-    
-    close all; clear; clc;
-    restoredefaultpath;
+
+close all; clear; clc;
+restoredefaultpath;
 %end
 
 pwd1 = fileparts(mfilename('fullpath'));
@@ -37,7 +37,7 @@ idxS = 3;  % 3 states for default model: Thetas, omegar, omegag
 DT = 0.008; % sample time
 t = 0:DT:100; % default time vector
 
-if useFASTwind == 0 %create step function 
+if useFASTwind == 0 %create step function
     t1L = round(length(t)/2);
     V = [rhoP*ones(1,t1L),(rhoP+2) * ones(1,length(t) - t1L)]';
     
@@ -63,7 +63,7 @@ d = V + d1;  % wind input load('d'); d = d';
 LinPointsMFile;
 MdlMFile;
 ControllerMFile;
-switchNoise = 1;
+switchNoise = 0;
 switchWind = 1;
 
 %% Set up control inputs as feedforward  and initial state rotor speed
@@ -88,20 +88,20 @@ if useFASTmdl == 1
     % add path to LinMdl folder and run create linear model for windspeed
     addpath(fullfile(parentDir,'LinMdl'));
     sysOut = createLinearModels(rhoP-3,1);
-       
+    
     % Assign matrices
-    Av = sysOut.A; Bu = sysOut.B(:,1:2); Cv = sysOut.C(1:4,:); 
+    Av = sysOut.A; Bu = sysOut.B(:,1:2); Cv = sysOut.C(1:4,:);
     Ev = sysOut.B(:,3);
     
     % Initial steady state and output (testX = -inv(Av) * Bv * u0'; testX(1:3)
     x0 = [zeros(1,7),rhoP1(1),rhoP1(1),u1(1),u2(1),d(1)]';
     y0 = x0(8:end-1); %{'omega_r','omega_gr','Tg','beta','V'};
-        % State names (input and output names already created)
+    % State names (input and output names already created)
     sysOut.StateName = {'yt [m]', 'zeta [m]', 'xt [m]', 'theta_s [rad]', ...
         'yt_dot [m/s]', 'zeta_dot [m/s]', 'xt_dot [m/s]',...
         'omega_r [rad/s]', 'omega_gr [rad/s]','Tg [kNm]','beta [rad]'};
     
-else  
+else
     % System and input matrix
     [AvAll,BvAll] = ABqL_WT_beta(d(1),lambda,beta,Cq);
     
@@ -113,9 +113,9 @@ else
         Bv = BvAll;
     end
     
-    Bu = Bv(:,2:3); 
+    Bu = Bv(:,2:3);
     nx = size(Av,2);
-    Cv = [zeros(nx-1,1),eye(nx-1)]; 
+    Cv = [zeros(nx-1,1),eye(nx-1)];
     Ev = Bv(:,1);
     
     % Initial steady state and output (testX = -inv(Av) * Bv * u0'; testX(1:3)
@@ -158,7 +158,7 @@ Re = C*C';
 K1 = lqr(A',C',Qe,Re)'; % lqr not supported in Simulink
 
 % Ham = [A', -C'* Re^(-1) * C; % Hamiltonion matrix -lambda to make it stablizable
-%       -Qe, -A]; 
+%       -Qe, -A];
 % [V,D] = eig(Ham); % Divide into stable and unstable eigenvalues
 % idxS = diag(D) < 0; % get stable eigenvalues
 % Vs = V(:,idxS);% get eigenvectors of stable eigenvalues
@@ -218,7 +218,7 @@ for idx = 1:ny
     subplot(ny, 1,idx)
     plot(t,y(:,idx), 'Color',cl(1,:),'Linewidth',1);
     hold on;
-     plot(t,y1(:,idx),'Color',cl(2,:), 'Linewidth',1,'Linestyle','--');
+    plot(t,y1(:,idx),'Color',cl(2,:), 'Linewidth',1,'Linestyle','--');
     if idx == 1
         title('WECS outputs');
     end
@@ -289,7 +289,7 @@ lambdaCqVecLUT = lambdaCqVecMin : dLlambdaCqVec:lambdaCqVecMax;
 
 lambdaTildaMat = lambdaCqVecMax *ones(size(lambdaCqMat));
 for idx = 1: length(betaLUT)
-    [lambdaCqbeta, idxUnique] = unique(lambdaCqMat(idx,:));  
+    [lambdaCqbeta, idxUnique] = unique(lambdaCqMat(idx,:));
     lambdaTildaMat(idx,:) = interp1(lambdaCqbeta,lambdaLUT(idxUnique),lambdaCqVecLUT,'linear','extrap');
 end
 
@@ -316,7 +316,7 @@ A = [0,1,-1 ;
     wecs.Ks/Jgr, wecs.Bs/Jgr, -wecs.Bs/Jgr];
 B = [0; 0; -wecs.Ng/Jgr];
 E = [0; 1/wecs.Jr;0 ];
-C = [0 1 0;0 0 1]; % 
+C = [0 1 0;0 0 1]; %
 fprintf('rank(C*E) is %d; rank(E) is %d\n', rank(C*E),rank(E));
 
 H = E*inv((C*E)'*(C*E))*(C*E)' %#ok<MINV,*NOPTS> display output, inv is fast enough
@@ -387,8 +387,8 @@ estErr = OutDataWindPlot(:,1) - OutDataWindPlot(:,2);
 std(estErr)
 1 - var(estErr)/var(windTrue)
 
-% 
-figure; 
+%
+figure;
 subplot(2,1,1)
 plot(timeVecPlot, windTrue,'color',cl(1,:));
 hold on
@@ -406,10 +406,16 @@ axis tight; grid on;
 print(gcf,fullfile(figDir,'WindEst'), '-dpng');
 print(gcf,fullfile(figDir,'WindEst'), '-depsc');
 
-% return;
+windSimFile = fullfile('dataOut', 'OutDataTr.mat');
+if exist(windSimFile,'file') == 2
+    load(windSimFile,'OutDataWind');
+else
+    return
+end
+
 
 estErrTr = OutDataTr(idxPlotData,1) - OutDataTr(idxPlotData,2);
-figure; 
+figure;
 subplot(2,2,1)
 plot(timeVecPlot, OutDataTr(idxPlotData,1),'color',cl(1,:));
 hold on
@@ -434,7 +440,7 @@ axis tight; grid on;
 subplot(2,2,4)
 plot(timeVecPlot,estErr);
 legend('True - Estimate');
-%ylabel ('Wind [m/s]') 
+%ylabel ('Wind [m/s]')
 xlabel('time [s]')
 axis tight; grid on;
 
