@@ -4,7 +4,7 @@ clc; clear; bdclose;
 addpath('WECSMdl');
 addpath('subfunctions');
 addpath('subfunctionsMPC');
-addpath('subfunctions');
+addpath('subfunctionsUtil');
 % initialize constants to base workspace for CPC simulation
 testCtrl;
 load(fullfile(dataInPath,'OutDataWind18NTM.mat'),'OutData','OutTable');
@@ -53,6 +53,8 @@ end
 [WIPC,KIPC,refOPC,OutTableIPC] = runSimIPC(X,ref,OutList,weightVec);
 
 
+x = ga( runSimIPC,nvars,A,b,[],[],lb,ub,nonlcon,IntCon,options)
+
 %% Set vector which pitch rate constraints to be test
 maxRateVector = [13,10,8];
 
@@ -70,27 +72,27 @@ controlValue = getValue(controlCtrlObj);
 
 currentOutTableIPCCell = cell(nRate,1); % cell with
 
-%simMdlname = 'test_SimulinkMdl2_Baseline';
-% x0Ctrl = X;
-% for idx = 1: nRate
-%     maxRate = maxRateVector(idx);
-%     controlValue.Pitch.Maxrate = maxRate;
-%     controlValue.Pitch.Minrate = - maxRate;
-%     setValue(controlCtrlObj,controlValue);
-%     saveChanges(myDictionaryCtrlObj)
-%     
-%     matFileOutTableTest1 = fullfile(outDataDir,...
-%         sprintf('OutTableTest_rate%02d_IPC.mat',maxRate));
-%     
-%     
-%     if exist(matFileOutTableTest1,'file') == 2
-%         load(matFileOutTableTest1,'xSim');
-%     else
-%         xSim = simulannealbnd(@(xCtrl) runSimIPC(xCtrl,ref,OutList,weightVec),x0Ctrl);
-%         save(matFileOutTableTest1,'xSim');
-%     end
-%     currentOutTableIPCCell{idx} = xSim;
-% end
+simMdlname = 'test_SimulinkMdl2_Baseline';
+x0Ctrl = X;
+for idx = 1: nRate
+    maxRate = maxRateVector(idx);
+    controlValue.Pitch.Maxrate = maxRate;
+    controlValue.Pitch.Minrate = - maxRate;
+    setValue(controlCtrlObj,controlValue);
+    saveChanges(myDictionaryCtrlObj)
+    
+    matFileOutTableTest1 = fullfile(outDataDir,...
+        sprintf('OutTableTest_rate%02d_IPC.mat',maxRate));
+    
+    
+    if exist(matFileOutTableTest1,'file') == 2
+        load(matFileOutTableTest1,'xSim');
+    else
+        xSim = simulannealbnd(@(xCtrl) runSimIPC(xCtrl,ref,OutList,weightVec),x0Ctrl);
+        save(matFileOutTableTest1,'xSim');
+    end
+    currentOutTableIPCCell{idx} = xSim;
+end
 load('xSim','xSim');
 
 [WIPCSimAn,KIPCSimAn,refOPCSimAn,OutTableIPCSimAn] = runSimIPC(xSim,ref,OutList,weightVec);
