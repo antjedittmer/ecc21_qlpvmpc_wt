@@ -17,7 +17,7 @@ function [currentOutTableTest, tictoc_LPVMPC,GenPwrRef] = getSimulationOutputTab
 % set default variablenames
 if nargin < 5 || isempty(varnames)
     varnames = {'Wind', 'RotSpeed', 'GenPwr', 'GenTq', 'BlPitch1', ...
-    'NcIMUTAxs', 'NcIMUTAys'}; %%'Tower FA acc', 'Tower SS acc'};
+    'NcIMUTAxs', 'NcIMUTAys','zeta_dotdot'}; %%'Tower FA acc', 'Tower SS acc'};
 end
 
 % Get the name of the table
