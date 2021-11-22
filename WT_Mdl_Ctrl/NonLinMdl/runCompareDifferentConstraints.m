@@ -1,4 +1,4 @@
-clc;
+clc; clear; close all;
 initWorkspace;
 load(fullfile(dataInPath,'OutDataWind18NTW.mat'),'OutTable');
 addpath('subfunctionsMPC');
@@ -230,7 +230,8 @@ aTestCell3{3} = currentOutTableTestCell{2};
 summaryTickLabel = {'PI, limit 13 deg/s', 'MPC, limit 13 deg/s', 'MPC, limit 2 deg/s'};
 calculateEvalCriteria(aTestCell3,summaryTickLabel)
 
-[K_matrix_MPC, strK_MPC] = calculateEvalCriteria(aTestCell3,summaryTickLabel);
+%[K_matrix_MPC, strK_MPC]
+K_matrix_MPC = calculateEvalCriteria(aTestCell3,summaryTickLabel);
 
 load('OutTableIPC.mat','OutTableIPC');
 load('OutTableWeightsOrig.mat','OutTableCPC')
@@ -271,8 +272,8 @@ cellOfTable4{2} = cellOfTable{3};
 strCell = {'PI-CPC','PI-IPC'}; %,'MPC, 13deg/s','MPC, 1deg/s'};
 [K1_matrix_IPC, strK1_IPC] = calculateEvalCriteria(cellOfTable4,strCell);
 
-x = load('OutTableTest_rate13_IPC.mat');
-load('OutTableTest_rate08_PI.mat','OutTableTest_rate08_PI');
+% x = load('OutTableTest_rate13_IPC.mat');
+%load('OutTableTest_rate08_PI.mat','OutTableTest_rate08_PI');
 load('OutTableTest_rate01_MPC_LPV.mat','OutTableTest_rate01_MPC');
 load('OutTableTest_rate13_MPC_LPV.mat','OutTableTest_rate13_MPC');
 cellOfTable5 = cellOfTable4;
