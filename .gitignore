@@ -5,12 +5,9 @@ figDir*/
 **/figDir*
 dataOut*/
 **/dataOut*
-OutData*
-**/OutData*
 slprj/
-**/slprj
+figDirUIO/
 **/NonLinMdl1/
-**/html
 
 *.asv
 *.csv
@@ -18,9 +15,6 @@ slprj/
 *.slxc
 *.png
 *.eps
-*.fig
-*.original
-*.autosave
 
 *.mexa64
 *.mexmaci64

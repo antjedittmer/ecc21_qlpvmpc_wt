@@ -43,9 +43,9 @@ load(fullfile(dataInPath,'OutDataSweep.mat'),'OutTable');
 %load(fullfile(dataInPath,'OutDataWind18NTW.mat'),'OutTable');
 
 %% Clean-up
-% clear RESTORE*
-% clear data*
-% clear dir*
+clear RESTORE*
+%clear data*
+clear dir*
 
 
 

@@ -1,5 +1,6 @@
 clc;
 initWorkspace;
+load(fullfile(dataInPath,'OutDataWind18NTW.mat'),'OutTable');
 addpath('subfunctionsMPC');
 
 workDir = pwd;
