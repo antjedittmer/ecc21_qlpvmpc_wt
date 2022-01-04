@@ -1,5 +1,9 @@
-function [K_matrix, strK] = calculateEvalCriteria(cellOfTable,summaryTickLabel)
-% calculate evaluation criteria for controllers
+function [K_matrix, strK] = calculateEvalCriteria(cellOfTable,summaryTickLabel,printTitle)
+% calculate evaluation criteria for controllers and 
+
+if nargin < 3
+    printTitle = 1;
+end
 
 % epected variablenames: GenPwr,GenSpeed,TwrBsM,BlPitchC
 outTable1 = cellOfTable{1};
@@ -149,9 +153,9 @@ strK.DamageTower = sprintf('%2.3f, ',K_matrix(:,5)); %K_damageTower);
 % ax.XTickLabel = summaryTickLabel;
 
 
-subPlotBar(K_matrix,strK,summaryTickLabel);
+subPlotBar(K_matrix,strK,summaryTickLabel,printTitle);
 
-function subPlotBar(K_matrix,strK,summaryTickLabel)
+function subPlotBar(K_matrix,strK,summaryTickLabel,printTitle)
 figure;
 cl1 = colormap('lines');
 cl = [0.5,0.5,0.5;
@@ -167,6 +171,8 @@ for k = 1:5
     b(k).FaceColor = cl(k,:);
 end
 
+
+
 axis tight; grid on;
 titleCellNew = {['Power tracking C_{P}: ', '{\color[rgb]{',num2str(cl(1,:)),'}',strK.power(1:end-2),'}'],...
     ['Power variance C_{\sigma(P)}: ',  '{\color[rgb]{',num2str(cl(2,:)),'}',strK.StdPowSpeed(1:end-2),'}'], ...
@@ -174,7 +180,21 @@ titleCellNew = {['Power tracking C_{P}: ', '{\color[rgb]{',num2str(cl(1,:)),'}',
     ['Blade damage C_{D,Blades}: ',  '{\color[rgb]{',num2str(cl(4,:)),'}',strK.DamageBlades(1:end-2),'}'],...
     ['Tower damage C_{D,Tower}: ',  '{\color[rgb]{',num2str(cl(5,:)),'}',strK.DamageTower(1:end-2),'}']};
 
+if printTitle
 title(titleCellNew)
+else
+%     for idx = 1: length(b)
+%         xtips1 = b(idx).XEndPoints;
+%         ytips1 = b(idx).YEndPoints;
+%         labels1 = string(round(b(idx).YData,1));
+%         text(xtips1,ytips1,labels1,'HorizontalAlignment','center',...
+%             'VerticalAlignment','bottom')
+%     end
+end
 
 ax = gca;
+ax.XLim = ax.XLim + [-0.1 0.1];
+ax.YLim = ax.YLim + [0 0.2];
+ax.XTickLabelRotation = 22.5;
+
 ax.XTickLabel = summaryTickLabel;

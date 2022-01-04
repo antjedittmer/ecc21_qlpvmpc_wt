@@ -34,7 +34,7 @@ controlValue = getValue(controlObj);
 %% Set vector which pitch rate constraints to be test
 maxRateVector = 1:13;
 
-%% Loop over pitch rate constraint vector: 
+%% MPC Loop over pitch rate constraint vector 
 nRate = length(maxRateVector);
 currentOutTableTestCell = cell(nRate,1); % cell with
 tictoc_LPVMPCcell = cell(nRate,1);
@@ -69,9 +69,14 @@ tableForPlotMPC{2} = currentOutTableTestCell{idx8};
 tableForPlotMPC{3} = currentOutTableTestCell{end};
 
 testCaseStrMPC =  'qLMPC CPC Rate Constraints [deg/s]';
-testCaseCell = {'standard (8) ','high (13) ', 'low (4) ',};
+testCaseCell = {'standard (8) ','high (13) ', 'low (4) '};
+
+% input plotOutTable:OutTable,OutTableTest1,OutTableTest2,testCaseStr, testCaseCell, figNo2,figDir,strFig)
+figDir = 'figDir';
 axPlotAllMPC = plotOutTable(tableForPlotMPC{1},tableForPlotMPC{2},tableForPlotMPC{3},...
-   testCaseStrMPC,testCaseCell);
+   testCaseStrMPC,testCaseCell,[],figDir);
+
+figMPC = gcf;
 
 %% Get Data Directory value of pitch actuator rate
 DDNameCtrl = 'DD_CtrlBaseline.sldd';
@@ -103,10 +108,9 @@ OutTable4 = currentOutTablePICell{maxRateVector == 4};
 OutTable4.Time = OutTable.Time(1:height(OutTable4));
 testCaseStr =  'PI CPC Rate Constraints [deg/s]';
 figNo2 = 2;
-figDir = '';
 strFig = 'testConstrPI';
 axPlotAll = plotOutTable(OutTable4,currentOutTablePICell{maxRateVector == 8},currentOutTablePICell{end},...
-   testCaseStr,testCaseCell, figNo2,figDir,strFig);
+   testCaseStr,testCaseCell,figNo2,figDir,strFig);
 
 for idx = 1:length(axPlotAllMPC)
     limPI = get(axPlotAll(idx),'YLim');
@@ -115,11 +119,17 @@ for idx = 1:length(axPlotAllMPC)
     set(axPlotAllMPC(idx),'YLim',newLim ); 
     set(axPlotAll(idx),'YLim',newLim ); 
 end
-figDir = 'figDir';
+
+figDirConstr = 'figDirConstr';
+figDir = figDirConstr;
+
 strFig = 'MPCNewLim';
-print(fullfile(figDir,['cmpTimeDomain_All5',strFig]), '-dpng');
+saveas(figMPC, fullfile(figDirConstr,['cmpTimeDomain_All5',strFig]), 'png');
+saveas(figMPC, fullfile(figDirConstr,['cmpTimeDomain_All5',strFig]), 'eps');
+
 strFig = 'PINewLim';
-print(gcf, fullfile(figDir,['cmpTimeDomain_All5',strFig]), '-dpng');
+print(gcf, fullfile(figDirConstr,['cmpTimeDomain_All5',strFig]), '-dpng');
+print(gcf, fullfile(figDirConstr,['cmpTimeDomain_All5',strFig]), '-deps');
 
 %% MPC limited to MPC2
 tableForPlotMPC1{1} = currentOutTableTestCell{1};
@@ -130,7 +140,7 @@ tableForPlotMPC1{3} = currentOutTableTestCell{end};
 testCaseStrMPC =  'qLMPC CPC Rate Constraints [deg/s]';
 testCaseCell = {'standard (8) ','high (13) ', 'very low (2) '};
 axPlotAllMPC1 = plotOutTable(tableForPlotMPC1{1},tableForPlotMPC1{2},tableForPlotMPC1{3},...
-   testCaseStrMPC,testCaseCell);
+   testCaseStrMPC,testCaseCell,[],figDirConstr);
 
 for idx = 1:length(axPlotAllMPC)
     limPI = get(axPlotAll(idx),'YLim');
@@ -176,42 +186,61 @@ matrixTwrQLMPC = cell2mat(cellfun(@(x) x.NcIMUTAxs(idxT)', currentOutTableTestCe
 diffPitchPI = diff(matrixPitchPI');
 diffPitchQLMPC = diff(matrixPitchQLMPC');
 
-stdDiffPitchPI = std(abs(diff(matrixPitchPI')))*180/pi;
-stdDiffPitchQLMPC = std(abs(diff(matrixPitchQLMPC')))*180/pi;
-stdTowerPI = std(abs(matrixTwrPI'));
-stdTowerQLMPC = std(abs(matrixTwrQLMPC'));
+stdDiffPitchPI = mean(abs(diff(matrixPitchPI')))*180/pi;
+stdDiffPitchQLMPC = mean(abs(diff(matrixPitchQLMPC')))*180/pi;
+stdTowerPI = mean(abs(matrixTwrPI'));
+stdTowerQLMPC = mean(abs(matrixTwrQLMPC'));
 
-figure; 
-subplot(2,1,1);
-plot(maxRateVector,stdDiffPitchPI,'*-',...
-    maxRateVector,stdDiffPitchQLMPC,'o-');
+figure(3); 
+vec4to13 = 3:13;
+vec2to13 = 3:13;
+subplot(2,2,1);
+plot(maxRateVector(vec4to13),stdDiffPitchPI(vec4to13),'*-',...
+    maxRateVector(vec2to13),stdDiffPitchQLMPC(vec2to13),'o-');
+axis tight; grid on;
+title('Mean values different rate limits')
+ylabel('mean(\Delta Pitch) [deg/s]');
+
+subplot(2,2,3);
+plot(maxRateVector(vec4to13),stdTowerPI(vec4to13),'*-',...
+    maxRateVector(vec2to13),stdTowerQLMPC(vec2to13),'o-');
+
+axis tight; grid on;
+ylabel('mean(TwrFA) [m/s^2]');
+xlabel('Max. Pitch rate [m/s^2]');
+
+subplot(1,2,2);
+plot(stdDiffPitchPI(vec4to13),stdTowerPI(vec4to13),'*-',...
+stdDiffPitchQLMPC(vec2to13),stdTowerQLMPC(vec2to13),'o-');
+axis tight; grid on;
+title({'Pareto front:','mean(TwrFa) vs. mean(\Delta Pitch)'})
 legend('PI','qLMPC');
-axis tight; grid on;
-ylabel('std_{\Delta Pitch} [deg/s]');
-subplot(2,1,2);
-plot(maxRateVector,stdTowerPI,'*-',...
-    maxRateVector,stdTowerQLMPC,'o-');
-axis tight; grid on;
-ylabel('std_{\Delta Pitch} [deg/s]');
-xlabel('std_{TwrFA} [m/s^2]');
-figure;
-plot(stdDiffPitchPI,stdTowerPI,'*-',...
-stdDiffPitchQLMPC,stdTowerQLMPC,'o-');
+ylabel('mean(\Delta Pitch) [deg/s]');
+xlabel('mean(TwrFA) [m/s^2]');
 
+%% Barplots 
+
+donotuse1Barplot = 1;
+noTitle = 0;
 aTestCell{1} = currentOutTablePICell{4};
 aTestCell{1}.Time = OutTable.Time(1:heightT);
 aTestCell{2} = currentOutTablePICell{end};
 aTestCell{3} = currentOutTableTestCell{2};
-aTestCell{4} = currentOutTableTestCell{3};
-aTestCell{5} = currentOutTableTestCell{end};
-
+aTestCell{4-donotuse1Barplot} = currentOutTableTestCell{3};
+aTestCell{5-donotuse1Barplot} = currentOutTableTestCell{end};
+if donotuse1Barplot == 1
+    summaryTickLabel = {'PI, limit 4 deg/s', 'PI, limit 13 deg/s',...
+    'MPC, limit 4 deg/s','MPC, limit 13 deg/s'};
+else
 summaryTickLabel = {'PI, limit 4 deg/s', 'PI, limit 13 deg/s','MPC, 1 deg s',...
     'MPC, limit 4 deg/s','MPC, limit 13 deg/s'};
-calculateEvalCriteria(aTestCell,summaryTickLabel)
+end
+calculateEvalCriteria(aTestCell,summaryTickLabel,noTitle)
 figStr = 'PI4_13MPC4_13';
 print(gcf,[fullfile(figDir,'optCriteria_PI_MPC'),'_',figStr], '-dpng');
-%print(gcf,[fullfile(figDir,'cmpCtrlSimulink_PI_MPC'),'_',figStr,], '-depsc');
+% print(gcf,[fullfile(figDir,'cmpCtrlSimulink_PI_MPC'),'_',figStr,], '-depsc');
 
+%% Next bar plot: Only two bars omit for now
 OutTable8 = currentOutTablePICell{end};
 OutTable8.Time = OutTable.Time(1:height(OutTable8));
 
@@ -219,7 +248,7 @@ aTestCell1{1} = OutTable8;
 aTestCell1{2} = currentOutTableTestCell{end};
 
 summaryTickLabel = {'PI, limit 13 deg/s', 'MPC, limit 13 deg/s'};
-calculateEvalCriteria(aTestCell1,summaryTickLabel)
+calculateEvalCriteria(aTestCell1,summaryTickLabel,noTitle)
 figStr = 'PI13MPC13';
 print(gcf,[fullfile(figDir,'optCriteria_PI_MPC'),'_',figStr], '-dpng');
 
