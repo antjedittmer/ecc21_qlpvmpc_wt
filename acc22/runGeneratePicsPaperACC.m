@@ -22,7 +22,6 @@ initUIO_WECS;
 
 %Load data if available from previous simulation.
 strWindType = ''; %Default wind: nomal turbulent wind, 18 
-loadData = 0; %use data if available
 useFASTForComparison = 1; % use data recorded with FAST in closed loop with PI
 
 figNo1 = 100;
@@ -35,6 +34,9 @@ switchNoise = 0;% run Noise with limit 10^-6
 UIOstr = 'UIO';
 runCompareCtrl(strWindType,loadData,figNo1,useFASTForComparison,UIOstr);
 
+figNo1 = 102;
+UIOstr = 'UIOall';
+runCompareCtrl(strWindType,loadData,figNo1,useFASTForComparison,UIOstr);
 
 
 

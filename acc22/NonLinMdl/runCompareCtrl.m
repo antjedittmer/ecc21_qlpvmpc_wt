@@ -103,6 +103,7 @@ if mean(OutTableTest2.RotSpeed) >1
 end
 
 % Run or load qLPV controller
+simMdlname2 = '';
 if isempty(UIOstr)
     simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta.slx'; %
     if ~exist(simMdlname,'file')
@@ -111,14 +112,25 @@ if isempty(UIOstr)
     end
     matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPC',strFig,strMultVar,'.mat']);
     %simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta_UIO.slx';
+elseif strcmp(UIOstr,'UIO')
+    simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta_UIO.slx';
+    matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPCUI_2',strFig,strMultVar,'.mat']);
 else
     simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta_UIO.slx';
     matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPCUI_2',strFig,strMultVar,'.mat']);
+    
+    simMdlname2 = 'test_SimulinkMdl2_qLPVMPCbeta.slx'; %
+    matFileOutTableTest2 = fullfile(dataDirOut,['OutTableMPC',strFig,strMultVar,'.mat']);
 end
 % simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta_UIO_inside3.slx';
 % matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPCUIO3',strFig,strMultVar,'.mat']);
 
 [OutTableMPC, tictoc_LPVMPC,GenPwrRef] = getSimulationOutputTable(matFileOutTableTest1,loadData,OutTable,simMdlname,varnames);
+if ~isempty(simMdlname2)
+    OutTableMPC2 = getSimulationOutputTable(matFileOutTableTest2,loadData,OutTable,simMdlname2,varnames);
+end
+
+    
 
 %% Prepare information for plots and plot data
 
@@ -130,10 +142,10 @@ DT = 0.008;
 r = GenPwrRef;
 
 % Plot and compare closed-loop results
-plotComparison(OutTableTest2,OutTableMPC,q_,r_,p,DT,figStr,figDir,r,timeForPlot,meanOpt,figNo1,UIOstr)
+plotComparison(OutTableTest2,OutTableMPC,q_,r_,p,DT,figStr,figDir,r,timeForPlot,meanOpt,figNo1,UIOstr,OutTableMPC2)
 
 
-function plotComparison(OutTableTest2,OutTableMPC,q_,r_,p,DT,figStr,figDir,r,timeForPlot,meanOpt,figNo1,UIOstr)
+function plotComparison(OutTableTest2,OutTableMPC,q_,r_,p,DT,figStr,figDir,r,timeForPlot,meanOpt,figNo1,UIOstr,OutTableMPC2)
 %plotComparison plots the time series obtained with baseline and qLPVMPC
 
 %% Handle optional inputs
@@ -143,6 +155,10 @@ if nargin <10
     timeForPlot(2) = maxTime;
 end
 
+if nargin <14
+    OutTableMPC2 = '';
+end
+
 %% Vector for plot: Time index for plot
 timeVec = 0:DT: maxTime*DT - DT;
 
@@ -150,6 +166,8 @@ idxPlot = timeVec >= timeForPlot(1) & timeVec <= timeForPlot(2);
 timeVecPlot = timeVec(idxPlot);
 OutTableTest2Plot = OutTableTest2(idxPlot,:);
 OutTableMPCPlot = OutTableMPC(idxPlot,:);
+OutTableMPC2Plot = OutTableMPC2(idxPlot,:);
+
 
 PGRef = r.Data(idxPlot);
 
@@ -192,19 +210,32 @@ title({['Baseline (P-PI) vs. qLPV MPC; ', meanOpt],... %WT mdl: Model2
 
 % Tower fore-aft acceleration
 ax1(2) = subplot(3,1,2);
-plot(timeVecPlot, OutTableTest2Plot.NcIMUTAxs, timeVecPlot,OutTableMPCPlot.NcIMUTAxs,'-.');
+
+if isempty(OutTableMPC2Plot)
+    plot(timeVecPlot, OutTableTest2Plot.NcIMUTAxs, timeVecPlot,OutTableMPCPlot.NcIMUTAxs,'-.');
+else
+    plot(timeVecPlot, OutTableTest2Plot.NcIMUTAxs, timeVecPlot,OutTableMPCPlot.NcIMUTAxs,'-.',...
+        timeVecPlot,OutTableMPC2Plot.NcIMUTAxs,'--');
+end
 title([yAxCell{2}, ': var_{P-Pi} = ',titleStdPI , ', var_{qLPVMPC} = ' ,titleStdqLPV,', ratio: ' ,ratioStd])
 ylabel(yAxCell{2}); %'y_t [m/s^2]')
 axis tight; grid on;
 
 % Generator power
 ax1(3) = subplot(3,1,3);
-plot(timeVecPlot, OutTableTest2Plot.GenPwr, timeVecPlot,OutTableMPCPlot.GenPwr,'-.',timeVecPlot,PGRef,'k:');
+if isempty(OutTableMPC2Plot)
+    plot(timeVecPlot, OutTableTest2Plot.GenPwr, timeVecPlot,OutTableMPCPlot.GenPwr,'-.',timeVecPlot,PGRef,'k:');
+    legend('P-PI','MPC','P_{g,ref}','Location','SouthEast')
+else
+    plot(timeVecPlot, OutTableTest2Plot.GenPwr, timeVecPlot,OutTableMPCPlot.GenPwr,'-.',...
+        timeVecPlot,OutTableMPC2Plot.GenPwr,'--',timeVecPlot,PGRef,'k:');
+    legend('P-PI','MPC V_{est}','MPC V_{real}','P_{g,ref}','Location','SouthEast')
+end
 title(['|P_{g,ref}  - P_g| [kW]: var_{P-Pi} = ',titleStdPI_Pwr, ', var_{qLPVMPC} = ' ,...
     titleStdqLPV_Pwr,', ratio: ' ,ratioStd_Pwr])
 ylabel(yAxCell{3}); %'P_g [kW]')
 axis tight; grid on;
-legend('P-PI','MPC','P_{g,ref}','Location','SouthEast')
+
 xlabel('time [s]');
 
 % Link axes and set poisition
