@@ -107,7 +107,7 @@ simMdlname2 = '';
 if isempty(UIOstr)
     simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta.slx'; %
     if ~exist(simMdlname,'file')
-        simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta_UIO.slx';       
+        simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta_UIO.slx';
         assignin('base','switchWind', 1); %switchWind = 0;
     end
     matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPC',strFig,strMultVar,'.mat']);
@@ -126,11 +126,12 @@ end
 % matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPCUIO3',strFig,strMultVar,'.mat']);
 
 [OutTableMPC, tictoc_LPVMPC,GenPwrRef] = getSimulationOutputTable(matFileOutTableTest1,loadData,OutTable,simMdlname,varnames);
+OutTableMPC2 = '';
 if ~isempty(simMdlname2)
     OutTableMPC2 = getSimulationOutputTable(matFileOutTableTest2,loadData,OutTable,simMdlname2,varnames);
 end
 
-    
+
 
 %% Prepare information for plots and plot data
 
@@ -166,8 +167,11 @@ idxPlot = timeVec >= timeForPlot(1) & timeVec <= timeForPlot(2);
 timeVecPlot = timeVec(idxPlot);
 OutTableTest2Plot = OutTableTest2(idxPlot,:);
 OutTableMPCPlot = OutTableMPC(idxPlot,:);
-OutTableMPC2Plot = OutTableMPC2(idxPlot,:);
-
+if ~isempty(OutTableMPC2)
+    OutTableMPC2Plot = OutTableMPC2(idxPlot,:);
+else
+    OutTableMPC2Plot = OutTableMPC2;
+end
 
 PGRef = r.Data(idxPlot);
 
@@ -183,15 +187,23 @@ pVec = deblank(sprintf('%d', p(1)/q_(1)));
 % Improvement tower foreaft acceleration
 varPI = var(OutTableTest2Plot.NcIMUTAxs);
 varqLPV = var(OutTableMPCPlot.NcIMUTAxs);
-titleStdPI = sprintf('%2.2e',varPI);
-titleStdqLPV = sprintf('%2.2e',varqLPV);
+titleStdPI = sprintf('%2.1e',varPI);
+titleStdqLPV = sprintf('%2.1e',varqLPV);
 ratioStd = sprintf('%2.1f ', varPI/varqLPV);
 
 varPI_Pwr = var(abs(PGRef - OutTableTest2Plot.GenPwr));
 varqLPV_Pwr = var(abs(PGRef - OutTableMPCPlot.GenPwr));
-titleStdPI_Pwr = sprintf('%2.2e',varPI_Pwr);
-titleStdqLPV_Pwr = sprintf('%2.2e',varqLPV_Pwr);
+titleStdPI_Pwr = sprintf('%2.1e',varPI_Pwr);
+titleStdqLPV_Pwr = sprintf('%2.1e',varqLPV_Pwr);
 ratioStd_Pwr = sprintf('%2.1f ', varPI_Pwr/varqLPV_Pwr);
+
+if ~isempty(OutTableMPC2)
+    varqLPV2 = var(OutTableMPC2Plot.NcIMUTAxs);
+    titleStdqLPV2 = sprintf('%2.1e',varqLPV2);
+    
+    varqLPV2_Pwr = var(abs(PGRef - OutTableMPC2Plot.GenPwr));
+    titleStdqLPV2_Pwr = sprintf('%2.1e',varqLPV2_Pwr);
+end
 
 % axis for plot
 yAxCell = {'wind V [m/s]', 'Twr_{FA} y_t [m/s^2]','GenPwr P_g [kW]'};
@@ -213,30 +225,71 @@ ax1(2) = subplot(3,1,2);
 
 if isempty(OutTableMPC2Plot)
     plot(timeVecPlot, OutTableTest2Plot.NcIMUTAxs, timeVecPlot,OutTableMPCPlot.NcIMUTAxs,'-.');
+title([yAxCell{2}, ': var_{P-Pi} = ',titleStdPI , ', var_{MPC} = ' ,...
+    titleStdqLPV,', ratio: ' ,ratioStd])
+
 else
     plot(timeVecPlot, OutTableTest2Plot.NcIMUTAxs, timeVecPlot,OutTableMPCPlot.NcIMUTAxs,'-.',...
         timeVecPlot,OutTableMPC2Plot.NcIMUTAxs,'--');
+    title([yAxCell{2}, ': var_{P-Pi} = ',titleStdPI , ', var_{MPC,est} = ' ,...
+    titleStdqLPV,', var_{MPC,meas} = ' ,titleStdqLPV2])
 end
-title([yAxCell{2}, ': var_{P-Pi} = ',titleStdPI , ', var_{qLPVMPC} = ' ,titleStdqLPV,', ratio: ' ,ratioStd])
 ylabel(yAxCell{2}); %'y_t [m/s^2]')
 axis tight; grid on;
+
+cl =[ 0    0.4470    0.7410
+    0.8500    0.3250    0.0980
+    0.9290    0.6940    0.1250];
+if ~isempty(OutTableMPC2)
+    ha = axes('position',[.25 .45 .2 .1]);
+    box on % put box around60 new pair of axes
+    idxT = (timeVecPlot < 90) & (timeVecPlot > 75); % range of t near perturbation
+    %     plot(timeVecPlot(idxT), OutTableTest2Plot.NcIMUTAxs(idxT), timeVecPlot(idxT),OutTableMPCPlot.NcIMUTAxs(idxT),'-.',...
+    %         timeVecPlot(idxT),OutTableMPC2Plot.NcIMUTAxs(idxT),'--');% plot on new axes
+    plot( timeVecPlot(idxT),OutTableMPCPlot.NcIMUTAxs(idxT),'-.','Color',cl(2,:)); hold on;
+    plot(timeVecPlot(idxT),OutTableMPC2Plot.NcIMUTAxs(idxT),'--','Color',cl(3,:)); hold off;% plot on new axes
+    
+    axis tight; grid on;
+    %posAxis = axis;
+    ha.YLim = [min(OutTableMPCPlot.NcIMUTAxs(idxT)), max(OutTableMPCPlot.NcIMUTAxs(idxT))];
+    %axis(posAxis);
+end
+
 
 % Generator power
 ax1(3) = subplot(3,1,3);
 if isempty(OutTableMPC2Plot)
     plot(timeVecPlot, OutTableTest2Plot.GenPwr, timeVecPlot,OutTableMPCPlot.GenPwr,'-.',timeVecPlot,PGRef,'k:');
     legend('P-PI','MPC','P_{g,ref}','Location','SouthEast')
+    title(['|P_{g,ref}  - P_g| [kW]: var_{P-Pi} = ',titleStdPI_Pwr, ', var_{MPC} = ' ,...
+    titleStdqLPV_Pwr,', ratio: ' ,ratioStd_Pwr])
 else
     plot(timeVecPlot, OutTableTest2Plot.GenPwr, timeVecPlot,OutTableMPCPlot.GenPwr,'-.',...
         timeVecPlot,OutTableMPC2Plot.GenPwr,'--',timeVecPlot,PGRef,'k:');
     legend('P-PI','MPC V_{est}','MPC V_{real}','P_{g,ref}','Location','SouthEast')
+     title(['|P_{g,ref}  - P_g| [kW]: var_{P-Pi} = ',titleStdPI_Pwr, ', var_{MPC,est} = ' ,...
+    titleStdqLPV_Pwr,', var_{MPC,meas} = ' ,titleStdqLPV2_Pwr])
 end
-title(['|P_{g,ref}  - P_g| [kW]: var_{P-Pi} = ',titleStdPI_Pwr, ', var_{qLPVMPC} = ' ,...
-    titleStdqLPV_Pwr,', ratio: ' ,ratioStd_Pwr])
+
 ylabel(yAxCell{3}); %'P_g [kW]')
+xlabel('time [s]');
 axis tight; grid on;
 
-xlabel('time [s]');
+if ~isempty(OutTableMPC2)
+    ha = axes('position',[.25 .15 .2 .1]);
+    box on % put box around60 new pair of axes
+    idxT = (timeVecPlot < 90) & (timeVecPlot > 75); % range of t near perturbation
+    %     plot(timeVecPlot(idxT), OutTableTest2Plot.GenPwr(idxT), timeVecPlot(idxT),OutTableMPCPlot.GenPwr(idxT),'-.',...
+    %         timeVecPlot(idxT),OutTableMPC2Plot.GenPwr(idxT),'--',timeVecPlot(idxT),PGRef(idxT),'k:');
+    plot(timeVecPlot(idxT),OutTableMPCPlot.GenPwr(idxT),'-.','Color',cl(2,:)); hold on;
+    plot(timeVecPlot(idxT),OutTableMPC2Plot.GenPwr(idxT),'--','Color',cl(3,:));hold off;
+    axis tight;grid on;
+    %posAxis = axis;
+    ha.YLim = [min(OutTableMPCPlot.GenPwr(idxT)), max(OutTableMPCPlot.GenPwr(idxT))];
+    %axis(posAxis);
+end
+
+
 
 % Link axes and set poisition
 linkaxes(ax1,'x')

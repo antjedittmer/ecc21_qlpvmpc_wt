@@ -34,7 +34,7 @@ switchNoise = 0;% run Noise with limit 10^-6
 UIOstr = 'UIO';
 runCompareCtrl(strWindType,loadData,figNo1,useFASTForComparison,UIOstr);
 
-figNo1 = 102;
+figNo1 = 103;
 UIOstr = 'UIOall';
 runCompareCtrl(strWindType,loadData,figNo1,useFASTForComparison,UIOstr);
 
