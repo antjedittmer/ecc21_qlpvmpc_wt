@@ -1,4 +1,4 @@
-function runCompareCtrl(strWindType,loadData,figNo1,useFASTForComparison,UIOstr)
+function [OutTableTest2Plot, OutTableMPCPlot,OutTableMPC2Plot,PGRef] = runCompareCtrl(strWindType,loadData,figNo1,useFASTForComparison,UIOstr)
 % runComparCtrl compares simulation results for baseline and qLPV MPC
 % controller in closed loop with the Simulink WECS model.
 %
@@ -143,10 +143,11 @@ DT = 0.008;
 r = GenPwrRef;
 
 % Plot and compare closed-loop results
-plotComparison(OutTableTest2,OutTableMPC,q_,r_,p,DT,figStr,figDir,r,timeForPlot,meanOpt,figNo1,UIOstr,OutTableMPC2)
+[OutTableTest2Plot, OutTableMPCPlot,OutTableMPC2Plot,PGRef] = plotComparison(OutTableTest2,OutTableMPC,q_,r_,p,DT,figStr,figDir,r,timeForPlot,meanOpt,figNo1,UIOstr,OutTableMPC2);
 
 
-function plotComparison(OutTableTest2,OutTableMPC,q_,r_,p,DT,figStr,figDir,r,timeForPlot,meanOpt,figNo1,UIOstr,OutTableMPC2)
+function [OutTableTest2Plot, OutTableMPCPlot,OutTableMPC2Plot,PGRef] = ...
+    plotComparison(OutTableTest2,OutTableMPC,q_,r_,p,DT,figStr,figDir,r,timeForPlot,meanOpt,figNo1,UIOstr,OutTableMPC2)
 %plotComparison plots the time series obtained with baseline and qLPVMPC
 
 %% Handle optional inputs
@@ -187,22 +188,22 @@ pVec = deblank(sprintf('%d', p(1)/q_(1)));
 % Improvement tower foreaft acceleration
 varPI = var(OutTableTest2Plot.NcIMUTAxs);
 varqLPV = var(OutTableMPCPlot.NcIMUTAxs);
-titleStdPI = sprintf('%2.1e',varPI);
-titleStdqLPV = sprintf('%2.1e',varqLPV);
-ratioStd = sprintf('%2.1f ', varPI/varqLPV);
+titleStdPI = sprintf('%1.1e',varPI);
+titleStdqLPV = sprintf('%1.1e',varqLPV);
+ratioStd = sprintf('%1.1f ', varPI/varqLPV);
 
 varPI_Pwr = var(abs(PGRef - OutTableTest2Plot.GenPwr));
 varqLPV_Pwr = var(abs(PGRef - OutTableMPCPlot.GenPwr));
-titleStdPI_Pwr = sprintf('%2.1e',varPI_Pwr);
-titleStdqLPV_Pwr = sprintf('%2.1e',varqLPV_Pwr);
-ratioStd_Pwr = sprintf('%2.1f ', varPI_Pwr/varqLPV_Pwr);
+titleStdPI_Pwr = sprintf('%1.1e',varPI_Pwr);
+titleStdqLPV_Pwr = sprintf('%1.1e',varqLPV_Pwr);
+ratioStd_Pwr = sprintf('%1.1f ', varPI_Pwr/varqLPV_Pwr);
 
 if ~isempty(OutTableMPC2)
     varqLPV2 = var(OutTableMPC2Plot.NcIMUTAxs);
-    titleStdqLPV2 = sprintf('%2.1e',varqLPV2);
+    titleStdqLPV2 = sprintf('%1.1e',varqLPV2);
     
     varqLPV2_Pwr = var(abs(PGRef - OutTableMPC2Plot.GenPwr));
-    titleStdqLPV2_Pwr = sprintf('%2.1e',varqLPV2_Pwr);
+    titleStdqLPV2_Pwr = sprintf('%1.1e',varqLPV2_Pwr);
 end
 
 % axis for plot
@@ -261,13 +262,13 @@ ax1(3) = subplot(3,1,3);
 if isempty(OutTableMPC2Plot)
     plot(timeVecPlot, OutTableTest2Plot.GenPwr, timeVecPlot,OutTableMPCPlot.GenPwr,'-.',timeVecPlot,PGRef,'k:');
     legend('P-PI','MPC','P_{g,ref}','Location','SouthEast')
-    title(['|P_{g,ref}  - P_g| [kW]: var_{P-Pi} = ',titleStdPI_Pwr, ', var_{MPC} = ' ,...
+    title(['|P_{g,ref}-P_g| [kW]: var_{P-Pi} = ',titleStdPI_Pwr, ', var_{MPC} = ' ,...
     titleStdqLPV_Pwr,', ratio: ' ,ratioStd_Pwr])
 else
     plot(timeVecPlot, OutTableTest2Plot.GenPwr, timeVecPlot,OutTableMPCPlot.GenPwr,'-.',...
         timeVecPlot,OutTableMPC2Plot.GenPwr,'--',timeVecPlot,PGRef,'k:');
     legend('P-PI','MPC V_{est}','MPC V_{real}','P_{g,ref}','Location','SouthEast')
-     title(['|P_{g,ref}  - P_g| [kW]: var_{P-Pi} = ',titleStdPI_Pwr, ', var_{MPC,est} = ' ,...
+     title(['|P_{g,ref}-P_g| [kW]: var_{P-Pi} = ',titleStdPI_Pwr, ', var_{MPC,est} = ' ,...
     titleStdqLPV_Pwr,', var_{MPC,meas} = ' ,titleStdqLPV2_Pwr])
 end
 
@@ -288,7 +289,6 @@ if ~isempty(OutTableMPC2)
     ha.YLim = [min(OutTableMPCPlot.GenPwr(idxT)), max(OutTableMPCPlot.GenPwr(idxT))];
     %axis(posAxis);
 end
-
 
 
 % Link axes and set poisition
