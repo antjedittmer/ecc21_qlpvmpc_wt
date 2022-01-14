@@ -3,7 +3,7 @@ function plotSignalErrorMeasFilt(OutDataRotorSpeed,DT,ylabStr)
 
 %% Assign default inputs
 if nargin <1 || isempty(OutDataRotorSpeed)
-    load(fullfile('dataOut','OutDataRotorSpeedPI'),'OutDataRotorSpeed');
+    load(fullfile('dataOut','OutDataRotorSpeedMPC'),'OutDataRotorSpeed');
 end
 
 if nargin <2 || isempty(DT)
