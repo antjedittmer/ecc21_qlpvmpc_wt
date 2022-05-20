@@ -19,7 +19,7 @@ if ~nargin || isempty(strWindType)
 end
 
 if nargin < 2 || isempty(loadData) 
-    loadData = 0; %load simulation output data if available;
+    loadData = 1; %load simulation output data if available;
 end
 
 if nargin < 3 || isempty(figNo1) 
@@ -73,7 +73,7 @@ end
 %% Load data from FAST run
 % Load FASTtool simulation data from dataIn folder.
 
-load(outDataSimulationMat ,'OutTable');
+load(outDataSimulationMat ,'OutTable');%
 
 % Assign data from FAST to variables
 idxTime = 1: height(OutTable);
@@ -166,6 +166,7 @@ print(fullfile(figDir,['cmpTimeDomain_BlPitchTqTwr',strFig]), '-dpng');
 
 
 %% Figure for paper
+
 figure(figNo2+1)
 axPlotAll(1) = subplot(6,1,1);
 plot(time,vectAmpWind(idxTime),time,OutTableTest1.Wind(idxTime),'--'); 

@@ -1,9 +1,9 @@
-function runCompareCtrl(strWindType,loadData,figNo1,useFASTForComparison,UIOstr)
+function runCompareCtrl(strWindType,loadData,figNo1,useFASTForComparison)
 % runComparCtrl compares simulation results for baseline and qLPV MPC
 % controller in closed loop with the Simulink WECS model.
 %
 % All inputs are optional:
-% - strWindType: Two testcases: step sweep 4 to 25 ms and normal dist. with
+% - strWindType: Two testcases: step sweep 4 to 25 ms and normal dist. with 
 %   18 m/s mean (Default: Sweep)
 % - loadData: load simulation output data if available instead of running
 %   simulation (Default: 1)
@@ -13,15 +13,15 @@ function runCompareCtrl(strWindType,loadData,figNo1,useFASTForComparison,UIOstr)
 %% Handle optional inputs
 % The default inputs are provided here.
 
-if ~nargin || isempty(strWindType)
-    strWindType = 'NTW18'; % 'Sweep'; %
+if ~nargin || isempty(strWindType) 
+    strWindType = 'Sweep'; %'NTW18';   
 end
 
 if nargin < 2 || isempty(loadData)
     loadData = 1; %load simulation output data if available;
 end
 
-if nargin < 3 || isempty(figNo1)
+if nargin < 3 || isempty(figNo1) 
     figNo1 = 1;
 end
 
@@ -29,9 +29,6 @@ if nargin < 4 || isempty(useFASTForComparison)
     useFASTForComparison = 1;
 end
 
-if nargin < 5 || isempty(UIOstr)
-    UIOstr = '';
-end
 %% Set path to directories
 
 % Set path to inputdata directory
@@ -41,7 +38,7 @@ dataInDir = fullfile( mainDir,'dataIn');
 addpath(dataInDir);
 
 % Set path to figure directory
-figDir = fullfile(mainDir,'figDirUIONoise');
+figDir = fullfile(mainDir,'figDir');
 if ~isfolder(figDir)
     mkdir(figDir)
 end
@@ -54,85 +51,50 @@ end
 
 % Names of simulation output in correct order
 varnames = {'Wind', 'RotSpeed', 'GenPwr', 'GenTq', 'BlPitch1', ...
-    'NcIMUTAxs', 'NcIMUTAys'};
+    'NcIMUTAxs', 'NcIMUTAys'}; 
 
 % Weight values (copied from MATLAB function)
 q_ = [1 10^4 0 10^3 10^3 0 0 0];
-r_ = [1 10^4];
+r_ = [1 10^4]; 
 p = 10^3;
 
 % Switch between Sweep and NTW18
 if strcmp(strWindType,'Sweep') == 1 % sweep from 4 to 25 in steps
     outDataSimulationMat = 'OutDataSweep.mat';
-    strFig = '';
+    strFig = ''; 
 else % wind with average 18 m/s
-    outDataSimulationMat = 'OutDataWind18NTWnoise.mat';
-    strFig = 'NTW18';
+    outDataSimulationMat = 'OutDataWind18NTW.mat';
+    strFig = 'NTW18'; 
 end
 
 %% Load baseline and MPC data or run simulations
 
 %For FASTtool simulation data
-multVar = 1;
-strMultVar  = '';
-if multVar ~= 1
-    strMultVar = strrep(sprintf('_%2.2f',multVar),'.','dot');
-end
-load(outDataSimulationMat ,'OutTable');
-windTest = OutTable.Wind1VelX;
-meanWindTest = mean(windTest); % varWindTest = var(windTest);
-OutTable.Wind1VelX = multVar*(windTest - meanWindTest) + meanWindTest;
+load(outDataSimulationMat ,'OutTable'); 
 
 % Load data closed loop simulation PI
 if useFASTForComparison % from FAST
     OutTableTest2 = OutTable;
 else % from Simulink
     loadBaseline = 1; %always load if available
-    matFileOutTableTest2 = fullfile(dataDirOut,['OutTableTest2',strFig,strMultVar,'.mat']);
+    matFileOutTableTest2 = fullfile(dataDirOut,['OutTableTest2',strFig,'.mat']);
     simMdlname2 = 'test_SimulinkMdl2_Baseline';
-    OutTableTest2 = getSimulationOutputTable(matFileOutTableTest2,loadBaseline,OutTable,simMdlname2);
+    OutTableTest2 = getSimulationOutputTable(matFileOutTableTest2,loadBaseline,OutTable,simMdlname2);    
 end
 
-% Check that SI units are used (can be removed,
+% Check that SI units are used (can be removed, 
 if mean(OutTableTest2.GenTq) <100 % protection against legacy data in kNm
     OutTableTest2.GenTq = OutTableTest2.GenTq*1000; % kNm -> Nm
 end
 
-if mean(OutTableTest2.RotSpeed) >1
+if mean(OutTableTest2.RotSpeed) >1 
     OutTableTest2.RotSpeed = OutTableTest2.RotSpeed *pi/30; %RPM -> rad/s
 end
 
 % Run or load qLPV controller
-if isempty(UIOstr)
-    simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta.slx'; %
-    matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPC',strFig,strMultVar,'.mat']);
-    simMdlnameCompare = '';
-    OutTableMPCCompare = '';
-    
-elseif strcmp(UIOstr,'UIO')
-    simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta_UIO_inside.slx';
-    % simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta_UIO_inside2.slx';
-    % matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPCUIO2',strFig,strMultVar,'.mat']);
-    % simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta_UIO_inside3.slx';
-    matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPCUIO1',strFig,strMultVar,'.mat']);
-    simMdlnameCompare = '';
-    OutTableMPCCompare = '';
-else
-    simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta_UIO_inside.slx'; %
-    matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPCUIO3',strFig,strMultVar,'.mat']);
-
-    simMdlnameCompare = 'test_SimulinkMdl2_qLPVMPCbeta.slx';
-    matFileOutTableTestCompare = fullfile(dataDirOut,['OutTableMPC_N_',strFig,strMultVar,'.mat']);
-  
-end
-
+simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta.slx'; %
+matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPC',strFig,'.mat']);
 [OutTableMPC, tictoc_LPVMPC,GenPwrRef] = getSimulationOutputTable(matFileOutTableTest1,loadData,OutTable,simMdlname,varnames);
-
-if ~isempty(simMdlnameCompare)
-    
-    [OutTableMPCCompare, tictoc_LPVMPC_C,GenPwrRef_C] = getSimulationOutputTable(matFileOutTableTestCompare,loadData,OutTable,simMdlnameCompare,varnames);
-
-end
 
 %% Prepare information for plots and plot data
 
@@ -144,10 +106,10 @@ DT = 0.008;
 r = GenPwrRef;
 
 % Plot and compare closed-loop results
-plotComparison(OutTableTest2,OutTableMPC,OutTableMPCCompare,q_,r_,p,DT,figStr,figDir,r,timeForPlot,meanOpt,figNo1,UIOstr)
+plotComparison(OutTableTest2,OutTableMPC,q_,r_,p,DT,figStr,figDir,r,timeForPlot,meanOpt,figNo1)
 
 
-function plotComparison(OutTableTest2,OutTableMPC,OutTableMPCCompare,q_,r_,p,DT,figStr,figDir,r,timeForPlot,meanOpt,figNo1,UIOstr)
+function plotComparison(OutTableTest2,OutTableMPC,q_,r_,p,DT,figStr,figDir,r,timeForPlot,meanOpt,figNo1)
 %plotComparison plots the time series obtained with baseline and qLPVMPC
 
 %% Handle optional inputs
@@ -167,7 +129,7 @@ OutTableMPCPlot = OutTableMPC(idxPlot,:);
 
 PGRef = r.Data(idxPlot);
 
-%% Title strings
+%% Title strings 
 % Display optimization weights and calculate decrease in tower movement and
 % power variance.
 
@@ -196,10 +158,11 @@ yAxCell = {'wind V [m/s]', 'Twr_{FA} y_t [m/s^2]','GenPwr P_g [kW]'};
 % Plot input wind, tower fore-aft acceleration and generator power
 
 figure(figNo1);
+
 % Plot wind
 ax1(1) = subplot(3,1,1);
 plot(timeVecPlot, OutTableMPCPlot.Wind);
-ylabel(yAxCell{1});
+ylabel(yAxCell{1}); 
 axis tight; grid on;
 title({['Baseline (P-PI) vs. qLPV MPC; ', meanOpt],... %WT mdl: Model2
     ['q_ = [', qVec,'], r = [',rVec,'], p = ',pVec,'* q']})
@@ -227,7 +190,6 @@ set(gcf,'Name', figStr)
 posDefault = [520   378   560   420]; %get(gcf, 'position');
 set(gcf, 'position', [posDefault(1:3),posDefault(4)*1.1]);
 
-save
-print(gcf,[fullfile(figDir,'cmpCtrlSimulink_PI_MPC'),UIOstr,'_',figStr,'_',num2str(timeVecPlot(end))], '-dpng');
-print(gcf,[fullfile(figDir,'cmpCtrlSimulink_PI_MPC'),UIOstr,'_',figStr,'_',num2str(timeVecPlot(end))], '-depsc');
+print(gcf,[fullfile(figDir,'cmpCtrlSimulink_PI_MPC'),'_',figStr,'_',num2str(timeVecPlot(end))], '-dpng');
+print(gcf,[fullfile(figDir,'cmpCtrlSimulink_PI_MPC'),'_',figStr,'_',num2str(timeVecPlot(end))], '-depsc');
 

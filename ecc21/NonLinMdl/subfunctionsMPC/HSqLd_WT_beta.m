@@ -22,15 +22,8 @@ nx = length(xk);
 ni = 2; %;
 
 %p1 = NaN(length(Xk)/nx,1);
-p1 = [rhoP(1);cumsum(Xk(4:nx:end)) + rhoP(1)]; 
-if any(p1<0 | p1 >2)
-    p1 = repmat(rhoP(1), size(p1,1),1); % 
-end
-%repmat(rhoP(1), size(p1,1),1); % %rho1: omega_g: omega_r/Ng [rad/s] % p1 = [xk(1);Xk(1:nx:end)];
+p1 = [rhoP(1);cumsum(Xk(4:nx:end)) + rhoP(1)]; %repmat(rhoP(1), size(p1,1),1); % %rho1: omega_g: omega_r/Ng [rad/s] % p1 = [xk(1);Xk(1:nx:end)];
 p2 = [rhoP(2);cumsum(Udot(2:ni:end)) + rhoP(2)]; %repmat(rhoP(2), size(p1,1),1); %[rhoP(2); cumsum(Udot(2:ni:end)) + rhoP(2)]; %rho2: beta [rad] + betaDot: % p2 = [xk(3);Xk(3:nx:end)]; %rho2: beta [rad]
-if any(p1<0)
-    p2 = repmat(rhoP(2), size(p1,1),1); % 
-end
 p3 = repmat(rhoP(3), size(p1,1),1); %V:  % p3 = [xk(4);Xk(4:nx:end)]; % V
 
 %%%%%%%%% Build L, S matrices Xk = L*xk+S*Uk%%

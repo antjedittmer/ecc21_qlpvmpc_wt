@@ -35,8 +35,7 @@ if exist(matFileOutTableTest1,'file') == 2 && loadData
     end
 else
     WS = 'base';
-    DT = 0.008;
-    assignin(WS,'DT',DT)
+    % assignin(WS,'DT',DT)
     assignin(WS,'OutTable',OutTable)
     open_system(simMdlname1);
     out1 = sim(simMdlname1,'SrcWorkspace',WS);

@@ -4,7 +4,7 @@ loadSimResults = 0;
 
 %% Get Rotorsimulation model name
 % Get the name of the model. Model is saved with a different name in R2018b.
-simulinkModel = [bdroot,'slx'];; %'test_SimulinkMdl1_Baseline.slx'; %'Lebensdauer_mit_Aktuator_und_Lagerschaden.slx'; %'Lebensdauer_mit_Aktuator.slx'; 
+simulinkModel = 'test_SimulinkMdl1_Baseline.slx'; %'Lebensdauer_mit_Aktuator_und_Lagerschaden.slx'; %'Lebensdauer_mit_Aktuator.slx'; 
 versionRelease = version('-release');
 is2018b = str2num(versionRelease(1:4)) >= 2018; %#ok<ST2NM> (2007b compatibility)
 
@@ -177,11 +177,7 @@ for idxSubsys = 1: length(listSubsys)
         open_system(aSimulinkModelPrint); 
     end
     aPic = fullfile(outDirFig,sprintf('%s_Subsys%02d.jgg',simulinkModelPrint,idxSubsys));
-    aPicPng = fullfile(outDirFig,sprintf('%s_Subsys%02d.png',simulinkModelPrint,idxSubsys));
-    aPicEps = fullfile(outDirFig,sprintf('%s_Subsys%02d.eps',simulinkModelPrint,idxSubsys));
-    print(['-s', aSimulinkModelPrint],'-djpeg',aPic);
-    print(['-s', aSimulinkModelPrint],'-dpng',aPicPng);
-    print(['-s', aSimulinkModelPrint],'-dpng',aPicEps);
+    print(['-s', aSimulinkModelPrint],'-djpeg',aPic)
     if ~is2018b
         close_system(aSimulinkModelPrint);
     end

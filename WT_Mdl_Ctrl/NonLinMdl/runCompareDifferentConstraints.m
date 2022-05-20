@@ -174,8 +174,6 @@ for idx = 1:length(axPlotAllMPC)
 end
 
 
-
-
 %% Extract signals from table
 idxT = 60/DT:height(currentOutTablePICell{1});
 matrixPitchPI = cell2mat(cellfun(@(x) x.BlPitch1(idxT)', currentOutTablePICell, 'UniformOutput',false));
