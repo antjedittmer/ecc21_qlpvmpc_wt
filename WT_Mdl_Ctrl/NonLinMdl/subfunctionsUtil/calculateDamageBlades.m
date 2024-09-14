@@ -25,13 +25,13 @@ function damage = calculateDamage(sigt,m)
 % sigt: signal
 % m: slope of the curve blades: 10 (CFK), tower 4 (steel)
 
-tp = sig2ext(sigt);    % turning points
-rf = rainflow2(tp);    % rainflow
-CycleRate = rf(3,:);   % number of cycles
-siga = rf(1,:);        % cycle amplitudes
-
-% calculation of the damage
-damage=sum((CycleRate).*((siga).^m));
+% tp = sig2ext(sigt);    % turning points
+% rf = rainflow2(tp);    % rainflow
+% CycleRate = rf(3,:);   % number of cycles
+% siga = rf(1,:);        % cycle amplitudes
+% 
+% % calculation of the damage
+% damage = sum((CycleRate).*((siga).^m));
 
 % expected time to failure in seconds
 % T=To/damage;
@@ -40,8 +40,20 @@ damage=sum((CycleRate).*((siga).^m));
 %figure, rfhist(rf,30,'mean')
 %figure, rfmatrix(rf,30,30)
 
+% Postprocessing Parameter
+WoehlerExponent                 = m;            % [-]   for steel: 4; for cfk: 10
+N_REF                           = 2e6/(20*8760);% [-]   fraction of 2e6 in 20 years for 1h
+c                       = rainflow(sigt);
+Count                   = c(:,1);
+Range                   = c(:,2);
+damage         = (sum(Range.^WoehlerExponent.*Count)/N_REF).^(1/WoehlerExponent);
+
+
 % expected time to failure in days
 %disp(['Calculated fatigue life in days: ' num2str(T/3600/24)])
+
+
+
 
 
 

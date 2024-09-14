@@ -2,9 +2,8 @@ clc; clear; bdclose;
 
 % Add Paths for simulation
 addpath('WECSMdl');
-addpath('subfunctions');
-addpath('subfunctionsMPC');
-addpath('subfunctionsUtil');
+addpath('subfunctionsMPC'); % addpath('subfunctions');
+addpath('subfunctionsUtil'); 
 % initialize constants to base workspace for CPC simulation
 testCtrl;
 load(fullfile(dataInPath,'OutDataWind18NTM.mat'),'OutData','OutTable');
@@ -40,6 +39,9 @@ end
 onIPC = 1;
 switchIPC = 1;
 initDLRparameter(onIPC,switchIPC);
+options1 = optimset('Display','iter','PlotFcns',@optimplotfval);
+x0Ctrl  = zeros(1,3);
+%[WIPC,KIPC,refOPC,OutTableIPC] = runSimIPC(x0Ctrl,ref,OutList,weightVec);
 
 % IPC optimization with X
 matWeightsIPCfminsearch = fullfile(outDataDir,'X.mat');
@@ -47,13 +49,13 @@ if loadMat && exist(matWeightsIPCfminsearch,'file') == 2
     load(matWeightsIPCfminsearch,'X')
 else
     x0Ctrl  = zeros(1,3);
-    X = fminsearch(@(xCtrl) runSimIPC(xCtrl,ref,OutList,weightVec),x0Ctrl);
+    X = fminsearch(@(xCtrl) runSimIPC(xCtrl,ref,OutList,weightVec),x0Ctrl,options1);
     save(matWeightsIPCfminsearch,'X');
 end
 [WIPC,KIPC,refOPC,OutTableIPC] = runSimIPC(X,ref,OutList,weightVec);
 
 
-x = ga( runSimIPC,nvars,A,b,[],[],lb,ub,nonlcon,IntCon,options)
+%x = ga(@runSimIPC,nvars,A,b,[],[],lb,ub,nonlcon,IntCon,options)
 
 %% Set vector which pitch rate constraints to be test
 maxRateVector = [13,10,8];
@@ -105,8 +107,7 @@ x0Ctrl  = zeros(1,3);
 
 strNewCtrl = 'IPC_{SimAnn}';
 plotTimeseriesCtrlComparison([],OutTableCPC,OutTableIPC,OutTableIPCSimAn,strNewCtrl)
-
-%[K_matrix, strK] = calculateEvalCriteria(aTestCell3,summaryTickLabel);
+[K_matrix, strK] = calculateEvalCriteria(aTestCell3,summaryTickLabel);
 
 
 cellOfTable{1} = OutTableCPC;

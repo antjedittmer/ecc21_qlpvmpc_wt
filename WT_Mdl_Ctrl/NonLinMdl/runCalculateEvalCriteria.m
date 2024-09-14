@@ -57,13 +57,14 @@ cellOfTable{1} = OutTable; %Test1;
 cellOfTable{2} = OutTable; %Test1; %OutTableTestCL;
 
 tmp = load('cellOfTable');
+
 x = load('OutTableTest_rate13_IPC.mat');
 load('OutTableTest_rate08_PI.mat','OutTableTest_rate08_PI');
 load('OutTableTest_rate01_MPC.mat','OutTableTest_rate01_MPC');
 load('OutTableTest_rate13_MPC.mat','OutTableTest_rate13_MPC');
 
-cellOfTable4{1} = cellOfTable{1};
-cellOfTable4{2} = cellOfTable{3};
+cellOfTable4{1} = tmp.cellOfTable{1};
+cellOfTable4{2} = tmp.cellOfTable{3};
 strCell = {'PI-CPC','PI-IPC'}; %,'MPC, 13deg/s','MPC, 1deg/s'};
 calculateEvalCriteria(cellOfTable4,strCell)
 

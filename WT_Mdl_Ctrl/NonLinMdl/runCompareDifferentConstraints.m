@@ -1,4 +1,5 @@
 clc; clear; close all;
+
 initWorkspace;
 load(fullfile(dataInPath,'OutDataWind18NTW.mat'),'OutTable');
 addpath('subfunctionsMPC');
@@ -13,9 +14,11 @@ if ~isfolder(figDir)
 end
 
 %% Set path and parameter names
+writeToExcel = 0;
 % simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta'; 
 outDataSimulationMat = 'OutDataWind18NTW.mat';
 loadData = 1;
+onlyPlotCPCtimeseries = 1;
 
 % Set path to data output directory
 workDir = fileparts(mfilename('fullpath'));
@@ -57,22 +60,23 @@ for idx = 1: nRate
         getSimulationOutputTable(matFileOutTableTest1,loadData,OutTable,simMdlname);
 end
 
-% Plot qLmpc result
-idx3 = maxRateVector == 3;
-idx4 = maxRateVector == 4;
-idx8 = maxRateVector == 8;
+% Plot qLmpc result for different maximu rates
+selR = [3,4,8,13];
+idx3 = maxRateVector == selR(1);
+idx4 = maxRateVector == selR(2);
+idx8 = maxRateVector == selR(3);
+idx13 = maxRateVector == selR(4);
 
 heightT = height(currentOutTableTestCell{idx4});
-tableForPlotMPC{1} = currentOutTableTestCell{idx4};
-tableForPlotMPC{1}.Time = OutTable.Time(1:heightT);
+tableForPlotMPC{1} = currentOutTableTestCell{idx4}; 
+tableForPlotMPC{1}.Time = OutTable.Time(1:heightT); % Time assigned to this table
 tableForPlotMPC{2} = currentOutTableTestCell{idx8};
 tableForPlotMPC{3} = currentOutTableTestCell{end};
 
-testCaseStrMPC =  'qLMPC CPC Rate Constraints [deg/s]';
-testCaseCell = {'standard (8) ','high (13) ', 'low (4) '};
-
 % input plotOutTable:OutTable,OutTableTest1,OutTableTest2,testCaseStr, testCaseCell, figNo2,figDir,strFig)
 figDir = 'figDir';
+testCaseStrMPC =  'qLMPC CPC Rate Constraints [deg/s]';
+testCaseCell = {'standard (8) ','high (13) ', 'low (4) '};
 axPlotAllMPC = plotOutTable(tableForPlotMPC{1},tableForPlotMPC{2},tableForPlotMPC{3},...
    testCaseStrMPC,testCaseCell,[],figDir);
 
@@ -103,6 +107,18 @@ for idx = 1: nRate
         getSimulationOutputTable(matFileOutTableTest1,loadData,OutTable,simMdlname);
 end
 
+if writeToExcel == 1
+    for idxE = 1:3
+        spreadsheet = sprintf('MPC_CPC_%02d',selR(idxE+1));
+        writetable(tableForPlotMPC{idxE},'NREL5MW_NTW18.xlsx','FileType','spreadsheet','Sheet',spreadsheet);
+    end
+    
+    for idxE = 1:3
+        spreadsheet = sprintf('PI_CPC_%02d',selR(idxE+1));
+        writetable(currentOutTablePICell{maxRateVector == selR(idxE+1)},'NREL5MW_NTW18.xlsx','FileType','spreadsheet','Sheet',spreadsheet);
+    end
+end
+
 % Plot qLmpc result
 OutTable4 = currentOutTablePICell{maxRateVector == 4};
 OutTable4.Time = OutTable.Time(1:height(OutTable4));
@@ -130,6 +146,10 @@ saveas(figMPC, fullfile(figDirConstr,['cmpTimeDomain_All5',strFig]), 'eps');
 strFig = 'PINewLim';
 print(gcf, fullfile(figDirConstr,['cmpTimeDomain_All5',strFig]), '-dpng');
 print(gcf, fullfile(figDirConstr,['cmpTimeDomain_All5',strFig]), '-deps');
+
+if onlyPlotCPCtimeseries == 1
+    return
+end
 
 %% MPC limited to MPC2
 tableForPlotMPC1{1} = currentOutTableTestCell{1};

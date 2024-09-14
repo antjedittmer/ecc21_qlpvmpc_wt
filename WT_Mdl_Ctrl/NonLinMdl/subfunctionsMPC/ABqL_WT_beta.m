@@ -63,7 +63,8 @@ dlambdadV = - omegabar*rb/Vbar^2;
 %% Grid points
 Cqb = interp2(lambdaVec,pitchVec,cQ,Lambda_bar,beta_bar); 
 dCqdlambdab = interp2(lambdaVec,pitchVec,Cqdlambda,Lambda_bar,beta_bar);
-dCqdbetab = interp2(lambdaVec,pitchVec,Cqdbeta,Lambda_bar,beta_bar); 
+dCqdbetab = interp2(lambdaVec,pitchVec,Cqdbeta,Lambda_bar,beta_bar);
+
 %% Tr=0.5*pi*rb^3*Cq*v^2
 dTrdomega = 0.5*rho*pi*rb^3*(dCqdlambdab*dlambdadomega)*Vbar^2;% br = dTr/domega
 dTrdbeta = 0.5*rho*pi*rb^3*dCqdbetab*Vbar^2;% Krb = dTr/dbeta

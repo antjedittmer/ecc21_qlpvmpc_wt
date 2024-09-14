@@ -1,4 +1,4 @@
-function axPlotAll = plotOutTable(OutTable,OutTableTest1,OutTableTest2,testCaseStr, testCaseCell, figNo2,figDir,strFig)
+function axPlotAll = plotOutTable(OutTable,OutTableTest1,OutTableTest2,testCaseStr, testCaseCell,figNo2,figDir,strFig)
 
 
 %% Set parameters and missing inputs

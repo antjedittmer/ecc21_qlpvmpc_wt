@@ -42,6 +42,11 @@ DT = 0.008; % one sample time
 load(fullfile(dataInPath,'OutDataSweep.mat'),'OutTable');
 %load(fullfile(dataInPath,'OutDataWind18NTW.mat'),'OutTable');
 
+%% Create bus objects used in all Simulink models
+Mdl_TuDelftOLFunction(0);
+MdLCtrl_BaselineFunction(0);
+
+
 %% Clean-up
 clear RESTORE*
 %clear data*
