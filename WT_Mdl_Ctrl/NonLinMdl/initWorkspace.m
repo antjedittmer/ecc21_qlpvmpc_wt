@@ -7,7 +7,7 @@ Simulink.data.dictionary.closeAll;
 %% Set paths
 dataIn = 'dataIn'; % external data from FAST linearization, FASTtool
 dataOut = 'dataOut'; % data from simulation runs, saved to not run all simulation again
-dirSub = {'subfunctionsUtil', 'WECSCtrl', 'WECSMDl','WECSAct'}; 
+dirSub = {'subfunctionsUtil', 'subfunctionsMPC','WECSCtrl', 'WECSMDl','WECSAct'}; 
 
 % Get relative paths with respect to testCrl.m file
 dirFileName = mfilename('fullpath');
@@ -45,6 +45,10 @@ load(fullfile(dataInPath,'OutDataSweep.mat'),'OutTable');
 %% Create bus objects used in all Simulink models
 Mdl_TuDelftOLFunction(0);
 MdLCtrl_BaselineFunction(0);
+
+%% Initialize path to FASTFile: FAST_InputFileName and OutList
+testqLPV; %
+TMax = 660; %Can be overwritten later on
 
 
 %% Clean-up
