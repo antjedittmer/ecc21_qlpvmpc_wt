@@ -25,7 +25,9 @@
 %    0 0 0 0 5.025497444E+6];
 
 
-FAST_InputFileName = 'D:\ditt_aj\Projekte\FASTTool\subfunctions\inputfiles\FAST.fst';
+% FAST_InputFileName = 'D:\ditt_aj\Projekte\FASTTool\subfunctions\inputfiles\FAST.fst';
+% wind step from 4 to 25
+FAST_InputFileName = 'D:\ditt_aj\Projekte\FASTLinTUDelft\gitWT\Wind-Turbine\WT_Mdl_Ctrl\NonLinMdl\inputfiles\FAST.fst';
 
 OutList = cell(40, 1);
 OutList{1,1} = 'Time';

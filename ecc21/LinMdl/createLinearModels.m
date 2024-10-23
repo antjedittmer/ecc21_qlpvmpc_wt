@@ -106,6 +106,7 @@ for index =  speedVec
     Lambda_bar = Lin.RSpeed(index)*wecs.rb/Vbar;
     omegabar = Lin.RSpeed(index);
     beta_bar = Lin.Pitch(index); % rad
+    k_betaDegToRad = 180/pi;
     
     %% Grid points
     Cqb = interp2(lambda,pitch,Cq,Lambda_bar,beta_bar,'cubic');
