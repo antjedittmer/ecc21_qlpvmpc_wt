@@ -190,6 +190,7 @@ for index =  speedVec
     dlambdadomega = wecs.Rr/Vbar;
     dlambdadV = - omegabar*wecs.Rr/Vbar^2; %Vbar = Ve = V - ydot
     dlambdadydotfa =  - dlambdadV; %s/m   ydotfa m/s
+    % dlambdaddelta =  - dlambdadV; %s/m   ydotfa m/s
 
     %% Ft = 0.5*rho*pi*rb^2*Ct*v^2
     kCT = 0.5*rho*pi*wecs.Rr^2; % constant for CT: 0.5*rho*A
