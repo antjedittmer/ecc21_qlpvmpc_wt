@@ -74,11 +74,11 @@ wecs.N = 3;% Number of blades
 wecs.Ng = 97; % Gearbox ratio
 wecs.mh = 56780; % kg;  Hub mass
 wecs.mbl = 17740; %kg;  Mass of each blade
-wecs.mb = 0.25*17740; %kg;  Modal mass of each blade
+wecs.mb = 0.25*wecs.mbl; %kg;  Modal mass of each blade
 wecs.mn = 240000; % kg;  Nacellle mass
 wecs.mtower = 347460; % kg; Mass of the tower and nacelle
 wecs.mt = 0.25*wecs.mtower + wecs.mn + wecs.mh + wecs.N*wecs.mbl;
-wecs.mtb = wecs.mt + wecs.N*wecs.mb; %tower modal mass + modal mass of blades
+wecs.mtb = wecs.mt + wecs.N * wecs.mb; %tower modal mass + modal mass of blades
 
 wecs.H =  87.6;
 
@@ -103,8 +103,8 @@ wecs.Bb = 2 * wecs.zetab* wecs.wnb *wecs.mb; %Damping of the blade
 wecs.Ks = 867637000; %Nm/rad Stiffness of the transmission
 % 2*zeta*wn = B
 wecs.Bs = 6215000;  %Nm/rad/sec %Damping of the transmission
-wecs.Rr = 63; % m aerodynamic center on blade radius
-wecs.rb = wecs.Rr *0.75; % m aerodynamic center on blade radius
+wecs.Rr = 63; % m length rotor radius
+wecs.rb = wecs.Rr; % m aerodynamic center on blade radius
 wecs.etag = 0.944; %Drivetrain.Generator.Efficiency: 0.944;
 
 %% Lagrange's Model matrices
@@ -131,7 +131,7 @@ K = [wecs.Kt 0 0 0;
 
 Q = [1 0 0 0;
     wecs.rb 0 0 0;
-    0 1 0 0;
+    0 1 0 -wecs.Ng;
     0 0 1 0;
     0 0 0  -wecs.Ng];
 

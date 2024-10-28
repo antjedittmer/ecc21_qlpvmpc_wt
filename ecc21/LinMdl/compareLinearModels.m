@@ -222,8 +222,8 @@ for index =  speedVec
     A32 = ksw/wecs.mt * dTrdydotfa;
 
     A = [A11  A12                  0                 0                0;
-        A21 (A22 - wecs.Bt/wecs.mtb) 0                -wecs.Kt/wecs.mtb  0;
-        A31  A32                  -wecs.Bt/wecs.mtb  0               -wecs.Kt/wecs.mtb ;
+        A21 (A22 - wecs.Bt/wecs.mt) 0                -wecs.Kt/wecs.mt  0;
+        A31  A32                  -wecs.Bt/wecs.mt  0               -wecs.Kt/wecs.mt;
         [0 1 0 0 0; 0 0 1 0 0]];
 
     % Inputs: Torque [Nm], pitch angle beta [rad], wind speed V [m/s]
@@ -234,7 +234,7 @@ for index =  speedVec
     B22 = 1/wecs.mtb * dFtdbeta;
     B23 = 1/wecs.mtb * dFtdV;
 
-    B31 = ksw/wecs.mt * wecs.Ng;
+    B31 = - ksw/wecs.mt * wecs.Ng;
     B32 = ksw/wecs.mt * dTrdbeta;
     B33 = ksw/wecs.mt * dTrdV;
 
@@ -302,8 +302,8 @@ for index =  speedVec
     A7DoF = A9DoF(1:9,1:9);
 
     B9DoF = [zeros(4,3);... % states 1 - 4: y_FA,delta,x_sw, Theta_s
-        zeros(1,2),B1(5,1)*dFtdV;... % state 5: xdot_FA
-        zeros(1,2),B1(6,1)*dFtdV;...% state 6: deltadot
+        zeros(1,2),B1(5,1)*dFtdV;... % state 5: ydot_FA
+        zeros(1,2),B1(6,1)*dFtdV;...% state 6: xdot_FA
         B31,0,B1(7,2)*ksw *dTrdV;...% state 7: xdot_SW
         B11,0,B1(8,3)*dTrdV;... state 8: omega_r
         zeros(1,3);... state 9: omega_gr
@@ -438,33 +438,33 @@ for index =  speedVec
         print(figFolderStrEps, '-depsc');
 
         %%  code for debugging
-        % idxOut = 3; idxIn = 1; test5 = sys5DoF(idxOut,idxIn);
-        % test9 = sysLagrange(idxOut,idxIn);
-        % testFAST = model(idxOut,idxIn);
-        %
-        % idxStates = [1,2,5,[1,2,5]+15];
-        %
-        % modelRed = ss(testFAST.A(idxStates,idxStates), testFAST.B(idxStates,:), testFAST.c(:,idxStates), testFAST.d);
-        %
-        % omegaVec = linspace(0.01,10);
-        %
-        % kG = 20;
-        %
-        % yTestFAST = bode(testFAST,omegaVec);
-        % yTestLogFAST = kG*log10(squeeze(yTestFAST));
-        %
-        % yTestst5 = bode(test5,omegaVec);
-        % yTestLogst5 = kG*log10(squeeze(yTestst5));
-        %
-        % yTestst9 = bode(test9,omegaVec);
-        % yTestLogst9 = kG*log10(squeeze(yTestst9));
-        %
-        % yTestFASTRed = bode(modelRed,omegaVec);
-        % yTestLogFASTRed = kG*log10(squeeze(yTestFASTRed));
-        %
-        % figure; semilogx(omegaVec,yTestLogFAST,omegaVec,yTestLogst9,'b--',...
-        %     omegaVec,yTestLogst5,'r--',omegaVec,yTestLogFASTRed,'k--' )
-        % figure; bodemag(testFAST,test9,'b--',test5,'r-.',modelRed,'k--',omegaVec)
+%         idxOut = 3; idxIn = 2; test5 = sys5DoF(idxOut,idxIn);
+%         test9 = sysLagrange(idxOut,idxIn);
+%         testFAST = model(idxOut,idxIn);
+%         
+%         idxStates = [1,2,5,[1,2,5]+15];
+%         
+%         modelRed = ss(testFAST.A(idxStates,idxStates), testFAST.B(idxStates,:), testFAST.c(:,idxStates), testFAST.d);
+%         
+%         omegaVec = linspace(0.01,10);
+%         
+%         kG = 20;
+%         
+%         yTestFAST = bode(testFAST,omegaVec);
+%         yTestLogFAST = kG*log10(squeeze(yTestFAST));
+%         
+%         yTestst5 = bode(test5,omegaVec);
+%         yTestLogst5 = kG*log10(squeeze(yTestst5));
+%         
+%         yTestst9 = bode(test9,omegaVec);
+%         yTestLogst9 = kG*log10(squeeze(yTestst9));
+%         
+%         yTestFASTRed = bode(modelRed,omegaVec);
+%         yTestLogFASTRed = kG*log10(squeeze(yTestFASTRed));
+%         
+%         figure; semilogx(omegaVec,yTestLogFAST,omegaVec,yTestLogst9,'b--',...
+%             omegaVec,yTestLogst5,'r--',omegaVec,yTestLogFASTRed,'k--' )
+%         figure; bodemag(testFAST,test9,'b--',test5,'r-.',modelRed,'k--',omegaVec)
 
         %         {'ED Variable speed generator DOF (internal DOF index = DOF_GeAz), rad'
         %         'ED 1st tower fore-aft bending mode DOF (internal DOF index = DOF_TFA1), m'
