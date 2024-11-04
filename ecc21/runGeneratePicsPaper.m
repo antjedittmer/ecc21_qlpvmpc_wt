@@ -18,14 +18,18 @@ compareLinearModels;
 % mat-files in dataIn folder. 
 
 %Load data if available from previous simulation.
-loadData = 0;
+loadData = 1;
 
 % Run Simulink models in closed loop w baseline controller( Torque controller
 % k-omega-squared, Pitch controller: Gainscheduled Pi)
 figNo = 1;
-runCompareModels('Sweep',loadData,figNo);
+normStructSweep = runCompareModels('Sweep',loadData,figNo);
 figNo = 4;
-runCompareModels('NTW18',loadData,figNo);
+normStructNTM18 = runCompareModels(18,loadData,figNo);
+
+
+
+
 
 % Run models in closed loop with qLPV MPC
 figNo1 = 7;

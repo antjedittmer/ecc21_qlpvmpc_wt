@@ -56,7 +56,7 @@ end
 
 %% Define parameters
 % 5MW FAST WIND TURBINE (NREL/TP-500-38060) Definition of a 5-MW Reference
-% Wind Turbine for Offshore System Development
+% Wind Tudeltaine for Offshore System Development
 % Cut-In, Rated, Cut-Out Wind Speed 3 m/s, 11.4 m/s, 25 m/s
 % Cut-In, Rated Rotor Speed 6.9 rpm, 12.1 rpm
 % Tower equivalent mass, MT 438,000 kg
@@ -74,13 +74,13 @@ wecs.N = 3;% Number of blades
 wecs.Ng = 97; % Gearbox ratio
 wecs.mh = 56780; % kg;  Hub mass
 wecs.mbl = 17740; %kg;  Mass of each blade
-wecs.mb = 0.25*wecs.mbl; %kg;  Modal mass of each blade
+wecs.mb = 1/3 * wecs.mbl; %kg;  Modal mass of each blade
 wecs.mn = 240000; % kg;  Nacellle mass
 wecs.mtower = 347460; % kg; Mass of the tower and nacelle
 wecs.mt = 0.25*wecs.mtower + wecs.mn + wecs.mh + wecs.N*wecs.mbl;
 wecs.mtb = wecs.mt + wecs.N * wecs.mb; %tower modal mass + modal mass of blades
 
-wecs.H =  87.6;
+wecs.H =  90; % 87.6;
 
 wecs.Jg = 534.116; %  kg*m^2; Inertia of the generator
 wecs.Jr = 115926 + 3 * 11.776e6; % kg*m^2; Inertia of the rotor (Hub inertia + 3 blades)
@@ -106,6 +106,7 @@ wecs.Bs = 6215000;  %Nm/rad/sec %Damping of the transmission
 wecs.Rr = 63; % m length rotor radius
 wecs.rb = wecs.Rr; % m aerodynamic center on blade radius
 wecs.etag = 0.944; %Drivetrain.Generator.Efficiency: 0.944;
+
 
 %% Lagrange's Model matrices
 % Force input w = [Ft_fa,Ft_sw,Tr,Tg]; Ft_fa = Ft, Ft_sw = 3/2*Tg

@@ -28,7 +28,7 @@ end
 figNo2 = figNo1 + 1;
 
 if nargin < 4 || isempty(yAxCell) % Axes labels for figure
-    yAxCell = {'wind V (m/s)', 'GenTq T_g (kNm)', 'Pitch \beta (°)', 'RotSpd \omega_r (rpm)',...
+    yAxCell = {'Wind V (m/s)', 'GenTq T_g (kNm)', 'Pitch \beta (°)', 'RotSpd \omega_r (rpm)',...
     'GenPwr P_g (MW)','Twr_{FA} y_t (m/s^2)', 'Twr_{SW} x_t (m/s^2)'};
 end
 
@@ -281,7 +281,7 @@ linkaxes(axPlotAll,'x');
 
 set(gcf,'Name',['cmpTimeDomain_All',strFig])
 posDefault = get(0,'DefaultFigurePosition');
-set(gcf, 'position', [posDefault(1:3),posDefault(4)*1.65]);
+set(gcf, 'position', [posDefault(1),posDefault(2) - posDefault(4)*0.7,posDefault(3),posDefault(4)*1.7]);
 set(groot,'defaultLineLineWidth',defaultLineWidth);
 
 print(fullfile(figDir,['cmpTimeDomain_All',strFig]), '-dpng');

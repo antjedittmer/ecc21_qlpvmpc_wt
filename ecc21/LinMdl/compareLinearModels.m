@@ -383,7 +383,7 @@ for index =  speedVec
         Atest = model.A(vecStates,vecStates); %#ok<NASGU>
         sstest = ss(model.A(vecStates,vecStates),model.B(vecStates,:),model.C(:,vecStates),model.D); %#ok<NASGU>
 
-        cl = colormap('lines');
+        cl = lines;
         legCell = [ {'\color{black}Mdl1: Rot+Twr '};
             {['\color[rgb]{',num2str(cl(1,:)),'}Mdl2:',Mdl2Str]};
             modelsL];
