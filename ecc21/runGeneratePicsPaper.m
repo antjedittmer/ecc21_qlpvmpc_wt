@@ -18,15 +18,65 @@ compareLinearModels;
 % mat-files in dataIn folder. 
 
 %Load data if available from previous simulation.
-loadData = 1;
+loadData = 0;
 
 % Run Simulink models in closed loop w baseline controller( Torque controller
 % k-omega-squared, Pitch controller: Gainscheduled Pi)
 figNo = 1;
-normStructSweep = runCompareModels('Sweep',loadData,figNo);
+normStruct.Sweep = runCompareModels('Sweep',loadData,figNo);
 figNo = 4;
-normStructNTM18 = runCompareModels(18,loadData,figNo);
+normStruct.NTM18 = runCompareModels(18,loadData,figNo);
 
+
+%% Read out the quantative information
+
+fieldsGapAll = fieldnames(normStruct); %get the field names
+sortFieldsGap = fieldsGapAll; % Mdl1 (5 states) should be listed before Mdl2 (9 states)
+
+sortFieldsSignals =  [{'GenTq'}    {'BlPitch1'}  {'RotSpeed'}    {'GenPwr'}   {'TwrAccFA'}    {'TwrAccSW'}];
+windTickLabel = sortFieldsGap;
+
+
+%% Set informations for both plots
+
+lc = lines; %line colors
+lc1 = [0*[0.5, 0.5,0.5];lc];
+len = 6;
+vec = 1:len;
+idxVec = 1:len; % this is the number of input/output combination
+
+Mdl2Str = ' Rot,Twr + Bld';
+
+
+%% Set values for first, norm plot
+legCell = ['                        Norm: \color{black}Mdl1: Rot+Twr ',...
+    '\color[rgb]{',num2str(lc(1,:)),'}Mdl2:',Mdl2Str];
+
+figure(1);
+for idx = 1:6
+    subplot(3,2,idx)
+    aFieldname = sortFieldsSignals{idx};
+    b = bar([normStruct.Sweep.(aFieldname); normStruct.NTM18.(aFieldname)]);
+
+    for k = 1:length(b), b(k).FaceColor = lc1(k,:); end
+    set(gca,'XTickLabel',sortFieldsGap);
+    %set(gca,'YLim',[0,aMax]);
+
+    if idx == 1
+        title( legCell)
+    end
+
+
+    ylabel(aFieldname);
+
+
+end
+
+figStr = 'Norm';
+figFolderStr = fullfile(figFolder,figStr);
+figFolderStrEps = figFolderStr;
+print(figFolderStr, '-dpng');
+print(figFolderStrEps, '-depsc');
 
 
 

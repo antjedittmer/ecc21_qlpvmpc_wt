@@ -104,7 +104,7 @@ wecs.Ks = 867637000; %Nm/rad Stiffness of the transmission
 % 2*zeta*wn = B
 wecs.Bs = 6215000;  %Nm/rad/sec %Damping of the transmission
 wecs.Rr = 63; % m length rotor radius
-wecs.rb = wecs.Rr; % m aerodynamic center on blade radius
+wecs.rb = wecs.Rr*0.75; % m aerodynamic center on blade radius
 wecs.etag = 0.944; %Drivetrain.Generator.Efficiency: 0.944;
 
 

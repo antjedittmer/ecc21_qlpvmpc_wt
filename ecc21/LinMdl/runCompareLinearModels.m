@@ -11,11 +11,11 @@ noOut = 3;
 figFolder = 'figLinDiss';
 
 %compareLinearModels(speedVec,figFolder, useActuatorStates,figNoAdd,createBodePlots,plotVisible)
-[sysOut,gapCell] = compareLinearModels(speedVec,figFolder,useActuatorStates,figNoAdd,createBodePlots,plotVisible,noOut);
+[sysOut,gapCell] = compareLinearModels2(speedVec,figFolder,useActuatorStates,figNoAdd,createBodePlots,plotVisible,noOut);
 
 %% Read out the quantative information
 
-fieldsGapAll = fieldnames(gapCell); %get the field names
+fieldsGapAll = fieldnames(gapCell); % get the field names
 fieldsGap = fieldsGapAll(contains(fieldsGapAll,'n')); % only use Vinnicombe/nu-gap and norm for now
 sortFieldsGap = sort(fieldsGap); % Mdl1 (5 states) should be listed before Mdl2 (9 states)
 
@@ -125,6 +125,43 @@ figFolderStr = fullfile(figFolder,figStr);
 figFolderStrEps = figFolderStr;
 print(figFolderStr, '-dpng');
 print(figFolderStrEps, '-depsc');
+
+
+%%
+aTest = reshape(1:9,3,3);
+aTest = aTest';
+aTestVec = aTest(:);
+
+aPerm5DOF = permute(gapCell.mag5DoF{1},[2 1 3]); % abs(permute(gapCell.mag5DoF{1},[2 1 3]) - permute(gapCell.magFAST{1},[2 1 3]));
+aPerm9DOF = permute(gapCell.mag9DoF{1},[2 1 3]); %abs(permute(gapCell.mag9DoF{1},[2 1 3]) - permute(gapCell.magFAST{1},[2 1 3]));
+
+figure;
+
+for idx = 1:9
+
+    idxOut = mod((idx-1),3) + 1;
+    idxIn = floor((idx-1)/3) + 1;
+
+    mag_9DOF = 20*log10(squeeze(aPerm9DOF(idxOut,idxIn,:)));    % Squeeze to get a 1D array
+    mag_5DOF = 20*log10(squeeze(aPerm5DOF(idxOut,idxIn,:)));
+    % mag_FAST = 20*log10(squeeze(magFAST(idxOut,idxIn,:)));
+
+    subplot(3,3,idx)
+    semilogx(gapCell.freq9DoF{1},mag_9DOF,'-',...
+        gapCell.freq9DoF{1},mag_5DOF,'k--');
+    axis tight, grid on;
+
+    if mod(idx-1,3)== 0
+        anOutputStr = sysOutputname{(idx-1)/3 + 1};
+        ylabel(anOutputStr);
+    end
+
+    if idx >= 7
+        anInputStr = sysInputname{idx-6};
+        xlabel(anInputStr);
+    end
+
+end
 
 
 %  nugap9DoF

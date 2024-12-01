@@ -6,6 +6,8 @@ K5 = [K,-K(:,4)];
 DDName = 'DD_Mdl1.sldd';
 DDDataNames = {'beta';'Ce';'Cq';'Ct';'K5'; 'lambda'; 'M';'Q'; 'rho';'wecs'};
 
+Q(3,4) = 3/(2*wecs.H) * -97;
+
 myDictionaryObj = Simulink.data.dictionary.open(DDName);
 dDataSectObj = getSection(myDictionaryObj,'Design Data');
 
