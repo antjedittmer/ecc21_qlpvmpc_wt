@@ -15,7 +15,7 @@ function normStruct = runCompareModels(strWindType,loadData,figNo1,yAxCell)
 
 % Two testcases: step sweep 4 to 25 ms and normal dist. 18 m/s mean
 if ~nargin || isempty(strWindType) 
-   strWindType = 'Sweep'; %4,11,18,'Sweep'
+   strWindType = 'Sweep'; %4,11,18,
 end
 
 if nargin < 2 || isempty(loadData) 
@@ -110,7 +110,7 @@ time = time(idxTime);
 
 % Change line width
 defaultLineWidth = get(groot,'defaultLineLineWidth');
-set(groot,'defaultLineLineWidth',0.5);
+set(groot,'defaultLineLineWidth',0.75);
 cmpOnly1 = 2;
 
 
@@ -236,13 +236,15 @@ end
 %% Figure for paper
 figure(figNo2+1)
 nAx = 7;
-axPlotAll(1) = subplot(nAx,1,1);
-plot(time,vectAmpWind(idxTime),time,OutTableTest1.Wind(idxTime),'--'); 
+t = tiledlayout(nAx,1,'TileSpacing','Compact');
+
+axPlotAll(1) = nexttile; %subplot(nAx,1,1);
+plot(time,vectAmpWind(idxTime),time,OutTableTest1.Wind(idxTime),'k--'); 
 axis tight; grid on;
 ylabel(yAxCell{1}); %'wind [m/s]')
 title(titleStr);
   
-axPlotAll(2) = subplot(nAx,1,2);
+axPlotAll(2) = nexttile; %axPlotAll(2) = subplot(nAx,1,2);
 plot(time,OutTableTest2.GenTq(idxTime)/10^3,time,OutTable.GenTq(idxTime),time,OutTableTest1.GenTq(idxTime)/10^3,'k--');
 axis tight;
 posAxis = axis;
@@ -252,41 +254,42 @@ grid on; % axis tight;
 %grid on;
 ylabel(yAxCell{2}); %'GenTq T_g [Nm]') 
 
-axPlotAll(3) = subplot(nAx,1,3);
+axPlotAll(3) = nexttile; %axPlotAll(3) = subplot(nAx,1,3);
 plot(time,OutTableTest2.BlPitch1(idxTime),time,OutTable.BlPitch1(idxTime),time,OutTableTest1.BlPitch1(idxTime),'k--'); 
 axis tight; grid on;
 ylabel(yAxCell{3}); %'Pitch \beta [°]')
 
-axPlotAll(4) = subplot(nAx,1,4);
+axPlotAll(4) = nexttile; %axPlotAll(4) = subplot(nAx,1,4);
 plot(time,OutTableTest2.RotSpeed(idxTime), time,OutTable.RotSpeed(idxTime),time,OutTableTest1.RotSpeed(idxTime),'k--');
 axis tight; grid on;
 ylabel(yAxCell{4}); %'RotSpd \omega_r [rpm]')
 
-
-axPlotAll(5) = subplot(nAx,1,5);
+axPlotAll(5) = nexttile; %axPlotAll(5) = subplot(nAx,1,5);
 plot(time,OutTableTest2.NcIMUTAxs(idxTime),time,OutTable.NcIMUTAxs(idxTime),time,OutTableTest1.NcIMUTAxs(idxTime),'k--');
 axis tight; grid on;
 ylabel(yAxCell{6}); %'Twr_{FA} y_t[m/s^2]')
 
-axPlotAll(6) = subplot(nAx,1,6);
+axPlotAll(6) = nexttile; %axPlotAll(6) = subplot(nAx,1,6);
 plot(time,OutTableTest2.NcIMUTAys(idxTime),time,OutTable.NcIMUTAys(idxTime),time,OutTableTest1.NcIMUTAys(idxTime),'k--');
 axis tight; grid on;
 ylabel(yAxCell{7}); %'Twr_{SW} x_t[m/s^2]')
 set(axPlotAll(6),'YLim', get(axPlotAll(5) ,'YLim'))
 
-
-axPlotAll(7) = subplot(nAx,1,7);
+axPlotAll(7) = nexttile; %axPlotAll(7) = subplot(nAx,1,7);
 plot(time,OutTableTest2.GenPwr(idxTime)/1000,time,OutTable.GenPwr(idxTime)/1000,time,OutTableTest1.GenPwr(idxTime)/1000,'k--');
 axis tight; grid on;
 ylabel(yAxCell{5}); %'GenPwr P_g [MW]')
-xlabel('time [s]')
+xlabel('Time (s)')
 linkaxes(axPlotAll,'x');
-
 
 set(gcf,'Name',['cmpTimeDomain_All',strFig])
 posDefault = get(0,'DefaultFigurePosition');
-set(gcf, 'position', [posDefault(1),posDefault(2) - posDefault(4)*0.7,posDefault(3),posDefault(4)*1.7]);
-set(groot,'defaultLineLineWidth',defaultLineWidth);
+set(gcf, 'position', [posDefault(1),posDefault(2) - posDefault(4)*0.7,posDefault(3),posDefault(4)*2.1]);
+
+set(findall(gcf,'-property','FontSize'),'FontSize',11.5)
+set(findall(gcf,'-property','LineWidth'),'LineWidth',0.75)
+
+%set(groot,'defaultLineLineWidth',defaultLineWidth);
 
 print(fullfile(figDir,['cmpTimeDomain_All',strFig]), '-dpng');
 print(fullfile(figDir,['cmpTimeDomain_All',strFig]), '-depsc');

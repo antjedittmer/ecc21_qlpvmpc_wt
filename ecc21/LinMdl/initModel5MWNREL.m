@@ -1,4 +1,4 @@
-function [wecs, M, Ce, K, Q, L, rho, tau, kappa, lambda, pitch, Cq, Ct ] = initModel5MWNREL(plotOn, Rotor_Lamda, Rotor_Pitch, Rotor_cQ, Rotor_cT, figDir,titleOn)
+function [wecs, M, Ce, K, Q, L, rho, tau, kappa, lambda, pitch, Cq, Ct , Q3] = initModel5MWNREL(plotOn, Rotor_Lamda, Rotor_Pitch, Rotor_cQ, Rotor_cT, figDir,titleOn)
 % initModel5MWNREL initializes parameters of NREL 5 MW turbine.
 % Aerodynamic force and thrust LUT can be plotted. 
 % All inputs are optional.
@@ -104,7 +104,7 @@ wecs.Ks = 867637000; %Nm/rad Stiffness of the transmission
 % 2*zeta*wn = B
 wecs.Bs = 6215000;  %Nm/rad/sec %Damping of the transmission
 wecs.Rr = 63; % m length rotor radius
-wecs.rb = wecs.Rr*0.75; % m aerodynamic center on blade radius
+wecs.rb = wecs.Rr*0.93; % m aerodynamic center on blade radius
 wecs.etag = 0.944; %Drivetrain.Generator.Efficiency: 0.944;
 
 
@@ -135,6 +135,12 @@ Q = [1 0 0 0;
     0 1 0 -wecs.Ng;
     0 0 1 0;
     0 0 0  -wecs.Ng];
+
+Q3 = [1 0 0;
+    wecs.rb 0 0;
+    0 2/(3*wecs.H) -2*wecs.Ng/(3*wecs.H);
+    0 1 0;
+    0 0 -wecs.Ng];
 
 L = [eye(4), [0;0;0;-1]];
 

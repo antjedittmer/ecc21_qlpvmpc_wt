@@ -27,13 +27,17 @@ normStruct.Sweep = runCompareModels('Sweep',loadData,figNo);
 figNo = 4;
 normStruct.NTM18 = runCompareModels(18,loadData,figNo);
 
-
 %% Read out the quantative information
 
 fieldsGapAll = fieldnames(normStruct); %get the field names
 sortFieldsGap = fieldsGapAll; % Mdl1 (5 states) should be listed before Mdl2 (9 states)
 
-sortFieldsSignals =  [{'GenTq'}    {'BlPitch1'}  {'RotSpeed'}    {'GenPwr'}   {'TwrAccFA'}    {'TwrAccSW'}];
+sortFieldsSignals =  [{'GenTq'}  {'BlPitch1'}  {'RotSpeed'}    {'GenPwr'}   {'TwrAccFA'}    {'TwrAccSW'}];
+
+% sysOutputname =[{'RotSpd \omega_r (-)'};{'TwrAcc_{fa} (-)'}; {'TwrAcc_{sw} (-)'}];
+% sysInputname =[{'GenTq T_g (-)'}; {'BlPitch \beta_0 (-)'};{'Wind V_{\infty} (-)'}];
+
+% NcIMUTAxs
 windTickLabel = sortFieldsGap;
 
 
@@ -52,11 +56,18 @@ Mdl2Str = ' Rot,Twr + Bld';
 legCell = ['                        Norm: \color{black}Mdl1: Rot+Twr ',...
     '\color[rgb]{',num2str(lc(1,:)),'}Mdl2:',Mdl2Str];
 
-figure(1);
+figure(100);
 for idx = 1:6
     subplot(3,2,idx)
     aFieldname = sortFieldsSignals{idx};
-    b = bar([normStruct.Sweep.(aFieldname); normStruct.NTM18.(aFieldname)]);
+    aFieldn = aFieldname;
+    if strcmp(aFieldn,'TwrAccFA')
+        aFieldn = 'NcIMUTAxs';
+    elseif strcmp(aFieldn,'TwrAccSW')
+         aFieldn = 'NcIMUTAys';
+        end
+
+    b = bar([normStruct.Sweep.(aFieldn); normStruct.NTM18.(aFieldn)]);
 
     for k = 1:length(b), b(k).FaceColor = lc1(k,:); end
     set(gca,'XTickLabel',sortFieldsGap);
@@ -67,18 +78,17 @@ for idx = 1:6
     end
 
 
-    ylabel(aFieldname);
+    ylabel([aFieldname,' (-)']);
 
 
 end
 
-figStr = 'Norm';
+figFolder = 'figDir';
+figStr = 'NormTime';
 figFolderStr = fullfile(figFolder,figStr);
 figFolderStrEps = figFolderStr;
 print(figFolderStr, '-dpng');
 print(figFolderStrEps, '-depsc');
-
-
 
 
 % Run models in closed loop with qLPV MPC
