@@ -1,4 +1,4 @@
-function [wecs, M, Ce, K, Q, L, rho, tau, kappa, lambda, pitch, Cq, Ct , Q3] = initModel5MWNREL(plotOn, Rotor_Lamda, Rotor_Pitch, Rotor_cQ, Rotor_cT, figDir,titleOn)
+function [wecs, M, Ce, K, Q, L, rho, tau, kappa, lambda, pitch, Cq, Ct , Q3] = initModel5MWNREL(plotOn, Rotor_Lamda, Rotor_Pitch, Rotor_cQ, Rotor_cT, figDir,titleOn,multRb)
 % initModel5MWNREL initializes parameters of NREL 5 MW turbine.
 % Aerodynamic force and thrust LUT can be plotted. 
 % All inputs are optional.
@@ -42,17 +42,26 @@ if nargin < 5 || isempty(Rotor_Lamda) || isempty(Rotor_Pitch) || ....
     'Rotor_Lamda','Rotor_Pitch','Rotor_cQ','Rotor_cT');
 end
 
-if nargin < 6
-    titleOn = 0;
-end
 
 % Set path to figure directory
-if nargin < 6
+if nargin < 6 || isempty(figDir)
     figDir = fullfile(mainDir,'figDir');
     if ~isfolder(figDir)
         mkdir(figDir)
     end
 end
+
+% Put a plot title
+if nargin < 7  || isempty(titleOn)
+    titleOn = 0;
+end
+
+% Set a multiplication factor for the aerodynamic center on the blade
+if nargin < 8  || isempty(multRb)
+    multRb = 0.92;
+end
+
+
 
 %% Define parameters
 % 5MW FAST WIND TURBINE (NREL/TP-500-38060) Definition of a 5-MW Reference
@@ -74,7 +83,7 @@ wecs.N = 3;% Number of blades
 wecs.Ng = 97; % Gearbox ratio
 wecs.mh = 56780; % kg;  Hub mass
 wecs.mbl = 17740; %kg;  Mass of each blade
-wecs.mb = 1/3 * wecs.mbl; %kg;  Modal mass of each blade
+wecs.mb = wecs.mbl*0.333; %kg;  Modal mass of each blade
 wecs.mn = 240000; % kg;  Nacellle mass
 wecs.mtower = 347460; % kg; Mass of the tower and nacelle
 wecs.mt = 0.25*wecs.mtower + wecs.mn + wecs.mh + wecs.N*wecs.mbl;
@@ -104,7 +113,7 @@ wecs.Ks = 867637000; %Nm/rad Stiffness of the transmission
 % 2*zeta*wn = B
 wecs.Bs = 6215000;  %Nm/rad/sec %Damping of the transmission
 wecs.Rr = 63; % m length rotor radius
-wecs.rb = wecs.Rr*0.93; % m aerodynamic center on blade radius
+wecs.rb = wecs.Rr*multRb; %*0.93; % m aerodynamic center on blade radius
 wecs.etag = 0.944; %Drivetrain.Generator.Efficiency: 0.944;
 
 

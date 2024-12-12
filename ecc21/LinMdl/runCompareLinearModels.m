@@ -8,7 +8,7 @@ createBodePlots = 1;
 plotVisible = 1;
 noOut = 3;
 
-figFolder = 'figLinDiss';
+figFolder = 'figLinDiss02';
 
 %compareLinearModels(speedVec,figFolder, useActuatorStates,figNoAdd,createBodePlots,plotVisible)
 [sysOut,gapCell] = compareLinearModels2(speedVec,figFolder,useActuatorStates,figNoAdd,createBodePlots,plotVisible,noOut);
@@ -48,13 +48,13 @@ idxVec = 1:9; % this is the number of input/output combination
 tmpStr = sprintf('%d m/s,', speedVec + 3); %wind speed infor
 windTickLabel = regexp(tmpStr(1:end-1), ',','split');
 
-sysOutputname =[{'RotSpd \omega_r (rad/s)'};{'TwrAcc_{fa} (m/s^2)'}; {'TwrAcc_{sw} (m/s^2)'}];
-sysInputname =[{'GenTq T_g (kNm)'}; {'BlPitch \beta_0 (rad)'};{'Wind V_{\infty} (m/s)'}];
+% sysOutputname =[{'RotSpd \omega_r (rad/s)'};{'TwrAcc_{fa} (m/s^2)'}; {'TwrAcc_{sw} (m/s^2)'}];
+% sysInputname =[{'GenTq T_g (kNm)'}; {'BlPitch \beta_0 (rad)'};{'Wind V_{\infty} (m/s)'}];
 
 sysOutputname =[{'RotSpd \omega_r (-)'};{'TwrAcc_{fa} (-)'}; {'TwrAcc_{sw} (-)'}];
 sysInputname =[{'GenTq T_g (-)'}; {'BlPitch \beta_0 (-)'};{'Wind V_{\infty} (-)'}];
 
-Mdl2Str = ' Rot,Twr + Bld';
+Mdl2Str = ' Rot,Twr,Gen+Bld';
 
 
 %% Set values for first, norm plot

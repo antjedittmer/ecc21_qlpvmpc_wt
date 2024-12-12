@@ -2,7 +2,9 @@
 clc; clear; close all;
 
 %% Set path to initialization script initWorkspace and run it
-addpath('NonLinMdl');
+addpath(genpath('NonLinMdl'));
+addpath(genpath('LinMdl'));
+
 initWorkspace;
 
 %% Matlab analysis: Bode plots linearized FAST models (reference)
@@ -10,7 +12,7 @@ initWorkspace;
 % FAST models. 
 
 % Create Bode plots for comparison
-compareLinearModels;
+compareLinearModels2;
 
 %% Simulink simulations 
 % Simulink models are compared with FAST (NREL) references.
@@ -19,7 +21,7 @@ compareLinearModels;
 
 %Load data if available from previous simulation.
 loadData = 0;
-
+updateDDMdl1(0.93);
 % Run Simulink models in closed loop w baseline controller( Torque controller
 % k-omega-squared, Pitch controller: Gainscheduled Pi)
 figNo = 1;
@@ -49,10 +51,11 @@ len = 6;
 vec = 1:len;
 idxVec = 1:len; % this is the number of input/output combination
 
-Mdl2Str = ' Rot,Twr + Bld';
+
 
 
 %% Set values for first, norm plot
+Mdl2Str = ' Rot,Twr,Gen+Bld';
 legCell = ['                        Norm: \color{black}Mdl1: Rot+Twr ',...
     '\color[rgb]{',num2str(lc(1,:)),'}Mdl2:',Mdl2Str];
 
@@ -90,10 +93,13 @@ figFolderStrEps = figFolderStr;
 print(figFolderStr, '-dpng');
 print(figFolderStrEps, '-depsc');
 
+% return;
+
+
 
 % Run models in closed loop with qLPV MPC
-figNo1 = 7;
-runCompareCtrl('Sweep',loadData,figNo1);
 figNo1 = 8;
+runCompareCtrl('Sweep',loadData,figNo1);
+figNo1 = 9;
 runCompareCtrl('NTW18',loadData,figNo1);
 

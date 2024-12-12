@@ -14,7 +14,7 @@ function runCompareCtrl(strWindType,loadData,figNo1,useFASTForComparison)
 % The default inputs are provided here.
 
 if ~nargin || isempty(strWindType) 
-    strWindType = 'Sweep'; %'NTW18';   
+    strWindType = 'NTW18';  % 'Sweep'; %
 end
 
 if nargin < 2 || isempty(loadData)
@@ -187,8 +187,11 @@ xlabel('time [s]');
 % Link axes and set poisition
 linkaxes(ax1,'x')
 set(gcf,'Name', figStr)
+
 posDefault = [520   378   560   420]; %get(gcf, 'position');
 set(gcf, 'position', [posDefault(1:3),posDefault(4)*1.1]);
+
+
 
 print(gcf,[fullfile(figDir,'cmpCtrlSimulink_PI_MPC'),'_',figStr,'_',num2str(timeVecPlot(end))], '-dpng');
 print(gcf,[fullfile(figDir,'cmpCtrlSimulink_PI_MPC'),'_',figStr,'_',num2str(timeVecPlot(end))], '-depsc');
