@@ -74,6 +74,7 @@ end
 % Load FASTtool simulation data from dataIn folder.
 
 load(outDataSimulationMat ,'OutTable');
+updateDDMdl1(1);
 
 % Assign data from FAST to variables
 idxTime = 1: height(OutTable);

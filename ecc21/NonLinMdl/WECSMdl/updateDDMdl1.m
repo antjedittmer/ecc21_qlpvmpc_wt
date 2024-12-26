@@ -3,7 +3,7 @@
 function updateDDMdl1(multRb)
 
 if ~nargin
-    multRb = 0.75;
+    multRb = 1;
 end
 
 plotOn = 0;
@@ -22,8 +22,6 @@ for idxDD = 1: length(DDNameCell)
     DDName =  DDNameCell{idxDD}; %'DD_test.sldd'; %'DD_Mdl1.sldd'; %
     Q = Q3;
     DDDataNames = {'beta';'Ce';'Cq';'Ct';'K5'; 'lambda'; 'M';'Q'; 'rho';'wecs'; 'Lin_points'};
-
-
 
     myDictionaryObj = Simulink.data.dictionary.open(DDName);
     dDataSectObj = getSection(myDictionaryObj,'Design Data');

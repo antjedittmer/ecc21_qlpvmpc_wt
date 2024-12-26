@@ -38,7 +38,7 @@ mainDir = fileparts(workDir);
 
 % speedVec: index vector for 22 windspeeds, 4 to 25 m/s (Default: [1, 22])
 if nargin == 0 || isempty(speedVec)
-    speedVec = [1,14,22]; %[1,22]; % variations of wind speed
+    speedVec = [1]; %[1,22]; % variations of wind speed
 end
 
 if nargin < 2 || isempty(figFolder)

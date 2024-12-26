@@ -65,7 +65,7 @@ if strcmp(strWindType,'Sweep') == 1 % sweep from 4 to 25 in steps
     strFig = '';
     testCaseStr = 'Wind Sweep';
 else  % wind with average 18 m/s
-    outDataSimulationMat = sprintf('OutDataWind%02dNTM.mat',strWindType);
+    outDataSimulationMat = sprintf('OutDataWind%02dNTW.mat',strWindType);
     strFig = sprintf('NTW%02d',strWindType); %'NTW18';
     testCaseStr = sprintf('Wind, mean %02d m/s',strWindType);
 end
@@ -233,10 +233,10 @@ for idx = 1: length(varnamesnorm)
 end
 
 
-%% Figure for paper
+%% Figure for paper and dissertation
 figure(figNo2+1)
 nAx = 7;
-t = tiledlayout(nAx,1,'TileSpacing','Compact');
+tiledlayout(nAx,1,'TileSpacing','Compact');
 
 axPlotAll(1) = nexttile; %subplot(nAx,1,1);
 plot(time,vectAmpWind(idxTime),time,OutTableTest1.Wind(idxTime),'k--'); 

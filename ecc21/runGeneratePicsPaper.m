@@ -21,7 +21,7 @@ compareLinearModels2;
 
 %Load data if available from previous simulation.
 loadData = 0;
-updateDDMdl1(0.93);
+updateDDMdl1(0.75);
 % Run Simulink models in closed loop w baseline controller( Torque controller
 % k-omega-squared, Pitch controller: Gainscheduled Pi)
 figNo = 1;
@@ -52,8 +52,6 @@ vec = 1:len;
 idxVec = 1:len; % this is the number of input/output combination
 
 
-
-
 %% Set values for first, norm plot
 Mdl2Str = ' Rot,Twr,Gen+Bld';
 legCell = ['                        Norm: \color{black}Mdl1: Rot+Twr ',...
@@ -68,7 +66,7 @@ for idx = 1:6
         aFieldn = 'NcIMUTAxs';
     elseif strcmp(aFieldn,'TwrAccSW')
          aFieldn = 'NcIMUTAys';
-        end
+    end
 
     b = bar([normStruct.Sweep.(aFieldn); normStruct.NTM18.(aFieldn)]);
 
@@ -94,8 +92,6 @@ print(figFolderStr, '-dpng');
 print(figFolderStrEps, '-depsc');
 
 % return;
-
-
 
 % Run models in closed loop with qLPV MPC
 figNo1 = 8;
