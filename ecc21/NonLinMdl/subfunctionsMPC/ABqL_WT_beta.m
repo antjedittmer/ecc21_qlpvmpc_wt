@@ -48,7 +48,7 @@ end
 rho = 1.2250;
 Rr = 63; % m blade radius
 Ng = 97; %Gearbox ratio
-Jr = (115926 + 3 * 11.776e6) *1; %kg*m^2 Inertia of the rotor (Hub inertia + 3 blades
+Jr = 3.8759e+07; %(115926 + 3 * 11.776e6) *1; %kg*m^2 Inertia of the rotor (Hub inertia + 3 blades
 Jg = 534.116;% * Ng^2; %kg*m^2 Inertia of the generator (HSS)
 Jgr = Jg * Ng^2; % Inertia of the generator in LSS
 Ks = 867637000; %Nm/rad Stiffness of the transmission

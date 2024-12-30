@@ -16,7 +16,31 @@ K5 = [K,-K(:,4)];%#ok<*ASGLU>
 DDNameCell = {'DD_test.sldd'; 'DD_Mdl1.sldd'};
 
 % tmp = load('NREL5MW_linearised.mat');
-% Lin_points = tmp.Lin;
+load('OutDataStep.mat');
+idxT = OutTable.Time >= 100;
+OutTableT = OutTable(idxT,:);
+
+OutTableT.Time =  OutTableT.Time - OutTableT.Time(1);
+time = OutTableT.Time;
+
+tmp.Lin.V = 4:25;
+
+for idx = 1 : length(tmp.Lin.V)
+    timeIdx = time <= idx*100-10 & time >= idx*100-30;
+    Lin_points1.V(idx) = mean(OutTableT.Wind1VelX(timeIdx));
+
+    Lin_points1.RSpeed(idx) = mean(OutTableT.GenSpeed(timeIdx)/97/(60/(2*pi)));
+    Lin_points1.Pitch(idx) = mean(OutTableT.BlPitch1(timeIdx)/(180/(pi)));
+    Lin_points1.Torque(idx) = mean(OutTableT.GenTq(timeIdx));
+
+end
+
+Lin.RSpeed = Lin_points1.RSpeed;
+Lin.Pitch = Lin_points1.Pitch;
+Lin.Torque = Lin_points1.Torque;
+Lin.V= Lin_points1.V;
+
+Lin_points = Lin;
 
 for idxDD = 1: length(DDNameCell)
     DDName =  DDNameCell{idxDD}; %'DD_test.sldd'; %'DD_Mdl1.sldd'; %
