@@ -185,46 +185,46 @@ if debugOn == 1
     Ct1 = scaledTable * (newMaxValue - minValue) + minValue; % Scale back to new range
     Ct = Ct1;
 
-     lookupTable = Cq;
+    lookupTable = Cq;
 
     % Find the minimum and maximum values
     minValue = min(lookupTable(:));
     maxValue = max(lookupTable(:));
 
     % Reduce the highest point by 0.95%
-    newMaxValue = maxValue * 0.945;
+    newMaxValue = maxValue * 0.9475;
 
     % Apply linear scaling to adjust all values smoothly
     scaledTable = (lookupTable - minValue) / (maxValue - minValue); % Normalize to [0, 1]
     Cq1 = scaledTable * (newMaxValue - minValue) + minValue; % Scale back to new range
     Cq = Cq1;
 
-% 
-%     idx0 = Cq1 <= eps;
-% Cq1nan = Cq1;
-% Cq1nan(idx0) = nan;
+    %
+    idx0 = Cq1 <= eps;
+    Cq1nan = Cq1;
+    Cq1nan(idx0) = nan;
 
-% %Find the maximum value and its location
-% [maxValue, maxIndex] = max(lookupTable(:));
-% [rowMax, colMax] = ind2sub(size(lookupTable), maxIndex);
-% 
-% %Reduce the highest point by 0.95%
-% lookupTable(rowMax, colMax) = maxValue * 0.95;
-% 
-% % Create a Gaussian filter manually
-% filterSize = 5; % Size of the smoothing filter
-% sigma = 1;      % Standard deviation for Gaussian filter
-% [x, y] = meshgrid(-floor(filterSize/2):floor(filterSize/2), -floor(filterSize/2):floor(filterSize/2));
-% gaussianFilter = exp(-(x.^2 + y.^2) / (2 * sigma^2));
-% gaussianFilter = gaussianFilter / sum(gaussianFilter(:)); % Normalize the filter
-% 
-% % Apply the filter using convolution
-% Cq1 = conv2(lookupTable, gaussianFilter, 'same');
-% Cq = Cq1;
-% 
-%     idx0 = Cq1 <= eps;
-%     Cq1nan = Cq1;
-%     Cq1nan(idx0) = nan;
+    % %Find the maximum value and its location
+    % [maxValue, maxIndex] = max(lookupTable(:));
+    % [rowMax, colMax] = ind2sub(size(lookupTable), maxIndex);
+    %
+    % %Reduce the highest point by 0.95%
+    % lookupTable(rowMax, colMax) = maxValue * 0.95;
+    %
+    % % Create a Gaussian filter manually
+    % filterSize = 5; % Size of the smoothing filter
+    % sigma = 1;      % Standard deviation for Gaussian filter
+    % [x, y] = meshgrid(-floor(filterSize/2):floor(filterSize/2), -floor(filterSize/2):floor(filterSize/2));
+    % gaussianFilter = exp(-(x.^2 + y.^2) / (2 * sigma^2));
+    % gaussianFilter = gaussianFilter / sum(gaussianFilter(:)); % Normalize the filter
+    %
+    % % Apply the filter using convolution
+    % Cq1 = conv2(lookupTable, gaussianFilter, 'same');
+    % Cq = Cq1;
+    %
+    %     idx0 = Cq1 <= eps;
+    %     Cq1nan = Cq1;
+    %     Cq1nan(idx0) = nan;
 
 
 end
