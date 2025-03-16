@@ -147,9 +147,9 @@ strFig = 'PINewLim';
 print(gcf, fullfile(figDirConstr,['cmpTimeDomain_All5',strFig]), '-dpng');
 print(gcf, fullfile(figDirConstr,['cmpTimeDomain_All5',strFig]), '-deps');
 
-if onlyPlotCPCtimeseries == 1
-    return
-end
+% if onlyPlotCPCtimeseries == 1
+%     return
+% end
 
 %% MPC limited to MPC2
 tableForPlotMPC1{1} = currentOutTableTestCell{1};

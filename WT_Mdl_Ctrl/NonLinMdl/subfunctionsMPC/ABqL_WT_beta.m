@@ -53,7 +53,8 @@ Jg = 534.116;% * Ng^2; %kg*m^2 Inertia of the generator (HSS)
 Jgr = Jg * Ng^2; % Inertia of the generator in LSS
 Ks = 867637000; %Nm/rad Stiffness of the transmission
 Bs = 6215000;  %Nm/rad/sec        %Damping of the transmission
-tau_g = 0.01; % for pitch actuator and airspeed
+tau_beta = 0.1; % for pitch actuator and airspeed
+tau_T = 0.01; % for generator torque
 
 %% Lambda 
 Lambda_bar = omegabar*Rr/Vbar;
@@ -77,18 +78,18 @@ dTrdV =  2*0.5*rho*pi*Rr^3*Vbar*Cqb + ...
 Atemp = [[0,1,-1,0] ;
     [-Ks/Jr, (-Bs + dTrdomega)/Jr, Bs/Jr,0];
     Ks/Jgr, Bs/Jgr, -Bs/Jgr, - Ng/Jgr; 
-    zeros(1,3), -1/tau_g];
+    zeros(1,3), -1/tau_T];
 
 %% Create input matrix B
 % Input orig model: V [m/s], beta [rad], T_g_ref [Nm]
 % -> vel model: Vdot [m/s^2]  betaDot [rad/s], T_g_refDot [Nm/s]
 % for beta: Vdot [m/s^2]  T_g_refDot [Nm/s] betaDot [rad/s], 
-Btemp = [zeros(1,3); dTrdV/Jr, 0 dTrdbeta/Jr; zeros(1,3);  0,  1/tau_g,0];
+Btemp = [zeros(1,3); dTrdV/Jr, 0 dTrdbeta/Jr; zeros(1,3);  0,  1/tau_beta,0];
 
 % With Beta
-Aeval = [Atemp,Btemp(:,3); zeros(1, size(Atemp,2)), -1/tau_g];
+Aeval = [Atemp,Btemp(:,3); zeros(1, size(Atemp,2)), -1/tau_T];
 Beval = [Btemp; zeros(1, size(Btemp,2))];
 Beval(:,3) = 0;
-Beval(end,3) = 1/tau_g;
+Beval(end,3) = 1/tau_beta;
 
 end

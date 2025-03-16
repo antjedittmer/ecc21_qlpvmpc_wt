@@ -20,8 +20,8 @@ compareLinearModels2;
 % mat-files in dataIn folder. 
 
 %Load data if available from previous simulation.
-loadData = 0;
-updateDDMdl1(0.75);
+loadData = 1;
+updateDDMdl1(0.93);
 % Run Simulink models in closed loop w baseline controller( Torque controller
 % k-omega-squared, Pitch controller: Gainscheduled Pi)
 figNo = 1;
@@ -34,9 +34,9 @@ normStruct.NTM18 = runCompareModels(18,loadData,figNo);
 fieldsGapAll = fieldnames(normStruct); %get the field names
 sortFieldsGap = fieldsGapAll; % Mdl1 (5 states) should be listed before Mdl2 (9 states)
 
-sortFieldsSignals =  [{'GenTq'}  {'BlPitch1'}  {'RotSpeed'}    {'GenPwr'}   {'TwrAccFA'}    {'TwrAccSW'}];
+sortFieldsSignals =  [{'GenTq'}  {'BlPitch1'}  {'RotSpeed'}   {'GenPwr'}   {'TwrAccFA'}    {'TwrAccSW'}];
 
-% sysOutputname =[{'RotSpd \omega_r (-)'};{'TwrAcc_{fa} (-)'}; {'TwrAcc_{sw} (-)'}];
+% sysOutputname =[{'RotSpd \omega_r (-)'}; {'TwrAcc_{fa} (-)'}; {'TwrAcc_{sw} (-)'}];
 % sysInputname =[{'GenTq T_g (-)'}; {'BlPitch \beta_0 (-)'};{'Wind V_{\infty} (-)'}];
 
 % NcIMUTAxs
@@ -78,9 +78,7 @@ for idx = 1:6
         title( legCell)
     end
 
-
     ylabel([aFieldname,' (-)']);
-
 
 end
 
@@ -90,8 +88,6 @@ figFolderStr = fullfile(figFolder,figStr);
 figFolderStrEps = figFolderStr;
 print(figFolderStr, '-dpng');
 print(figFolderStrEps, '-depsc');
-
-% return;
 
 % Run models in closed loop with qLPV MPC
 figNo1 = 8;

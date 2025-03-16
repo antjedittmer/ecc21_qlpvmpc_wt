@@ -83,7 +83,7 @@ wecs.mh =  56780; % hub mass
 wecs.mb = 17740; %kg Mass of each blade
 wecs.mn = 240000; % Nacellle mass
 wecs.mtower = 347460;%347460;%kg Mass of the tower and nacelle
-wecs.mt = 0.25*wecs.mtower+wecs.mn+wecs.mh;
+wecs.mt = 0.25*wecs.mtower+wecs.mn+wecs.mh + 3* wecs.mb; % added 3*mb
 wecs.H =  87.6;
 
 wecs.Jrg = 534.116;% * Ng^2; %kg*m^2 Inertia of the generator

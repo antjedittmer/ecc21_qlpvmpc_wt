@@ -17,7 +17,7 @@ function [currentOutTableTest, tictoc_LPVMPC,GenPwrRef] = getSimulationOutputTab
 % set default variablenames
 if nargin < 5 || isempty(varnames)
     varnames = {'Wind', 'RotSpeed', 'GenPwr', 'GenTq', 'BlPitch1', ...
-    'NcIMUTAxs', 'NcIMUTAys','zeta_dotdot'}; %%'Tower FA acc', 'Tower SS acc'};
+    'NcIMUTAxs', 'NcIMUTAys'}; %%'Tower FA acc', 'Tower SS acc'};
 end
 
 % Get the name of the table
@@ -35,11 +35,11 @@ if exist(matFileOutTableTest1,'file') == 2 && loadData
     end
 else
     WS = 'base';
-    DT = 0.008;
-    assignin(WS,'DT',DT)
+    % assignin(WS,'DT',DT)
     assignin(WS,'OutTable',OutTable)
     open_system(simMdlname1);
     out1 = sim(simMdlname1,'SrcWorkspace',WS);
+    varnames = varnames(1: size(out1.OutDataTest,2));
     currentOutTableTest = array2table(out1.OutDataTest,'VariableNames',varnames);
     eval([strTable,' = currentOutTableTest;']);
     if contains(strTable,'MPC')

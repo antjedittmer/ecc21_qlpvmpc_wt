@@ -75,10 +75,9 @@ end
 
 load(outDataSimulationMat ,'OutTable');
 if OutTable.Time(end) >1000
-idxT = OutTable.Time >= 100;
-OutTable = OutTable(idxT,:);
-
-OutTable.Time =  OutTable.Time - OutTable.Time(1);
+    idxT = OutTable.Time >= 100;
+    OutTable = OutTable(idxT,:);
+    OutTable.Time =  OutTable.Time - OutTable.Time(1);
 end
 
 % Assign data from FAST to variables

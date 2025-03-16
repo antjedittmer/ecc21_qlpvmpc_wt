@@ -8,10 +8,10 @@ createBodePlots = 1;
 plotVisible = 1;
 noOut = 3;
 
-figFolder = 'figLinDiss02';
+figFolder = 'figLinDiss03';
 
 %compareLinearModels(speedVec,figFolder, useActuatorStates,figNoAdd,createBodePlots,plotVisible)
-[sysOut,gapCell] = compareLinearModels2(speedVec,figFolder,useActuatorStates,figNoAdd,createBodePlots,plotVisible,noOut);
+[sysOut,gapCell] = compareLinearModels(speedVec,figFolder,useActuatorStates,figNoAdd,createBodePlots,plotVisible,noOut);
 
 %% Read out the quantative information
 
@@ -129,15 +129,15 @@ figFolderStr = fullfile(figFolder,figStr);
 figFolderStrEps = figFolderStr;
 print(figFolderStr, '-dpng');
 print(figFolderStrEps, '-depsc');
-
+return; %
 
 %%
 aTest = reshape(1:9,3,3);
 aTest = aTest';
 aTestVec = aTest(:);
 
-aPerm5DOF = permute(gapCell.mag5DoF{1},[2 1 3]); % abs(permute(gapCell.mag5DoF{1},[2 1 3]) - permute(gapCell.magFAST{1},[2 1 3]));
-aPerm9DOF = permute(gapCell.mag9DoF{1},[2 1 3]); %abs(permute(gapCell.mag9DoF{1},[2 1 3]) - permute(gapCell.magFAST{1},[2 1 3]));
+aPerm5DOF = permute(gapCell.norm5DoF{1},[2 1 3]); %permute(gapCell.mag5DoF{1},[2 1 3]); % abs(permute(gapCell.mag5DoF{1},[2 1 3]) - permute(gapCell.magFAST{1},[2 1 3]));
+aPerm9DOF = permute(gapCell.norm9DoF{1},[2 1 3]); %abs(permute(gapCell.mag9DoF{1},[2 1 3]) - permute(gapCell.magFAST{1},[2 1 3]));
 
 figure;
 

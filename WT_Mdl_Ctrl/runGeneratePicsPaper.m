@@ -16,6 +16,7 @@ compareLinearModels;
 % Simulink models are compared with FAST (NREL) references.
 % FAST simulation results obtained with FASTTool (Tu Delft) are provided as
 % mat-files in dataIn folder. 
+updateDDMdl1(0.75);
 
 %Load data if available from previous simulation.
 loadData = 0;

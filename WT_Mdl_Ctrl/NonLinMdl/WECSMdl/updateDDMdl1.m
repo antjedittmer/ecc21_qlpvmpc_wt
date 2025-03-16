@@ -4,7 +4,7 @@ function updateDDMdl1(multRb)
 
 if ~nargin
     multRb = 0.75;
-    ends
+end
 
 plotOn = 0;
 Rotor_Lamda = ''; Rotor_Pitch = ''; Rotor_cQ = ''; Rotor_cT = '';

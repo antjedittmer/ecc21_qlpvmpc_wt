@@ -91,6 +91,7 @@ end
 % Wind energy conversion system (WECS) parameters
 [wecs, M, Ce, K, Q, L, rho, tau, kappa, lambda, pitch, Cq, Ct ] = ...
     initModel5MWNREL(0, Rotor_Lamda, Rotor_Pitch, Rotor_cQ, Rotor_cT, figFolder);
+wecs.Jr = 
 
 %% Compute aerodynamic force and torque gradients
 
@@ -210,8 +211,8 @@ for index =  speedVec
     % States omega ydotfa xdotsw xfa xss
 
     % dotomega = (Tr - Ng * Tg)/J
-    A11 = 1/wecs.Jr * dTrdomega;
-    A12 = 1/wecs.Jr * dTrdydotfa;
+    A11 = 1/wecs.Js * dTrdomega;
+    A12 = 1/wecs.Js * dTrdydotfa;
 
     % ydotdotfa = 1/Mt( -Bt * ydotfa - Kt* yfa +Ft)
     A21 = 1/wecs.mt * dFtdomega;
@@ -227,9 +228,9 @@ for index =  speedVec
         [0 1 0 0 0; 0 0 1 0 0]];
 
     % Inputs: Torque [Nm], pitch angle beta [rad], wind speed V [m/s]
-    B11 = -1/wecs.Jr * wecs.Ng;
-    B12 = 1/wecs.Jr * dTrdbeta;
-    B13 = 1/wecs.Jr * dTrdV;
+    B11 = -1/wecs.Js * wecs.Ng;
+    B12 = 1/wecs.Js * dTrdbeta;
+    B13 = 1/wecs.Js * dTrdV;
 
     B22 = 1/wecs.mtb * dFtdbeta;
     B23 = 1/wecs.mtb * dFtdV;
@@ -420,6 +421,7 @@ for index =  speedVec
 
         gapCell.norm9DoF{index} = tempNormMatrix9;
         gapCell.norm5DoF{index} = tempNormMatrix5;
+        
 
         % Title string
         titleStr = sprintf('Bode mag. plot for V = %d, pitch = %2.2f, and TSR = %2.4f',Vbar,beta_bar,Lambda_bar);

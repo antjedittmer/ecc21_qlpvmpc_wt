@@ -2,7 +2,7 @@
 clear; close all; clc; 
 restoredefaultpath;
 bdclose all;
-Simulink.data.dictionary.closeAll;
+% Simulink.data.dictionary.closeAll;
 
 %% Set paths
 dataIn = 'dataIn'; % external data from FAST linearization, FASTtool
@@ -45,8 +45,8 @@ load(fullfile(dataInPath,'OutDataSweep.mat'),'OutTable');
 %% Create bus objects used in all Simulink models
 % These buses do not need to be created anymore as they are stored in the
 % data dictionaries
-% Mdl_TuDelftOLFunction(0);
-% MdLCtrl_BaselineFunction(0);
+Mdl_TuDelftOLFunction(0);
+MdLCtrl_BaselineFunction(0);
 
 %% Initialize path to FASTFile: FAST_InputFileName and OutList
 testqLPV; %

@@ -8,7 +8,7 @@ close all;
 runCompareCtrl('Sweep');
 
 
-normStruct
+%normStruct
 % 
 % normStruct = 
 % 

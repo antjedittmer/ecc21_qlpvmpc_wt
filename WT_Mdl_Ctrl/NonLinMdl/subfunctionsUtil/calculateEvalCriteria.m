@@ -1,5 +1,5 @@
 function [K_matrix, strK] = calculateEvalCriteria(cellOfTable,summaryTickLabel,printTitle)
-% calculate evaluation criteria for controllers and 
+% calculate evaluation criteria for controllers 
 
 if nargin < 3
     printTitle = 1;
@@ -47,7 +47,7 @@ stdGenSpeed = nan( 1,lenComparison);
 % end
 
 %C_damageBlades calculated via Rainflow count w flap. blade RootMyb signals
-% Antje ToDo Using flapping moments only: Also edgewise(x) and pitch (z)?
+% Antje ToDo Using flapwise moments only: Also edgewise(x) and pitch (z)?
 % Antje ToDo: Transform from rotating into fixed reference system?
 if isFAST
     idxRootMyb = contains(varNames,'RootMyb') | contains(varNames,'RootMFlp');
