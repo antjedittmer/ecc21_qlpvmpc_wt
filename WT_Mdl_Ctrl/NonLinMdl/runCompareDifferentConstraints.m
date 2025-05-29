@@ -8,7 +8,7 @@ workDir = pwd;
 mainDir = fileparts(workDir);
 
 % Set path to figure directory
-figDir = fullfile(mainDir,'figDir');
+figDir = fullfile(mainDir,'figDirConstr1');
 if ~isfolder(figDir)
     mkdir(figDir)
 end
@@ -75,7 +75,7 @@ tableForPlotMPC{3} = currentOutTableTestCell{end};
 
 % input plotOutTable:OutTable,OutTableTest1,OutTableTest2,testCaseStr, testCaseCell, figNo2,figDir,strFig)
 figDir = 'figDir';
-testCaseStrMPC =  'qLMPC CPC Rate Constraints [deg/s]';
+testCaseStrMPC =  'qLMPC Rate Constraints [deg/s]';
 testCaseCell = {'standard (8) ','high (13) ', 'low (4) '};
 axPlotAllMPC = plotOutTable(tableForPlotMPC{1},tableForPlotMPC{2},tableForPlotMPC{3},...
    testCaseStrMPC,testCaseCell,[],figDir);
@@ -136,20 +136,23 @@ for idx = 1:length(axPlotAllMPC)
     set(axPlotAll(idx),'YLim',newLim ); 
 end
 
-figDirConstr = 'figDirConstr';
+figDirConstr = 'figDirConstr1';
+if ~isdir(figDirConstr)
+    mkdir(figDirConstr);
+end
 figDir = figDirConstr;
 
 strFig = 'MPCNewLim';
 saveas(figMPC, fullfile(figDirConstr,['cmpTimeDomain_All5',strFig]), 'png');
-saveas(figMPC, fullfile(figDirConstr,['cmpTimeDomain_All5',strFig]), 'eps');
+saveas(figMPC, fullfile(figDirConstr, ['cmpTimeDomain_All5', strFig]), 'epsc');
 
 strFig = 'PINewLim';
 print(gcf, fullfile(figDirConstr,['cmpTimeDomain_All5',strFig]), '-dpng');
-print(gcf, fullfile(figDirConstr,['cmpTimeDomain_All5',strFig]), '-deps');
+print(gcf, fullfile(figDirConstr, ['cmpTimeDomain_All5', strFig]), '-depsc');
 
-% if onlyPlotCPCtimeseries == 1
-%     return
-% end
+if onlyPlotCPCtimeseries == 1
+    return
+end
 
 %% MPC limited to MPC2
 tableForPlotMPC1{1} = currentOutTableTestCell{1};

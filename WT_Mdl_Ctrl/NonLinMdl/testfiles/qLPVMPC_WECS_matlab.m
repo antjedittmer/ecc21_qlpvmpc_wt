@@ -1,4 +1,4 @@
-function [u,Xk,U,mu,us,tictoc]= qLPVMPC_WECS_matlab(r,xk,Xk,mu_old,lambdaVec,pitchVec,cQ,schedParam,U,DT)
+function [u,Xk,U,mu,us,tictoc]= qLPVMPC_WECS_matlab(r,xk,Xk,mu_old,lambdaVec,pitchVec,cQ,schedParam,U,DT,wecs)
 % MATLAB_Function calculates controller output u. It turns the QP into a 
 % linear complementarity problem (LCP) and solves it with Lemke's algorithm.
 %
@@ -28,24 +28,27 @@ tictoc = 0;
 tic
 
 %% Init N, Q, R
-N = 20;
-q_ = [10 1 1 1 10 1 0]; %q_ = [100 1000 1 0.01 0]; 7.351e+02 1.000e+00 1.938e+09 1.625e+08 1.491e+08 1.657e+03
-r_ = [1000,1];
-R_ = kron(eye(N),diag(r_)); %R_ = 1000*eye(N); 
-p = 100*q_; %P = 1000*diag(q_);
+N = 40;
+q_ = [1 10^4 0 10^3 10^3 0 0 0]; %[10^4 0.1 1 1 100 0.1 0]; %q_ = [100 1000 1 0.01 0]; 7.351e+02 1.000e+00 1.938e+09 1.625e+08 1.491e+08 1.657e+03
+r_ = [1 10^4]; %[10^7,0.1];
+R_ = kron(eye(N),diag(r_)); %R_ = 1000*eye(N);
+p = 10^3*q_; %P = 1000*diag(q_);
 
-Ulim = repmat([8 * pi/180, 20000]',2*N,1); %rate constraints 
+u_rate_lower = - [200; 8 * pi/180]; % Lower rate limit 00
+u_rate_upper = [20000; 8 * pi/180];% Upper rate limit 20000
+Ulim = [repmat(-u_rate_lower ,N,1);repmat(u_rate_upper ,N,1)]; %rate constraints
 
 Control_Pitch_Max = 90 /180 * pi;
-Control_Pitch_Min = -2 /180 * pi;
+Control_Pitch_Min = 0 /180 * pi;
 Control_Torque_Limit = 47403;
 Control_Torque_Min = 200;
+
 schedParam(2) = min(max(schedParam(2), Control_Pitch_Min),Control_Pitch_Max);
 
 % isBetaState = 0;
 % nx = 4 + isBetaState; % number states plant: ThetaS,omegaR,omegaG,Tg
 % ny = 2 + isBetaState; % number of outputs plant omegaG,Tg
-nxA = 7;% nx + ny + 1; %number states augmented plant 
+nxA = 8;% nx + ny + 1; %number states augmented plant 
 nu = 2; % plant inputs: Tg_ref, beta_ref
 
 %% Shift Xk
@@ -61,12 +64,12 @@ refVec(1:2) = r;
 ref = repmat(refVec,N,1); %ref = kron(ones(N,1),[r; 0; 0; 0;0]);
 
 for i = 1:iterations
-    [L,S,H,g] = HSqLd_WT(N,q_,R_,p,xk,Xk,DT,ref,us,lambdaVec,pitchVec,cQ,schedParam,U);
+    [L,S,H,g] = HSqLd_WT_beta(N,q_,R_,p,xk,Xk,DT,ref,us,lambdaVec,pitchVec,cQ,schedParam,U,wecs);
     
     %% %%%%%%Turn QP into LCP and solve it%%%%%%%%%
-    Ac_ = [-eye(N*nu);eye(N*nu)];
-    bc_ = - Ulim;
-    Hi = eye(size(H,1))/H;
+    Ac_ = [-eye(N*nu);eye(N*nu)]; % A_constrained 
+    bc_ = - Ulim; %B_constrained
+    Hi = eye(size(H,1))/H; %H inverse
     M = Ac_*Hi*Ac_';
     q = -Ac_*Hi*g - bc_;
  
@@ -74,6 +77,12 @@ for i = 1:iterations
  
     U = Hi*(Ac_'*mu-g);
     U(isnan(U)) = 0;
+
+    options1 = optimoptions('quadprog','Display','none', 'Algorithm','active-set');
+
+    % xQuadprog1 = quadprog((H+H')/2,g, Ac_, -bc_);
+
+    xQuadprog = quadprog((H+H')/2,g, Ac_, -bc_,[], [],[],[], zeros(size(U)),options1);
     
     %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
     Xk = L*xk+S*U;

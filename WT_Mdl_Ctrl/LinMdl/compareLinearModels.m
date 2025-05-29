@@ -1,4 +1,4 @@
-function sysOut = compareLinearModels(speedVec,figFolder, useActuatorStates,figNoAdd,createBodePlots,plotVisible,noOut)
+function [sysOut,gapCell] = compareLinearModels(speedVec,figFolder,useActuatorStates,figNoAdd,createBodePlots,plotVisible,noOut,x)
 % compareLinearModels compares two sets of linearized turbine models with
 % linearized FASTTool models at different wind speeds.
 % All inputs are optional.
@@ -38,11 +38,11 @@ mainDir = fileparts(workDir);
 
 % speedVec: index vector for 22 windspeeds, 4 to 25 m/s (Default: [1, 22])
 if nargin == 0 || isempty(speedVec)
-    speedVec = [1, 22]; % variations of wind speed
+    speedVec = [1,22]; % variations of wind speed 8,9,
 end
 
 if nargin < 2 || isempty(figFolder)
-    figFolder = fullfile(mainDir,'figDir1');
+    figFolder = fullfile(mainDir,'figDir');
 end
 % Create output folder
 if ~isfolder(figFolder)
@@ -59,6 +59,8 @@ if nargin < 6,  plotVisible = 'on';  end
 
 if nargin < 7, noOut = 3;  end
 
+if nargin < 8, x = [];  end
+
 
 %% Load and initialize name of models and load into workspace
 addpath(fullfile(mainDir,'dataIn'));
@@ -66,7 +68,7 @@ load('NREL5MW_CPdata','Rotor_Lamda', 'Rotor_Pitch', 'Rotor_cQ', 'Rotor_cT','Roto
 
 % Initialize name of models and load into workspace
 idxModel = 1; %in case several linearized models are provided
-modelNames = {'NREL5MW_linearised_4to25'}; %{'NREL5MW_linearised_AD'}; %
+modelNames = {'NREL5MW_linearised_4to25'};
 modelNames = modelNames(idxModel);
 
 modelsL = {'FAST 30 states'};
@@ -89,8 +91,14 @@ end
 % Cut-In, Rated Rotor Speed 6.9 rpm, 12.1 rpm
 
 % Wind energy conversion system (WECS) parameters
-[wecs, M, Ce, K, Q, L, rho, tau, kappa, lambda, pitch, Cq, Ct ] = ...
-    initModel5MWNREL(0, Rotor_Lamda, Rotor_Pitch, Rotor_cQ, Rotor_cT, Rotor_cP, figFolder);
+
+if isempty(x)
+    [wecs, M, Ce, K, Q, L, rho, tau, kappa, lambda, pitch, Cq, Ct ] = ...
+        initModel5MWNREL(0, Rotor_Lamda, Rotor_Pitch, Rotor_cQ, Rotor_cT, Rotor_cP, figFolder);
+else
+    [wecs, M, Ce, K, Q, L, rho, tau, kappa, lambda, pitch, Cq, Ct] = ...
+        initModel5MWNRELTune(x);
+end
 
 %% Compute aerodynamic force and torque gradients
 ksw = 1/(2/3* wecs.H);
@@ -136,22 +144,37 @@ sysOutputname =[{'RotSpd \omega_r (rad/s)'};{'TwrAcc_{fa} (m/s^2)'}; {'TwrAcc_{s
 sysOutputname = sysOutputname(1:noOut);
 sysInputname =[{'GenTq T_g (kNm)'}; {'BlPitch \beta_0 (rad)'};{'Wind V_{\infty} (m/s)'}];
 
-% Check FAst names
+% Check FAST names
 sysOutNamesOrig = sysm{1}.OutputName(idxFASTOutput);
-disp(['TU Delft sysOutputnames: ', sprintf('%s, ', sysOutputname{:})])
-disp('FAST sysOutputnames:')
-fprintf('%s\n', sysOutNamesOrig{:});
-fprintf('\n')
-disp(['TU Delft sysInputnames: ', sprintf('%s, ', sysInputname{:})])
 sysInNamesOrig = sysm{1}.InputName(idxFASTInput);
-disp('FAST sysInputnames: ');
-fprintf('%s\n', sysInNamesOrig{:})
+
+if isempty(x)
+    disp(['TU Delft sysOutputnames: ', sprintf('%s, ', sysOutputname{:})])
+    disp('FAST sysOutputnames:')
+    fprintf('%s\n', sysOutNamesOrig{:});
+    fprintf('\n')
+    disp(['TU Delft sysInputnames: ', sprintf('%s, ', sysInputname{:})])
+    disp('FAST sysInputnames: ');
+    fprintf('%s\n', sysInNamesOrig{:})
+end
 
 % Set output gains for FAST accordingly
 multFASTOutputAll = [pi/30,1,1]; % ED RotSpeed, (rpm)
 multFASTOutput = multFASTOutputAll(1:noOut);
 multFASTInput = [1000,1,1];
 multFASTInput0 = multFASTInput;
+
+% Initialize gap metrics for quantitative evaluation
+noVelMdl = length(speedVec);
+% noOutMdl = length(sysOutputname);
+% noInMdl = length(sysOutputname);
+
+gapCell.gap9DoF = cell(noVelMdl,1);
+gapCell.nugap9DoF = cell(noVelMdl,1);
+gapCell.gap5DoF = cell(noVelMdl,1);
+gapCell.nugap5DoF = cell(noVelMdl,1);
+gapCell.norm9DoF = cell(noVelMdl,1);
+gapCell.norm5DoF = cell(noVelMdl,1);
 
 
 %% Loop over all air speeds in LinV
@@ -195,8 +218,8 @@ for index =  speedVec
     % States omega ydotfa xdotsw xfa xss
 
     % dotomega = (Tr - Ng * Tg)/J
-    A11 = 1/wecs.Jr * dTrdomega;
-    A12 = 1/wecs.Jr * dTrdydotfa;
+    A11 = 1/wecs.Js * dTrdomega;
+    A12 = 1/wecs.Js * dTrdydotfa;
 
     % ydotdotfa = 1/Mt( -Bt * ydotfa - Kt* yfa +Ft)
     wecs.mt = wecs.mtb;
@@ -213,9 +236,9 @@ for index =  speedVec
         [0 1 0 0 0; 0 0 1 0 0]];
 
     % Inputs: Torque [Nm], pitch angle beta [rad], wind speed V [m/s]
-    B11 = -1/wecs.Jr * wecs.Ng;
-    B12 = 1/wecs.Jr * dTrdbeta;
-    B13 = 1/wecs.Jr * dTrdV;
+    B11 = -1/wecs.Js * wecs.Ng;
+    B12 = 1/wecs.Js * dTrdbeta;
+    B13 = 1/wecs.Js * dTrdV;
 
     B22 = 1/wecs.mtb * dFtdbeta;
     B23 = 1/wecs.mtb * dFtdV;
@@ -274,55 +297,8 @@ for index =  speedVec
     B9DoF(10,1) = 1/kappa;
     B9DoF(11,2) = 1/tau;
 
-    %     A9DoForig = [A1(1:4,:) ,zeros(4,2); % states 1 - 4: y_FA,delta,x_sw, Theta_s
-    %         ...
-    %         [A1(5,1:4), ... % state 5: xdot_FA (from  states 1 - 4: y_FA,delta,x_sw, Theta_s)
-    %         A1(5,5) - B1(5,1)*dFtdV,... % state 5-> 5: xdot_FA <- xdot_FA
-    %         A1(5,6) - B1(5,1)*dFtdV*wecs.rb, ...% state 6-> 5: xdot_FA <- delta
-    %         A1(5,7), ... % state 7 > 5: xdot_FA <- xdot_sw
-    %         A1(5,8) + B1(5,1)*dFtdomega, ... % state 8 > 5: xdot_FA <- omega_r
-    %         A1(5,9), ...  % state 9 > 5: xdot_FA <- xdot_sw % state 10, 11 > 5: xdot_FA <- Tg, beta
-    %         0 , B1(5,1)*dFtdbeta];
-    %         ...
-    %         [A1(6,1:4), ...% state 6: delta (from  states 1 - 4: y_FA,delta,x_sw, Theta_s)
-    %         A1(6,5) - B1(6,1)*dFtdV,... % state 5> 6: delta<- xdot_FA
-    %         A1(6,6) - B1(6,1)*dFtdV*wecs.rb,... % state 5> 6: delta<- xdot_FA
-    %         A1(6,7), ... % delta<- xdot_FA
-    %         A1(6,8) + B1(6,1)*dFtdomega, ... % state 5> 6: delta<- xdot_FA
-    %         A1(6,9), ... % state 5> 6: delta<- xdot_FA
-    %         0 ,B1(6,1)*dFtdbeta];
-    %         ...
-    %         [A1(7,1:4), ... % state 7: x_sw (from  states 1 - 4: y_FA,delta,x_sw, Theta_s)
-    %         A1(7,5) - ksw * B1(7,2)*dTrdV,...
-    %         A1(7,6) - ksw * B1(7,2)*dTrdV*wecs.rb,...
-    %         A1(7,7), ...
-    %         A1(7,8) + ksw * B1(7,2)*dTrdomega, ...
-    %         A1(7,9),...
-    %         B31, ksw * B1(7,2)*dTrdbeta]; %  B31 = wecs.Ng/wecs.mtb *3/(2*wecs.H); Tg -> x_sw
-    %         ...
-    %         [A1(8,1:4), ... % state 8: omega_r (from  states 1 - 4: y_FA,delta,x_sw, Theta_s)
-    %         A1(8,5) - B1(8,3)*dTrdV,...
-    %         A1(8,6) - B1(8,3)*dTrdV*wecs.rb, ....
-    %         A1(8,7), ...
-    %         A1(8,8) + B1(8,3)*dTrdomega, ...
-    %         A1(8,9), ...
-    %         B11, B1(8,3)*dTrdbeta]; %  B11 = - wecs.Ng/wecs.Jr; Tg -> omega_r (instead of B1(8,1))
-    %         ...
-    %         [A1(9,1:6), A1(9,7) , A1(9,8:9) , -B11 ,0]; %B1(9,4)
-    %         zeros(1,9),  -1/kappa, 0;...
-    %         zeros(1,10),  -1/tau];
-    %
     A7DoF = A9DoF(1:9,1:9);
-    %
-    %     B9DoF = [zeros(4,3);... % states 1 - 4: y_FA,delta,x_sw, Theta_s
-    %         zeros(1,2),B1(5,1)*dFtdV;... % state 5: ydot_FA
-    %         zeros(1,2),B1(6,1)*dFtdV;...% state 6: xdot_FA
-    %         B31,0,B1(7,2)*ksw *dTrdV;...% state 7: xdot_SW
-    %         B11,0,B1(8,3)*dTrdV;... state 8: omega_r
-    %         zeros(1,3);... state 9: omega_gr
-    %         1/kappa, 0,0;...
-    %         0,1/tau,0];
-
+    
     B7DoF = B9DoF(1:9,:);
     B7DoF(:,1) = A9DoF(1:9,8+2); % Torque Tg as input
     B7DoF(:,2) = A9DoF(1:9,9+2); % Pitch beta as input
@@ -376,8 +352,10 @@ for index =  speedVec
         %wVec = logspace(opts.XLim{1}(1),opts.XLim{1}(2),100);
 
         bodemag(sysLagrange,opts); hold on; grid on;
+        freq9DoF = linspace(opts.XLim{:}(1),opts.XLim{:}(2),100);
+        mag9DoF = bode(sysLagrange,freq9DoF);
         bodemag(sys5DoF,'k--',opts); hold on; grid on;
-        
+        mag5DoF = bode(sys5DoF,freq9DoF);
 
         for indexModels=1:lenModelNames
             sysm =  sysmCell{indexModels};
@@ -385,6 +363,7 @@ for index =  speedVec
             model.OutputName = sysOutputname;
             model.InputName = sysInputname;
             bodemag(model,opts); hold on
+            magFAST = bode(model,freq9DoF);
             grid on
         end
 
@@ -404,6 +383,34 @@ for index =  speedVec
                 '\color[rgb]{',num2str(cl(ilegC+1,:)),'}',' ',modelsL{ilegC}]; %#ok<AGROW> This fast
         end
 
+        % Gap and nugap metric results
+        tempNormMatrix5 = nan(size(sysLagrange));
+        tempNormMatrix9 = nan(size(sysLagrange));
+        for idxOut = 1:size(sysLagrange,1)
+            for idxIn = 1:size(sysLagrange,2)
+                [gapCell.gap9DoF{index}(idxOut,idxIn),gapCell.nugap9DoF{index}(idxOut,idxIn)] = gapmetric(sysLagrange(idxOut,idxIn),model(idxOut,idxIn));
+                [gapCell.gap5DoF{index}(idxOut,idxIn),gapCell.nugap5DoF{index}(idxOut,idxIn)] = gapmetric(sys5DoF(idxOut,idxIn),model(idxOut,idxIn));
+
+                %% For debugging
+                % [gapCell.gap59DoF{index}(idxOut,idxIn),gapCell.nugap59DoF{index}(idxOut,idxIn)] =
+                % ...
+                % gapmetric(sysLagrange(idxOut,idxIn),sys5DoF(idxOut,idxIn));
+
+                mag_9DOF = 20*log10(squeeze(mag9DoF(idxOut,idxIn,:)));    % Squeeze to get a 1D array
+                mag_5DOF = 20*log10(squeeze(mag5DoF(idxOut,idxIn,:)));
+                mag_FAST = 20*log10(squeeze(magFAST(idxOut,idxIn,:)));
+
+                % figure; semilogx(freq9DoF,mag_9DOF,freq9DoF,mag_5DOF,'k--',freq9DoF,mag_FAST)
+                tempNormMatrix9(idxOut,idxIn) = norm(mag_9DOF - mag_FAST)/norm(mag_FAST);
+                tempNormMatrix5(idxOut,idxIn) = norm(mag_5DOF - mag_FAST)/norm(mag_FAST);
+
+            end
+        end
+
+        gapCell.norm9DoF{index} = tempNormMatrix9;
+        gapCell.norm5DoF{index} = tempNormMatrix5;
+
+        
         % Title string
         titleStr = sprintf('Bode mag. plot for V = %d, pitch = %2.2f, and TSR = %2.4f',Vbar,beta_bar,Lambda_bar);
         titleCell = {titleStr, [legCell{1},legCell{2},strExtr]};

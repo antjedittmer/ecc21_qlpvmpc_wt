@@ -12,7 +12,7 @@ initWorkspace;
 % FAST models. 
 
 % Create Bode plots for comparison
-compareLinearModels2;
+compareLinearModels;
 
 %% Simulink simulations 
 % Simulink models are compared with FAST (NREL) references.
@@ -21,7 +21,7 @@ compareLinearModels2;
 
 %Load data if available from previous simulation.
 loadData = 1;
-updateDDMdl1(0.93);
+updateDDMdl1(0.75);
 % Run Simulink models in closed loop w baseline controller( Torque controller
 % k-omega-squared, Pitch controller: Gainscheduled Pi)
 figNo = 1;

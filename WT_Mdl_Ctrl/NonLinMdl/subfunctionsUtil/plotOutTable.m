@@ -2,8 +2,10 @@ function axPlotAll = plotOutTable(OutTable,OutTableTest1,OutTableTest2,testCaseS
 
 
 %% Set parameters and missing inputs
-yAxCell = {'wind V [m/s]', 'GenTq T_g [kNm]', 'Pitch \beta [°]', 'RotSpd \omega_r [rpm]',...
-    'GenPwr P_g [MW]','Twr_{FA} y_t [m/s^2]'};
+% yAxCell = {'Wind V [m/s]', 'GenTq T_g [kNm]', 'Pitch \beta [°]', 'RotSpd \omega_r [rpm]',...
+%     'GenPwr P_g [MW]','Twr_{FA} y_t [m/s^2]'};
+yAxCell = {'Wind V (m/s)', 'GenTq T_g (kNm)', 'Pitch \beta (°)', 'RotSpd \omega_r (rpm)',...
+    'GenPwr P_g (MW)','Twr_{FA} (m/s^2)'};
 
 if nargin < 5 || isempty(testCaseCell)
     testCaseCell = {'Mdl1: Rot+Twr ', 'Mdl2: Rot,Twr,Bld+Act ','FAST'};
@@ -90,13 +92,18 @@ axPlotAll(6) = subplot(6,1,6);
 plot(time,OutTableTest2.GenPwr(idxTime)/1000,time,OutTable.GenPwr(idxTime)/1000,time,OutTableTest1.GenPwr(idxTime)/1000,'k--');
 axis tight; grid on;
 ylabel(yAxCell{5}); %'GenPwr P_g [MW]')
-xlabel('time [s]')
+%xlabel('time [s]')
+xlabel('Time (s)')
 linkaxes(axPlotAll,'x');
 
 set(gcf,'Name',['cmpTimeDomain_All',strFig])
 posDefault = [520   378   560   420]; %get(gcf, 'position');
-set(gcf, 'position', [posDefault(1:3),posDefault(4)*1.5]);
+set(gcf, 'position', [posDefault(1:3),posDefault(4)*2]);
 % set(groot,'defaultLineLineWidth',defaultLineWidth);
+
+set(findall(gcf,'-property','FontSize'),'FontSize',11.5)
+set(findall(gcf,'-property','LineWidth'),'LineWidth',0.75)
+
 % 
 print(fullfile(figDir,['cmpTimeDomain_All',strFig]), '-dpng');
 print(fullfile(figDir,['cmpTimeDomain_All',strFig]), '-depsc');

@@ -38,7 +38,7 @@ mainDir = fileparts(workDir);
 
 % speedVec: index vector for 22 windspeeds, 4 to 25 m/s (Default: [1, 22])
 if nargin == 0 || isempty(speedVec)
-    speedVec = [1,22]; %[1,22]; % variations of wind speed
+    speedVec = [1,8,9,22]; % variations of wind speed
 end
 
 if nargin < 2 || isempty(figFolder)
@@ -60,11 +60,11 @@ if nargin < 6,  plotVisible = 'on';  end
 if nargin < 7, noOut = 3;  end
 
 
-%% Load
+%% Load and initialize name of models and load into workspace
 addpath(fullfile(mainDir,'dataIn'));
-load('NREL5MW_CPdata','Rotor_Lamda', 'Rotor_Pitch', 'Rotor_cQ', 'Rotor_cT');
+load('NREL5MW_CPdata','Rotor_Lamda', 'Rotor_Pitch', 'Rotor_cQ', 'Rotor_cT','Rotor_cP');
 
-%% Initialize name of models and load into workspace
+% Initialize name of models and load into workspace
 idxModel = 1; %in case several linearized models are provided
 modelNames ={'NREL5MW_linearised_AD'}; %{'NREL5MW_linearised_4to25'};
 modelNames = modelNames(idxModel);
@@ -90,47 +90,44 @@ end
 
 % Wind energy conversion system (WECS) parameters
 [wecs, M, Ce, K, Q, L, rho, tau, kappa, lambda, pitch, Cq, Ct ] = ...
-    initModel5MWNREL(0, Rotor_Lamda, Rotor_Pitch, Rotor_cQ, Rotor_cT, figFolder);
-wecs.Jr = 
+    initModel5MWNREL(0, Rotor_Lamda, Rotor_Pitch, Rotor_cQ, Rotor_cT, Rotor_cP, figFolder);
+wecs.Js = wecs.Jr + wecs.Ng^2 * wecs.Jg;
 
 %% Compute aerodynamic force and torque gradients
-
-% E = 210*10^9; %
-% I = pi*(5^4 - (5-0.027)^4)/64;
-% wecs.H^2/(3*E*I)
-ksw = 3/(2* wecs.H);
+ksw = 1/(2/3* wecs.H);
 dLambda = mean(diff(lambda));
 dBeta = mean(diff(pitch));
 [Cqdlambda,Cqdbeta] = gradient(Cq,dLambda,dBeta);
 [Ctdlambda,Ctdbeta] = gradient(Ct,dLambda,dBeta);
 
-%% Constant matrices
+% Constant matrices
 % Set airspeed independent system and input matrix
-A1 = [zeros(4), L;...
-    -M\K, -M\Ce];
-B1 = [zeros(4); M\Q];
+Qxt = zeros(size(Q,1), size(Q,2)-1); % Qxt: FT, Tr, Tg
+Qxt(3,2) = Q(3,2)*ksw; % Q3: FT, Ftx, Tr, Tg
+Qxt(3,3) = Q(3,4)*ksw;
 
-%% Initialize Wnn ZZ PP matrices
-% sizeA = 5; % number of states, ToDo AD: Is there an automatic way to determine this?
-% Wnn = NaN(sizeA,length(Lin.V));  %#ok<*NASGU>
-% ZZ = NaN(sizeA,length(Lin.V));
-% PP = NaN(sizeA,length(Lin.V));
+Q3 = Qxt; % Q3: FT, Tr, Tg
+Q3(1:2,1) = Q(1:2,1);
+Q3(4:5,:) = Q(4:5,2:end);
+B1_3 = [zeros(4,3); M\Q3];
 
-%% Options for Bode plots
+% Options for Bode plots
 opts = bodeoptions('cstprefs');
 opts.FreqUnits = 'Hz'; opts.MagUnits ='Abs'; opts.MagScale ='log'; opts.XLim ={[1e-2 2]};
 
-%% Initialize natural frequencies, damping, pole vectros
+% Constant matrices
+% Set airspeed independent system and input matrix
+A1 = [zeros(4), L;...
+    -M\K, -M\Ce];
+
+% Initialize natural frequencies, damping, pole vectros
 lenLinV = length(Lin.V);
 sysCell = cell(lenLinV,1);
 u_bar_cell = cell(lenLinV,1);
 x_bar_cell = cell(lenLinV,1); % X(s) = (sI - A)^1 *B *U(s), xdot = 0 = Ax +Bu
 y_bar_cell = cell(lenLinV,1);
 
-%% Get and check FAST input and output names
-
-% Get index FAST outputs
-%noOut = 2;
+% Get and check FAST input and output names
 idxFASTOutputAll = [38 12 13];
 idxFASTOutput = idxFASTOutputAll(1:noOut);
 idxFASTInput = [8 9 1];
@@ -215,6 +212,7 @@ for index =  speedVec
     A12 = 1/wecs.Js * dTrdydotfa;
 
     % ydotdotfa = 1/Mt( -Bt * ydotfa - Kt* yfa +Ft)
+    wecs.mt = wecs.mtb;
     A21 = 1/wecs.mt * dFtdomega;
     A22 = 1/wecs.mt * dFtdydotfa;
 
@@ -262,54 +260,81 @@ for index =  speedVec
     %% Linear Model Mdl2: System and input matrices
     % Set up system and input matrices dependent on airspeed, pitch and rotor speed  x_FA
 
-    A9DoF = [A1(1:4,:) ,zeros(4,2); % states 1 - 4: y_FA,delta,x_sw, Theta_s
-        ...
-        [A1(5,1:4), ... % state 5: xdot_FA (from  states 1 - 4: y_FA,delta,x_sw, Theta_s)
-        A1(5,5) - B1(5,1)*dFtdV,... % state 5-> 5: xdot_FA <- xdot_FA
-        A1(5,6) - B1(5,1)*dFtdV*wecs.rb, ...% state 6-> 5: xdot_FA <- delta
-        A1(5,7), ... % state 7 > 5: xdot_FA <- xdot_sw
-        A1(5,8) + B1(5,1)*dFtdomega, ... % state 8 > 5: xdot_FA <- omega_r
-        A1(5,9), ...  % state 9 > 5: xdot_FA <- xdot_sw % state 10, 11 > 5: xdot_FA <- Tg, beta
-        0 , B1(5,1)*dFtdbeta];
-        ...
-        [A1(6,1:4), ...% state 6: delta (from  states 1 - 4: y_FA,delta,x_sw, Theta_s)
-        A1(6,5) - B1(6,1)*dFtdV,... % state 5> 6: delta<- xdot_FA
-        A1(6,6) - B1(6,1)*dFtdV*wecs.rb,... % state 5> 6: delta<- xdot_FA
-        A1(6,7), ... % delta<- xdot_FA
-        A1(6,8) + B1(6,1)*dFtdomega, ... % state 5> 6: delta<- xdot_FA
-        A1(6,9), ... % state 5> 6: delta<- xdot_FA
-        0 ,B1(6,1)*dFtdbeta];
-        ...
-        [A1(7,1:4), ... % state 7: x_sw (from  states 1 - 4: y_FA,delta,x_sw, Theta_s)
-        A1(7,5) - ksw * B1(7,2)*dTrdV,...
-        A1(7,6) - ksw * B1(7,2)*dTrdV*wecs.rb,...
-        A1(7,7), ...
-        A1(7,8) + ksw * B1(7,2)*dTrdomega, ...
-        A1(7,9),...
-        B31, ksw * B1(7,2)*dTrdbeta]; %  B31 = wecs.Ng/wecs.mtb *3/(2*wecs.H); Tg -> x_sw
-        ...
-        [A1(8,1:4), ... % state 8: omega_r (from  states 1 - 4: y_FA,delta,x_sw, Theta_s)
-        A1(8,5) - B1(8,3)*dTrdV,...
-        A1(8,6) - B1(8,3)*dTrdV*wecs.rb, ....
-        A1(8,7), ...
-        A1(8,8) + B1(8,3)*dTrdomega, ...
-        A1(8,9), ...
-        B11, B1(8,3)*dTrdbeta]; %  B11 = - wecs.Ng/wecs.Jr; Tg -> omega_r (instead of B1(8,1))
-        ...
-        [A1(9,1:6), A1(9,7) , A1(9,8:9) , -B11 ,0]; %B1(9,4)
-        zeros(1,9),  -1/kappa, 0;...
-        zeros(1,10),  -1/tau];
+    C5aero =  [B1_3(5,1) * [-dFtdV, -dFtdV*wecs.rb, 0, dFtdomega 0]; ... % yFAdot
+        B1_3(6,1) * [-dFtdV, -dFtdV*wecs.rb, 0, dFtdomega 0]; ... % deltaDot
+        B1_3(7,2) *[-dTrdV, -dTrdV*wecs.rb,0,dTrdomega,0];... % xSWdot
+        B1_3(8,2) *[-dTrdV, -dTrdV*wecs.rb,0,dTrdomega,0];... % omega_r
+        zeros(1,5)];  % omega_gr
+    QTildaTg = [0;0; B1_3(7,3);B11; -B11 ]; %B1_3(9,3);
+    QTildaBeta = [B1_3(5,1) *dFtdbeta; B1_3(6,1)*dFtdbeta; B1_3(7,2) * dTrdbeta;...
+        B1_3(8,2)*dTrdbeta;0];
+    QTildaV = [B1_3(5,1) * dFtdV; B1_3(6,1) * dFtdV; B1_3(7,2) * dTrdV;...
+        B1_3(8,2)*dTrdV;0];
 
+
+    A9DoF = zeros(size(A1) + 2); % 9 states + 2 ctrl input
+    A9DoF(1:4,:) = [A1(1:4,:) ,zeros(4,2)]; % states 1 - 4: y_FA,delta,x_sw, Theta_s
+    A9DoF(5:9,1:4) = -M\K;
+    A9DoF(5:9,5:9) = -M\Ce + C5aero; % states 5 - 9: y_FA,delta,x_sw, w_r, w_gr
+    A9DoF(5:9,10:11) = [QTildaTg, QTildaBeta];
+    %A9DoF(10:11,:) = zeros(2,11); % states 10 - 11: T_g, beta
+    A9DoF(10,10) =  -1/kappa;
+    A9DoF(11,11) =  -1/tau;
+
+
+    B9DoF = zeros(size(A1,1) + 2,3); % 3 inputs -> 9 states + 2 ctrl input
+    B9DoF(5:9,3) = QTildaV;
+    B9DoF(10,1) = 1/kappa;
+    B9DoF(11,2) = 1/tau;
+
+    %     A9DoForig = [A1(1:4,:) ,zeros(4,2); % states 1 - 4: y_FA,delta,x_sw, Theta_s
+    %         ...
+    %         [A1(5,1:4), ... % state 5: xdot_FA (from  states 1 - 4: y_FA,delta,x_sw, Theta_s)
+    %         A1(5,5) - B1(5,1)*dFtdV,... % state 5-> 5: xdot_FA <- xdot_FA
+    %         A1(5,6) - B1(5,1)*dFtdV*wecs.rb, ...% state 6-> 5: xdot_FA <- delta
+    %         A1(5,7), ... % state 7 > 5: xdot_FA <- xdot_sw
+    %         A1(5,8) + B1(5,1)*dFtdomega, ... % state 8 > 5: xdot_FA <- omega_r
+    %         A1(5,9), ...  % state 9 > 5: xdot_FA <- xdot_sw % state 10, 11 > 5: xdot_FA <- Tg, beta
+    %         0 , B1(5,1)*dFtdbeta];
+    %         ...
+    %         [A1(6,1:4), ...% state 6: delta (from  states 1 - 4: y_FA,delta,x_sw, Theta_s)
+    %         A1(6,5) - B1(6,1)*dFtdV,... % state 5> 6: delta<- xdot_FA
+    %         A1(6,6) - B1(6,1)*dFtdV*wecs.rb,... % state 5> 6: delta<- xdot_FA
+    %         A1(6,7), ... % delta<- xdot_FA
+    %         A1(6,8) + B1(6,1)*dFtdomega, ... % state 5> 6: delta<- xdot_FA
+    %         A1(6,9), ... % state 5> 6: delta<- xdot_FA
+    %         0 ,B1(6,1)*dFtdbeta];
+    %         ...
+    %         [A1(7,1:4), ... % state 7: x_sw (from  states 1 - 4: y_FA,delta,x_sw, Theta_s)
+    %         A1(7,5) - ksw * B1(7,2)*dTrdV,...
+    %         A1(7,6) - ksw * B1(7,2)*dTrdV*wecs.rb,...
+    %         A1(7,7), ...
+    %         A1(7,8) + ksw * B1(7,2)*dTrdomega, ...
+    %         A1(7,9),...
+    %         B31, ksw * B1(7,2)*dTrdbeta]; %  B31 = wecs.Ng/wecs.mtb *3/(2*wecs.H); Tg -> x_sw
+    %         ...
+    %         [A1(8,1:4), ... % state 8: omega_r (from  states 1 - 4: y_FA,delta,x_sw, Theta_s)
+    %         A1(8,5) - B1(8,3)*dTrdV,...
+    %         A1(8,6) - B1(8,3)*dTrdV*wecs.rb, ....
+    %         A1(8,7), ...
+    %         A1(8,8) + B1(8,3)*dTrdomega, ...
+    %         A1(8,9), ...
+    %         B11, B1(8,3)*dTrdbeta]; %  B11 = - wecs.Ng/wecs.Jr; Tg -> omega_r (instead of B1(8,1))
+    %         ...
+    %         [A1(9,1:6), A1(9,7) , A1(9,8:9) , -B11 ,0]; %B1(9,4)
+    %         zeros(1,9),  -1/kappa, 0;...
+    %         zeros(1,10),  -1/tau];
+    %
     A7DoF = A9DoF(1:9,1:9);
-
-    B9DoF = [zeros(4,3);... % states 1 - 4: y_FA,delta,x_sw, Theta_s
-        zeros(1,2),B1(5,1)*dFtdV;... % state 5: ydot_FA
-        zeros(1,2),B1(6,1)*dFtdV;...% state 6: xdot_FA
-        B31,0,B1(7,2)*ksw *dTrdV;...% state 7: xdot_SW
-        B11,0,B1(8,3)*dTrdV;... state 8: omega_r
-        zeros(1,3);... state 9: omega_gr
-        1/kappa, 0,0;...
-        0,1/tau,0];
+    %
+    %     B9DoF = [zeros(4,3);... % states 1 - 4: y_FA,delta,x_sw, Theta_s
+    %         zeros(1,2),B1(5,1)*dFtdV;... % state 5: ydot_FA
+    %         zeros(1,2),B1(6,1)*dFtdV;...% state 6: xdot_FA
+    %         B31,0,B1(7,2)*ksw *dTrdV;...% state 7: xdot_SW
+    %         B11,0,B1(8,3)*dTrdV;... state 8: omega_r
+    %         zeros(1,3);... state 9: omega_gr
+    %         1/kappa, 0,0;...
+    %         0,1/tau,0];
 
     B7DoF = B9DoF(1:9,:);
     B7DoF(:,1) = A9DoF(1:9,8+2); % Torque Tg as input
@@ -335,7 +360,7 @@ for index =  speedVec
         Mdl2Str = ' Rot,Twr,Bld+Act ';
     else
         sysLagrange = ss(A7DoF,B7DoF*diag(multFASTInput0),C7DoF,D7DoF*diag(multFASTInput0)); % to give input Tg in kN/m
-        Mdl2Str = ' Rot,Twr + Bld ';
+        Mdl2Str = ' Rot,Twr,Gen+Bld ';
     end
 
     sysLagrange.Outputname = sysOutputname;
@@ -421,59 +446,25 @@ for index =  speedVec
 
         gapCell.norm9DoF{index} = tempNormMatrix9;
         gapCell.norm5DoF{index} = tempNormMatrix5;
-        
 
+        
         % Title string
         titleStr = sprintf('Bode mag. plot for V = %d, pitch = %2.2f, and TSR = %2.4f',Vbar,beta_bar,Lambda_bar);
         titleCell = {titleStr, [legCell{1},legCell{2},strExtr]};
-        title(titleCell)
+        title(['V_{\infty}',sprintf(' = %d: %s', Vbar, titleCell{2})]); %title(titleCell)
 
         % Figure information
         figStr = [strrep(titleStr,'Bode mag. plot for V =','Figure_Bode V ='),'.png'];
         figFolderStr = fullfile(figFolder,figStr);
+
         figFolderStrEps = fullfile(figFolder,sprintf('BodeV%d',Vbar));
         posaxes =   get(0,'defaultFigurePosition');
         set(gcf,'Position',[posaxes(1:3),posaxes(4)*1.1]);
-        title(sprintf('V = %d: %s', Vbar, titleCell{2}))
 
         print(figFolderStr, '-dpng');
         print(figFolderStrEps, '-depsc');
 
-        %%  code for debugging
-%         idxOut = 3; idxIn = 2; test5 = sys5DoF(idxOut,idxIn);
-%         test9 = sysLagrange(idxOut,idxIn);
-%         testFAST = model(idxOut,idxIn);
-%         
-%         idxStates = [1,2,5,[1,2,5]+15];
-%         
-%         modelRed = ss(testFAST.A(idxStates,idxStates), testFAST.B(idxStates,:), testFAST.c(:,idxStates), testFAST.d);
-%         
-%         omegaVec = linspace(0.01,10);
-%         
-%         kG = 20;
-%         
-%         yTestFAST = bode(testFAST,omegaVec);
-%         yTestLogFAST = kG*log10(squeeze(yTestFAST));
-%         
-%         yTestst5 = bode(test5,omegaVec);
-%         yTestLogst5 = kG*log10(squeeze(yTestst5));
-%         
-%         yTestst9 = bode(test9,omegaVec);
-%         yTestLogst9 = kG*log10(squeeze(yTestst9));
-%         
-%         yTestFASTRed = bode(modelRed,omegaVec);
-%         yTestLogFASTRed = kG*log10(squeeze(yTestFASTRed));
-%         
-%         figure; semilogx(omegaVec,yTestLogFAST,omegaVec,yTestLogst9,'b--',...
-%             omegaVec,yTestLogst5,'r--',omegaVec,yTestLogFASTRed,'k--' )
-%         figure; bodemag(testFAST,test9,'b--',test5,'r-.',modelRed,'k--',omegaVec)
-
-        %         {'ED Variable speed generator DOF (internal DOF index = DOF_GeAz), rad'
-        %         'ED 1st tower fore-aft bending mode DOF (internal DOF index = DOF_TFA1), m'
-        %         'ED 1st tower side-to-side bending mode DOF (internal DOF index = DOF_TSS1), m'
-        %         'ED First time derivative of 1st tower fore-aft bending mode DOF (internal DOF index = DOF_TFA1), m/s'
-        %         'ED First time derivative of 1st tower side-to-side bending mode DOF (internal DOF index = DOF_TSS1), m/s'};
-
+        
     end
 
 end

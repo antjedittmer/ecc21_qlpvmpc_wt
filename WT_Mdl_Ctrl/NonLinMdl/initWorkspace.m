@@ -2,12 +2,13 @@
 clear; close all; clc; 
 restoredefaultpath;
 bdclose all;
-% Simulink.data.dictionary.closeAll;
+clear ABgL_WT; % LUT variables saved as persistent variables
+Simulink.data.dictionary.closeAll;
 
 %% Set paths
 dataIn = 'dataIn'; % external data from FAST linearization, FASTtool
 dataOut = 'dataOut'; % data from simulation runs, saved to not run all simulation again
-dirSub = {'subfunctionsUtil', 'subfunctionsMPC','WECSCtrl', 'WECSMDl','WECSAct'}; 
+dirSub = {'subfunctionsMPC', 'subfunctionsUtil', 'WECSCtrl', 'WECSMDl','WECSAct'}; 
 
 % Get relative paths with respect to testCrl.m file
 dirFileName = mfilename('fullpath');
@@ -40,23 +41,15 @@ end
 %% Load FASTTool wind as test signal
 DT = 0.008; % one sample time 
 load(fullfile(dataInPath,'OutDataSweep.mat'),'OutTable');
-%load(fullfile(dataInPath,'OutDataWind18NTW.mat'),'OutTable');
-
-%% Create bus objects used in all Simulink models
-% These buses do not need to be created anymore as they are stored in the
-% data dictionaries
-Mdl_TuDelftOLFunction(0);
-MdLCtrl_BaselineFunction(0);
-
-%% Initialize path to FASTFile: FAST_InputFileName and OutList
-testqLPV; %
-TMax = 660; %Can be overwritten later on
-
+%load(fullfile(dataInPath,'OutDataWind18NTM.mat'),'OutTable');
 
 %% Clean-up
 clear RESTORE*
-%clear data*
+clear data*
 clear dir*
 
+FAST_InputFileName = fullfile(pwd,'inputfiles', 'FAST.fst');
+TMax = 660;
+load('OutList')
 
 

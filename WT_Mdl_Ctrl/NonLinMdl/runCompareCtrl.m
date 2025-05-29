@@ -1,4 +1,4 @@
-function runCompareCtrl(strWindType,loadData,figNo1,useFASTForComparison)
+function runCompareCtrl(strWindType,loadData,figNo1,useFASTForComparison,figDirStr)
 % runComparCtrl compares simulation results for baseline and qLPV MPC
 % controller in closed loop with the Simulink WECS model.
 %
@@ -14,7 +14,7 @@ function runCompareCtrl(strWindType,loadData,figNo1,useFASTForComparison)
 % The default inputs are provided here.
 
 if ~nargin || isempty(strWindType) 
-    strWindType = 'NTW18';   
+    strWindType =  'Sweep'; %
 end
 
 if nargin < 2 || isempty(loadData)
@@ -29,6 +29,10 @@ if nargin < 4 || isempty(useFASTForComparison)
     useFASTForComparison = 1;
 end
 
+if nargin <5 || isempty(figDirStr)
+    figDirStr = 'figDir';
+end
+
 %% Set path to directories
 
 % Set path to inputdata directory
@@ -38,7 +42,7 @@ dataInDir = fullfile( mainDir,'dataIn');
 addpath(dataInDir);
 
 % Set path to figure directory
-figDir = fullfile(mainDir,'figDir');
+figDir = fullfile(mainDir,figDirStr);
 if ~isfolder(figDir)
     mkdir(figDir)
 end
@@ -51,7 +55,7 @@ end
 
 % Names of simulation output in correct order
 varnames = {'Wind', 'RotSpeed', 'GenPwr', 'GenTq', 'BlPitch1', ...
-    'NcIMUTAxs', 'NcIMUTAys','zeta'}; 
+    'NcIMUTAxs', 'NcIMUTAys'}; 
 
 % Weight values (copied from MATLAB function)
 q_ = [1 10^4 0 10^3 10^3 0 0 0];
@@ -108,7 +112,6 @@ r = GenPwrRef;
 % Plot and compare closed-loop results
 plotComparison(OutTableTest2,OutTableMPC,q_,r_,p,DT,figStr,figDir,r,timeForPlot,meanOpt,figNo1)
 
-
 function plotComparison(OutTableTest2,OutTableMPC,q_,r_,p,DT,figStr,figDir,r,timeForPlot,meanOpt,figNo1)
 %plotComparison plots the time series obtained with baseline and qLPVMPC
 
@@ -152,7 +155,7 @@ titleStdqLPV_Pwr = sprintf('%2.2e',varqLPV_Pwr);
 ratioStd_Pwr = sprintf('%2.1f ', varPI_Pwr/varqLPV_Pwr);
 
 % axis for plot
-yAxCell = {'wind V [m/s]', 'Twr_{FA} y_t [m/s^2]','GenPwr P_g [kW]'};
+yAxCell = {'wind V (m/s)', 'Twr_{FA} (m/s^2)','GenPwr P_g (kW)'};
 
 %% Plot
 % Plot input wind, tower fore-aft acceleration and generator power
@@ -164,32 +167,109 @@ ax1(1) = subplot(3,1,1);
 plot(timeVecPlot, OutTableMPCPlot.Wind);
 ylabel(yAxCell{1}); 
 axis tight; grid on;
-title({['Baseline (P-PI) vs. qLPV MPC; ', meanOpt],... %WT mdl: Model2
+title({['Baseline (P-PI) vs. qLMPC; ', meanOpt],... %WT mdl: Model2
     ['q_ = [', qVec,'], r = [',rVec,'], p = ',pVec,'* q']})
 
 % Tower fore-aft acceleration
 ax1(2) = subplot(3,1,2);
 plot(timeVecPlot, OutTableTest2Plot.NcIMUTAxs, timeVecPlot,OutTableMPCPlot.NcIMUTAxs,'-.');
-title([yAxCell{2}, ': var_{P-Pi} = ',titleStdPI , ', var_{qLPVMPC} = ' ,titleStdqLPV,', ratio: ' ,ratioStd])
+title([yAxCell{2}, ': var_{PI}: ',titleStdPI , ', var_{qLMPC}: ' ,titleStdqLPV,', ratio: ' ,ratioStd])
 ylabel(yAxCell{2}); %'y_t [m/s^2]')
 axis tight; grid on;
 
 % Generator power
 ax1(3) = subplot(3,1,3);
 plot(timeVecPlot, OutTableTest2Plot.GenPwr, timeVecPlot,OutTableMPCPlot.GenPwr,'-.',timeVecPlot,PGRef,'k:');
-title(['|P_{g,ref}  - P_g| [kW]: var_{P-Pi} = ',titleStdPI_Pwr, ', var_{qLPVMPC} = ' ,...
+title(['|P_{g,ref}-P_g| [kW]: var_{PI}: ',titleStdPI_Pwr, ', var_{qLMPC}: ' ,...
     titleStdqLPV_Pwr,', ratio: ' ,ratioStd_Pwr])
 ylabel(yAxCell{3}); %'P_g [kW]')
 axis tight; grid on;
 legend('P-PI','MPC','P_{g,ref}','Location','SouthEast')
-xlabel('time [s]');
+xlabel('Time (s)');
 
 % Link axes and set poisition
 linkaxes(ax1,'x')
 set(gcf,'Name', figStr)
+
 posDefault = [520   378   560   420]; %get(gcf, 'position');
 set(gcf, 'position', [posDefault(1:3),posDefault(4)*1.1]);
 
+set(findall(gcf,'-property','FontSize'),'FontSize',11.5)
+set(findall(gcf,'-property','LineWidth'),'LineWidth',0.75)
+
+
 print(gcf,[fullfile(figDir,'cmpCtrlSimulink_PI_MPC'),'_',figStr,'_',num2str(timeVecPlot(end))], '-dpng');
 print(gcf,[fullfile(figDir,'cmpCtrlSimulink_PI_MPC'),'_',figStr,'_',num2str(timeVecPlot(end))], '-depsc');
+
+
+%% Figure for paper and dissertation
+figure(figNo1+1)
+
+% dc = [double('x'),776]; chX = char(dc);
+%    yAxCell = {'Wind V (m/s)', 'GenTq T_g (kNm)', 'Pitch \beta (°)', 'RotSpd \omega_r (rpm)',...
+%     'GenPwr P_g (MW)',['Twr_{FA}',chX,'_{t} (m/s^2)'], 'Twr_{SW} x_t (m/s^2)'};
+
+   yAxCell = {'Wind V (m/s)', 'GenTq T_g (kNm)', 'Pitch \beta (°)', 'RotSpd \omega_r (rpm)',...
+    'GenPwr P_g (MW)','TwrAcc_{FA} (m/s^2)', 'TwrAcc_{SW} (m/s^2)'};
+
+
+
+titleStr = ['Baseline (P-PI) vs. qLPV MPC; ', meanOpt];
+nAx = 7;
+tiledlayout(nAx,1,'TileSpacing','Compact');
+
+axPlotAll(1) = nexttile; %subplot(nAx,1,1);
+plot(timeVecPlot,OutTableMPCPlot.Wind); 
+axis tight; grid on;
+ylabel(yAxCell{1}); %'wind [m/s]')
+title(titleStr);
+  
+axPlotAll(2) = nexttile; %axPlotAll(2) = subplot(nAx,1,2);  
+plot(timeVecPlot,OutTableTest2Plot.GenTq/1000,timeVecPlot,OutTableMPCPlot.GenTq/1000,'-.');
+axis tight;
+posAxis = axis;
+axis([posAxis(1:2), min(43,posAxis(3)), 44]);
+grid on; % axis tight;
+%grid on;
+ylabel(yAxCell{2}); %'GenTq T_g [Nm]') 
+
+axPlotAll(3) = nexttile; %axPlotAll(3) = subplot(nAx,1,3);
+plot(timeVecPlot,OutTableTest2Plot.BlPitch1,timeVecPlot,OutTableMPCPlot.BlPitch1,'-.'); 
+axis tight; grid on;
+ylabel(yAxCell{3}); %'Pitch \beta [°]')
+
+axPlotAll(4) = nexttile; %axPlotAll(4) = subplot(nAx,1,4);
+plot(timeVecPlot,OutTableTest2Plot.RotSpeed * 30/pi,timeVecPlot,OutTableMPCPlot.RotSpeed,'-.');
+axis tight; grid on;
+ylabel(yAxCell{4}); %'RotSpd \omega_r [rpm]')
+
+axPlotAll(5) = nexttile; %axPlotAll(5) = subplot(nAx,1,5);
+plot(timeVecPlot,OutTableTest2Plot.NcIMUTAxs,timeVecPlot,OutTableMPCPlot.NcIMUTAxs,'-.');
+axis tight; grid on;
+ylabel(yAxCell{6}); %'Twr_{FA} y_t[m/s^2]')
+
+axPlotAll(6) = nexttile; %axPlotAll(6) = subplot(nAx,1,6);
+plot(timeVecPlot,OutTableTest2Plot.NcIMUTAys,timeVecPlot,OutTableMPCPlot.NcIMUTAys,'-.');
+axis tight; grid on;
+ylabel(yAxCell{7}); %'Twr_{SW} x_t[m/s^2]')
+set(axPlotAll(6),'YLim', get(axPlotAll(5) ,'YLim'))
+
+axPlotAll(7) = nexttile; %axPlotAll(7) = subplot(nAx,1,7);
+plot(timeVecPlot,OutTableTest2Plot.GenPwr/1000,timeVecPlot,OutTableMPCPlot.GenPwr/1000,'-.');
+axis tight; grid on;
+ylabel(yAxCell{5}); %'GenPwr P_g [MW]')
+xlabel('Time (s)')
+linkaxes(axPlotAll,'x');
+
+set(gcf,'Name',['cmpCtrlTimeDomain_All_',figStr])
+posDefault = get(0,'DefaultFigurePosition');
+set(gcf, 'position', [posDefault(1),posDefault(2) - posDefault(4)*0.7,posDefault(3),posDefault(4)*2.1]);
+
+set(findall(gcf,'-property','FontSize'),'FontSize',11.5)
+set(findall(gcf,'-property','LineWidth'),'LineWidth',0.75)
+
+%set(groot,'defaultLineLineWidth',defaultLineWidth);
+
+print(fullfile(figDir,['cmpCtrlTimeDomain_All_',figStr]), '-dpng');
+print(fullfile(figDir,['cmpCtrlTimeDomain_All_',figStr]), '-depsc');
 
