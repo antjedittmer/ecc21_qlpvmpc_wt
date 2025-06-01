@@ -1,4 +1,4 @@
-function runCompareCtrl(strWindType,loadData,figNo1,useFASTForComparison,figDirStr)
+function runCompareCtrl(strWindType,loadData,figNo1,useFASTForComparison,figDirStr,simMdlname)
 % runComparCtrl compares simulation results for baseline and qLPV MPC
 % controller in closed loop with the Simulink WECS model.
 %
@@ -14,11 +14,11 @@ function runCompareCtrl(strWindType,loadData,figNo1,useFASTForComparison,figDirS
 % The default inputs are provided here.
 
 if ~nargin || isempty(strWindType) 
-    strWindType =  'Sweep'; %
+    strWindType = '18NTW'; % ; %'Sweep';
 end
 
 if nargin < 2 || isempty(loadData)
-    loadData = 0; %load simulation output data if available;
+    loadData = 1; %load simulation output data if available;
 end
 
 if nargin < 3 || isempty(figNo1) 
@@ -33,6 +33,10 @@ if nargin <5 || isempty(figDirStr)
     figDirStr = 'figDir';
 end
 
+
+if nargin < 6
+    simMdlname = 'test_FAST_qLPVMPC.slx';%'test_SimulinkMdl2_qLPVMPCbeta.slx'; %
+end
 %% Set path to directories
 
 % Set path to inputdata directory
@@ -55,7 +59,7 @@ end
 
 % Names of simulation output in correct order
 varnames = {'Wind', 'RotSpeed', 'GenPwr', 'GenTq', 'BlPitch1', ...
-    'NcIMUTAxs', 'NcIMUTAys'}; 
+    'NcIMUTAxs', 'NcIMUTAys','zeta'}; 
 
 % Weight values (copied from MATLAB function)
 q_ = [1 10^4 0 10^3 10^3 0 0 0];
@@ -65,10 +69,12 @@ p = 10^3;
 % Switch between Sweep and NTW18
 if strcmp(strWindType,'Sweep') == 1 % sweep from 4 to 25 in steps
     outDataSimulationMat = 'OutDataSweep.mat';
-    strFig = ''; 
+    FAST_InputFileName = fullfile(workDir,'inputfiles', 'FAST.fst');
+    strFig = '';
 else % wind with average 18 m/s
     outDataSimulationMat = 'OutDataWind18NTW.mat';
-    strFig = 'NTW18'; 
+    FAST_InputFileName = fullfile(workDir,'inputfilesNTM', 'FAST.fst');
+    strFig = 'NTW18';
 end
 
 %% Load baseline and MPC data or run simulations
@@ -79,12 +85,15 @@ load(outDataSimulationMat ,'OutTable');
 % Load data closed loop simulation PI
 if useFASTForComparison % from FAST
     OutTableTest2 = OutTable;
+   
+   
 else % from Simulink
     loadBaseline = 1; %always load if available
     matFileOutTableTest2 = fullfile(dataDirOut,['OutTableTest2',strFig,'.mat']);
     simMdlname2 = 'test_SimulinkMdl2_Baseline';
     OutTableTest2 = getSimulationOutputTable(matFileOutTableTest2,loadBaseline,OutTable,simMdlname2);    
 end
+
 
 % Check that SI units are used (can be removed, 
 if mean(OutTableTest2.GenTq) <100 % protection against legacy data in kNm
@@ -96,9 +105,14 @@ if mean(OutTableTest2.RotSpeed) >1
 end
 
 % Run or load qLPV controller
-simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta.slx'; %
+
+%simMdlname =  'test_FAST_qLPVMPC';
 matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPC',strFig,'.mat']);
-[OutTableMPC, tictoc_LPVMPC,GenPwrRef] = getSimulationOutputTable(matFileOutTableTest1,loadData,OutTable,simMdlname,varnames);
+if contains(simMdlname,'FAST')
+     matFileOutTableTest1 = fullfile(dataDirOut,['OutTableMPC',strFig,'FAST.mat']);
+end
+
+[OutTableMPC, tictoc_LPVMPC,GenPwrRef] = getSimulationOutputTable(matFileOutTableTest1,loadData,OutTable,simMdlname,varnames,FAST_InputFileName);
 
 %% Prepare information for plots and plot data
 

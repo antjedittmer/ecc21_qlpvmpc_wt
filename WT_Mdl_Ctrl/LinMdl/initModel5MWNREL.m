@@ -107,7 +107,7 @@ wecs.H =  90; % 87.6;
 
 wecs.Jg = 534.116; %  kg*m^2; Inertia of the generator
 wecs.Jr = x(2) * 3.8759e+07; % 3.8759e+07; %
-wecs.JrL = 115926 + 3 * 11.776e6; % kg*m^2; Inertia of the rotor (Hub inertia + 3 blades)
+wecs.JrL = wecs.Jr; %115926 + 3 * 11.776e6; % kg*m^2; Inertia of the rotor (Hub inertia + 3 blades)
 wecs.Js = wecs.Jr + wecs.Ng^2*wecs.Jg;
 f0 = 0.324;  % Hz, First natural tower fore-aft frequency
 f0sw = 0.3120;% ; % First natural tower sidewards frequency
@@ -202,7 +202,7 @@ if scaleLoopUp == 1
     lookupTable = Cq;
     minValue = min(lookupTable(:));
     maxValue = max(lookupTable(:));
-    newMaxValue = maxValue * 0.9475; % Reduce the highest point by 0.95%  * 0.9475
+    newMaxValue = maxValue * 0.9475; % Reduce the highest point by 0.95%  * 0.9475 0.93; %
 
     % Cq: Apply linear scaling to adjust all values smoothly
     scaledTable = (lookupTable - minValue) / (maxValue - minValue); % Normalize to [0, 1]

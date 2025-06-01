@@ -31,6 +31,6 @@ runCompareModels(18,loadData,figNo); %'NTW18'
 % Run models in closed loop with qLPV MPC
 figNo1 = 7;
 runCompareCtrl('Sweep',loadData,figNo1);
-figNo1 = 8;
+figNo1 =8;
 runCompareCtrl('NTW18',loadData,figNo1);
 

@@ -1,4 +1,4 @@
-function [currentOutTableTest, tictoc_LPVMPC,GenPwrRef] = getSimulationOutputTable(matFileOutTableTest1,loadData,OutTable,simMdlname1,varnames)
+function [currentOutTableTest, tictoc_LPVMPC,GenPwrRef] = getSimulationOutputTable(matFileOutTableTest1,loadData,OutTable,simMdlname1,varnames,FAST_InputFileName)
 % OutTableTest1 retrieves simulation data, either from previous runs or by
 % running the simulation. All inputs but varnames are required.
 %
@@ -20,6 +20,10 @@ if nargin < 5 || isempty(varnames)
     'NcIMUTAxs', 'NcIMUTAys'}; %%'Tower FA acc', 'Tower SS acc'};
 end
 
+if nargin < 6
+    FAST_InputFileName = '';
+end
+
 % Get the name of the table
 [~, strTable] = fileparts(matFileOutTableTest1);
 
@@ -37,9 +41,13 @@ else
     WS = 'base';
     % assignin(WS,'DT',DT)
     assignin(WS,'OutTable',OutTable)
+    assignin(WS,'FAST_InputFileName',FAST_InputFileName)
     open_system(simMdlname1);
     out1 = sim(simMdlname1,'SrcWorkspace',WS);
-    varnames = varnames(1: size(out1.OutDataTest,2));
+
+    varnamesPlus = [varnames,'zeta'];
+    varnames =  varnamesPlus(1: size(out1.OutDataTest,2));
+
     currentOutTableTest = array2table(out1.OutDataTest,'VariableNames',varnames);
     eval([strTable,' = currentOutTableTest;']);
     if contains(strTable,'MPC')
