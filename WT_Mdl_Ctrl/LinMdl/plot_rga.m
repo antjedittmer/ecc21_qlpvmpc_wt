@@ -28,11 +28,11 @@ SamplePoints = (upperb-lowerb)*1000;
 s= 1i *logspace(lowerb,upperb,SamplePoints);
 for k=1:1:SamplePoints
     Gsample(:,:,k)=evalfr(G,s(1,k));
-    lambda11(1,k)=Gsample(1,1,k)*Gsample(2,2,k)/(Gsample(1,1,k)*Gsample(2,2,k)-Gsample(1,2,k)*Gsample(2,1,k));
-    lambda12(1,k)=-Gsample(1,2,k)*Gsample(2,1,k)/(Gsample(1,1,k)*Gsample(2,2,k)-Gsample(1,2,k)*Gsample(2,1,k));
-    lambda21(1,k)=lambda12(1,k);
-    lambda22(1,k)=lambda11(1,k);
-    lambda(:,:,k)=[lambda11(1,k) lambda12(1,k); lambda21(1,k) lambda22(1,k)];
+    lambda11(1,k)= Gsample(1,1,k) * Gsample(2,2,k)/(Gsample(1,1,k)*Gsample(2,2,k)-Gsample(1,2,k)*Gsample(2,1,k));
+    lambda12(1,k)= -Gsample(1,2,k) * Gsample(2,1,k)/(Gsample(1,1,k)*Gsample(2,2,k)-Gsample(1,2,k)*Gsample(2,1,k));
+    lambda21(1,k)= lambda12(1,k);
+    lambda22(1,k)= lambda11(1,k);
+    lambda(:,:,k)= [lambda11(1,k) lambda12(1,k); lambda21(1,k) lambda22(1,k)];
 end
     
 f=abs(s);

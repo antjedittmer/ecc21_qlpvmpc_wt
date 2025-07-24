@@ -21,18 +21,18 @@ load('NREL5MW_CPdata_new3','Rotor_Lamda', 'Rotor_Pitch', ...
     'Rotor_cQ', 'Rotor_cT');
 
 %% Initialize name of models and load into workspace
-idxModelNames = 1:2; %:2; %1:2; %1:5
-modelNames =[{'NREL5MW_linearised_4to25'},{'NREL5MW_linearised'}]; %
-%     {'NREL5MW_linearised_Gen_Fa_Flap1'};{'NREL5MW_linearised'}; %
-%     {'NREL5MW_linearised_Gen_Fa_SS_Flap1'};
-%     {'NREL5MW_linearised_Gen_DriveTrain_Fa_SS_Flap1'}; {'NREL5MW_linearised'} ];
+idxModelNames = 1:4; %:2; %1:2; %1:5
+modelNames =[{'NREL5MW_linearised_4to25'};%{'NREL5MW_linearised'}; %
+    {'NREL5MW_linearised_Gen_Fa_Flap1'}; %
+   {'NREL5MW_linearised_Gen_Fa_SS_Flap1'};
+   {'NREL5MW_linearised_Gen_DriveTrain_Fa_SS_Flap1'}; ]; %{'NREL5MW_linearised'} 
 modelNames = modelNames(idxModelNames);
 
 modelsL = [{'FAST 30 states'};
-    {'FAST 10 states'};
+    {'FAST Rot+FA+1^{st} flap mode (10 states)'};
     {'Fast Rot+FA+SW+1^{st} flap mode (12 states)'};
     {'Fast Rot+drive train+FA+SW+1^{st} flap mode (14 states)'};
-    {'Fast Rot+FA (4 states)'}];
+     ];
 
 modelsL = modelsL(idxModelNames);
 
@@ -48,6 +48,7 @@ for idxModels = 2 : lenModelNames
     load(modelNames{idxModels},'sysm','sysm_MBC');
     sysmCell{idxModels} = sysm;
     sysmCell_MBC{idxModels} = sysm_MBC;
+    %size(sysm{1})
 end
 
 

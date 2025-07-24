@@ -14,15 +14,15 @@ function runCompareCtrl(strWindType,loadData,figNo1,useFASTForComparison,figDirS
 % The default inputs are provided here.
 
 if ~nargin || isempty(strWindType) 
-    strWindType = '18NTW'; % ; %'Sweep';
+    strWindType =  '18NTW'; % ;  'Sweep'; % 
 end
 
 if nargin < 2 || isempty(loadData)
-    loadData = 1; %load simulation output data if available;
+    loadData = 0; %load simulation output data if available;
 end
 
 if nargin < 3 || isempty(figNo1) 
-    figNo1 = 1;
+    figNo1 = 100;
 end
 
 if nargin < 4 || isempty(useFASTForComparison)
@@ -33,9 +33,8 @@ if nargin <5 || isempty(figDirStr)
     figDirStr = 'figDir';
 end
 
-
 if nargin < 6
-    simMdlname = 'test_FAST_qLPVMPC.slx';%'test_SimulinkMdl2_qLPVMPCbeta.slx'; %
+    simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta.slx'; %  'test_FAST_qLPVMPC.slx';% 
 end
 %% Set path to directories
 
@@ -43,7 +42,7 @@ end
 workDir = fileparts(mfilename('fullpath'));
 mainDir = fileparts(workDir);
 dataInDir = fullfile( mainDir,'dataIn');
-addpath(dataInDir);
+% addpath(dataInDir);
 
 % Set path to figure directory
 figDir = fullfile(mainDir,figDirStr);
@@ -64,15 +63,15 @@ varnames = {'Wind', 'RotSpeed', 'GenPwr', 'GenTq', 'BlPitch1', ...
 % Weight values (copied from MATLAB function)
 q_ = [1 10^4 0 10^3 10^3 0 0 0];
 r_ = [1 10^4]; 
-p = 10^3;
+p = 1; %10^3;
 
 % Switch between Sweep and NTW18
 if strcmp(strWindType,'Sweep') == 1 % sweep from 4 to 25 in steps
-    outDataSimulationMat = 'OutDataSweep.mat';
+    outDataSimulationMat = 'OutDataSweepWithActuator.mat'; %'OutDataSweep.mat';
     FAST_InputFileName = fullfile(workDir,'inputfiles', 'FAST.fst');
     strFig = '';
 else % wind with average 18 m/s
-    outDataSimulationMat = 'OutDataWind18NTW.mat';
+    outDataSimulationMat = 'OutData18NTWwithActuator.mat'; % 'OutDataWind18NTW.mat';
     FAST_InputFileName = fullfile(workDir,'inputfilesNTM', 'FAST.fst');
     strFig = 'NTW18';
 end
@@ -80,7 +79,7 @@ end
 %% Load baseline and MPC data or run simulations
 
 %For FASTtool simulation data
-load(outDataSimulationMat ,'OutTable'); 
+load(fullfile(dataInDir,outDataSimulationMat) ,'OutTable'); 
 
 % Load data closed loop simulation PI
 if useFASTForComparison % from FAST

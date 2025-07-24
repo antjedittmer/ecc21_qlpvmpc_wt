@@ -38,7 +38,7 @@ mainDir = fileparts(workDir);
 
 % speedVec: index vector for 22 windspeeds, 4 to 25 m/s (Default: [1, 22])
 if nargin == 0 || isempty(speedVec)
-    speedVec = [1,22]; % variations of wind speed 8,9,
+    speedVec = [1,8,9,21,22]; % variations of wind speed 8,9,
 end
 
 if nargin < 2 || isempty(figFolder)
@@ -67,12 +67,25 @@ addpath(fullfile(mainDir,'dataIn'));
 load('NREL5MW_CPdata','Rotor_Lamda', 'Rotor_Pitch', 'Rotor_cQ', 'Rotor_cT','Rotor_cP');
 
 % Initialize name of models and load into workspace
-idxModel = 1; %in case several linearized models are provided
-modelNames = {'NREL5MW_linearised_4to25'};
-modelNames = modelNames(idxModel);
+% idxModel = 1; %in case several linearized models are provided
+% modelNames = {'NREL5MW_linearised_4to25'};
+% modelNames = modelNames(idxModel);
+% 
+% modelsL = {'FAST 30 states'};
+% modelsL = modelsL(idxModel);
 
-modelsL = {'FAST 30 states'};
-modelsL = modelsL(idxModel);
+idxModelNames = [1,4]; %:2; %1:2; %1:5
+modelNames =[{'NREL5MW_linearised_4to25'};%{'NREL5MW_linearised'}; %
+    {'NREL5MW_linearised_Gen_Fa_Flap1'}; %
+   {'NREL5MW_linearised_Gen_Fa_SS_Flap1'};
+   {'NREL5MW_linearised_Gen_DriveTrain_Fa_SS_Flap1'}; ]; %{'NREL5MW_linearised'} 
+modelNames = modelNames(idxModelNames);
+
+modelsL = [{'FAST 30 states'};
+    {'FAST Rot+FA+1^{st} flap mode (10 states)'};
+    {'Fast Rot+FA+SW+1^{st} flap mode (12 states)'};
+    {'Fast Rot+drive train+FA+SW+1^{st} flap mode (14 states)'};
+     ];
 
 lenModelNames = length(modelNames);
 sysmCell = cell(lenModelNames,1);
@@ -101,7 +114,7 @@ else
 end
 
 %% Compute aerodynamic force and torque gradients
-ksw = 1/(2/3* wecs.H);
+ksw = 1/(2/3 * wecs.H);
 dLambda = mean(diff(lambda));
 dBeta = mean(diff(pitch));
 [Cqdlambda,Cqdbeta] = gradient(Cq,dLambda,dBeta);
@@ -194,41 +207,41 @@ for index =  speedVec
     dCqdbetab = interp2(lambda,pitch,Cqdbeta,Lambda_bar,beta_bar,'cubic');
     dCtdbetab = interp2(lambda,pitch,Ctdbeta,Lambda_bar,beta_bar,'cubic');
 
-    %% Tip speed ratio lambda = (rb * omega)/Ve =  (rb * omega)/(V - ydotfa)
+    %% Tip speed ratio lambda = (rb * omega)/Ve =  (rb * omega)/(V - xdotfa)
     dlambdadomega = wecs.Rr/Vbar;
     dlambdadV = - omegabar*wecs.Rr/Vbar^2; %Vbar = Ve = V - ydot
-    dlambdadydotfa =  - dlambdadV; %s/m   ydotfa m/s
-    % dlambdaddelta =  - dlambdadV; %s/m   ydotfa m/s
+    dlambdadxdotfa =  - dlambdadV; %s/m   xdotfa m/s
+    % dlambdaddelta =  - dlambdadV; %s/m   xdotfa m/s
 
     %% Ft = 0.5*rho*pi*rb^2*Ct*v^2
     kCT = 0.5*rho*pi*wecs.Rr^2; % constant for CT: 0.5*rho*A
     dFtdomega = kCT *dCtdlambdab*dlambdadomega*Vbar^2;
     dFtdV = kCT * Vbar * (dCtdlambdab*dlambdadV*Vbar + 2*Ctb); % dVe/dV = 1;
-    dFtdydotfa = kCT * Vbar *(dCtdlambdab*dlambdadydotfa*Vbar - 2*Ctb); % dVe/dydot = -1;
+    dFtdxdotfa = kCT * Vbar *(dCtdlambdab*dlambdadxdotfa*Vbar - 2*Ctb); % dVe/dydot = -1;
     dFtdbeta = kCT*dCtdbetab*Vbar^2;
 
     %% Tr = 0.5*rho*pi*rb^3*Cq*v^2
     kCQ = kCT*wecs.Rr;
     dTrdomega = kCQ *dCqdlambdab*dlambdadomega*Vbar^2;
     dTrdV = kCQ *Vbar *(dCqdlambdab*dlambdadV*Vbar + 2*Cqb);
-    dTrdydotfa = kCQ * Vbar*(dCqdlambdab*dlambdadydotfa*Vbar - 2*Cqb);
+    dTrdxdotfa = kCQ * Vbar*(dCqdlambdab*dlambdadxdotfa*Vbar - 2*Cqb);
     dTrdbeta = kCQ *dCqdbetab*Vbar^2;
 
     %% Linear Model Mdl1: System, input matrices and state space model
-    % States omega ydotfa xdotsw xfa xss
+    % States omega xdotfa ydotsw xfa xss
 
     % dotomega = (Tr - Ng * Tg)/J
-    A11 = 1/wecs.Js * dTrdomega;
-    A12 = 1/wecs.Js * dTrdydotfa;
+    A11 = 1/wecs.Js * dTrdomega;  %sprintf('%2.3f', wecs.Js) '43784497.444' sprintf('%2.3f', dTrdomega)     '-924461.885'   
+    A12 = 1/wecs.Js * dTrdxdotfa;
 
-    % ydotdotfa = 1/Mt( -Bt * ydotfa - Kt* yfa +Ft)
+    % ydotdotfa = 1/Mt( -Bt * xdotfa - Kt* yfa +Ft)
     wecs.mt = wecs.mtb;
     A21 = 1/wecs.mt * dFtdomega;
-    A22 = 1/wecs.mt * dFtdydotfa;
+    A22 = 1/wecs.mt * dFtdxdotfa;
 
-    % xdotdotsw = 1/Mt( -Bt * xdotsw - Kt* xsw + 3/(2*H)Tg)
+    % xdotdotsw = 1/Mt( -Bt * ydotsw - Kt* xsw + 3/(2*H)Tg)
     A31 = ksw/wecs.mt * dTrdomega;
-    A32 = ksw/wecs.mt * dTrdydotfa;
+    A32 = ksw/wecs.mt * dTrdxdotfa;
 
     A = [A11  A12                  0                 0                0;
         A21 (A22 - wecs.Bt/wecs.mt) 0                -wecs.Kt/wecs.mt  0;
@@ -275,7 +288,9 @@ for index =  speedVec
         B1_3(7,2) *[-dTrdV, -dTrdV*wecs.rb,0,dTrdomega,0];... % xSWdot
         B1_3(8,2) *[-dTrdV, -dTrdV*wecs.rb,0,dTrdomega,0];... % omega_r
         zeros(1,5)];  % omega_gr
-    QTildaTg = [0;0; B1_3(7,3);B11; -B11 ]; %B1_3(9,3);
+    %QTildaTg = [0;0; B1_3(7,3);B11; -B11 ]; %B1_3(9,3);
+    B11a = -1/wecs.JrL * wecs.Ng; %1/(wecs.Jg*wecs.Ng);
+    QTildaTg = [0;0; B1_3(7,3);B11a; -B11a]; %B1_3(9,3);
     QTildaBeta = [B1_3(5,1) *dFtdbeta; B1_3(6,1)*dFtdbeta; B1_3(7,2) * dTrdbeta;...
         B1_3(8,2)*dTrdbeta;0];
     QTildaV = [B1_3(5,1) * dFtdV; B1_3(6,1) * dFtdV; B1_3(7,2) * dTrdV;...
@@ -341,8 +356,8 @@ for index =  speedVec
     sysCell{index} = sysOut;
     Torque_g_bar = 0.5*rho*pi*wecs.rb^3*Cqb*Vbar^2/wecs.Ng; % Nm
     u_bar_cell{index} = [Torque_g_bar, beta_bar * pi/180,Vbar]';
-    x_bar_cell{index}  = - sysLagrange.A\sysLagrange.B *u_bar_cell{index}; % X(s) = (sI - A)1 *B *U(s) (xdot = 0 = Ax +Bu)
-    y_bar_cell{index}  = sysLagrange.C * x_bar_cell{index} + sysLagrange.D * u_bar_cell{index};
+    x_bar_cell{index} = - sysLagrange.A\sysLagrange.B *u_bar_cell{index}; % X(s) = (sI - A)1 *B *U(s) (xdot = 0 = Ax +Bu)
+    y_bar_cell{index} = sysLagrange.C * x_bar_cell{index} + sysLagrange.D * u_bar_cell{index};
 
     %% Make a Bode plot
     if createBodePlots == 1
@@ -367,6 +382,10 @@ for index =  speedVec
             grid on
         end
 
+        sysm = sysmCell{1};
+        model = diag(multFASTOutput)*sysm{1}(idxFASTOutput,idxFASTInput)* diag(multFASTInput);
+        model.OutputName = sysOutputname;
+        model.InputName = sysInputname;
         vecStates = [1:5,16:18];
 
         Atest = model.A(vecStates,vecStates); %#ok<NASGU>
@@ -378,7 +397,7 @@ for index =  speedVec
             modelsL];
 
         strExtr = '';
-        for ilegC = 1: length(modelsL)
+        for ilegC = 1: length(idxModelNames)
             strExtr = [strExtr,...
                 '\color[rgb]{',num2str(cl(ilegC+1,:)),'}',' ',modelsL{ilegC}]; %#ok<AGROW> This fast
         end

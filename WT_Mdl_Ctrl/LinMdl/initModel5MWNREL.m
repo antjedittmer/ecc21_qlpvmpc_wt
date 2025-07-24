@@ -107,7 +107,7 @@ wecs.H =  90; % 87.6;
 
 wecs.Jg = 534.116; %  kg*m^2; Inertia of the generator
 wecs.Jr = x(2) * 3.8759e+07; % 3.8759e+07; %
-wecs.JrL = wecs.Jr; %115926 + 3 * 11.776e6; % kg*m^2; Inertia of the rotor (Hub inertia + 3 blades)
+wecs.JrL = (115926 + 3 * 11.776e6); % kg*m^2; Inertia of the rotor (Hub inertia + 3 blades)
 wecs.Js = wecs.Jr + wecs.Ng^2*wecs.Jg;
 f0 = 0.324;  % Hz, First natural tower fore-aft frequency
 f0sw = 0.3120;% ; % First natural tower sidewards frequency
@@ -130,7 +130,7 @@ wecs.Ks = 867637000; %Nm/rad Stiffness of the transmission
 % 2*zeta*wn = B
 wecs.Bs = 6215000;  %Nm/rad/sec %Damping of the transmission
 wecs.Rr = 63; % m length rotor radius
-wecs.rb = wecs.Rr*multRb; %*0.75; % m aerodynamic center on blade radius
+wecs.rb = 0.5*wecs.Rr*multRb; %*0.75; % m aerodynamic center on blade radius
 wecs.etag = 0.944; %Drivetrain.Generator.Efficiency: 0.944;
 
 %% Lagrange's Model matrices

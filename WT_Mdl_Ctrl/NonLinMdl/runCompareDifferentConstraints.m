@@ -2,6 +2,8 @@ clc; clear; close all;
 
 initWorkspace;
 load(fullfile(dataInPath,'OutDataWind18NTW.mat'),'OutTable');
+%load(fullfile(dataInPath,'OutTable_TEF_off_IPC_off.mat'),'OutTable');
+
 addpath('subfunctionsMPC');
 
 workDir = pwd;
@@ -18,7 +20,7 @@ writeToExcel = 0;
 % simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta'; 
 outDataSimulationMat = 'OutDataWind18NTW.mat';
 loadData = 1;
-onlyPlotCPCtimeseries = 1;
+onlyPlotCPCtimeseries = 0;
 
 % Set path to data output directory
 workDir = fileparts(mfilename('fullpath'));
@@ -35,7 +37,7 @@ controlObj = getEntry(dDataSectObj,'Control');
 controlValue = getValue(controlObj);
 
 %% Set vector which pitch rate constraints to be test
-maxRateVector = 1:13;
+maxRateVector = [4,8,13] %1:13;
 
 %% MPC Loop over pitch rate constraint vector 
 nRate = length(maxRateVector);
@@ -241,9 +243,9 @@ xlabel('mean(TwrFA) [m/s^2]');
 
 %% Barplots 
 
-donotuse1Barplot = 1;
+donotuse1Barplot = 0;
 noTitle = 0;
-aTestCell{1} = currentOutTablePICell{4};
+aTestCell{1} = currentOutTablePICell{1};
 aTestCell{1}.Time = OutTable.Time(1:heightT);
 aTestCell{2} = currentOutTablePICell{end};
 aTestCell{3} = currentOutTableTestCell{2};
@@ -253,8 +255,8 @@ if donotuse1Barplot == 1
     summaryTickLabel = {'PI, limit 4 deg/s', 'PI, limit 13 deg/s',...
     'MPC, limit 4 deg/s','MPC, limit 13 deg/s'};
 else
-summaryTickLabel = {'PI, limit 4 deg/s', 'PI, limit 13 deg/s','MPC, 1 deg s',...
-    'MPC, limit 4 deg/s','MPC, limit 13 deg/s'};
+summaryTickLabel = {'PI, limit 4 deg/s', 'PI, limit 13 deg/s','MPC, 4 deg s',...
+    'MPC, limit 8 deg/s','MPC, limit 13 deg/s'};
 end
 calculateEvalCriteria(aTestCell,summaryTickLabel,noTitle)
 figStr = 'PI4_13MPC4_13';

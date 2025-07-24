@@ -45,10 +45,10 @@ load(fullfile(dataInPath,'OutDataSweep.mat'),'OutTable');
 
 %% Clean-up
 clear RESTORE*
-clear data*
+% clear data*
 clear dir*
 
-FAST_InputFileName = fullfile(pwd,'inputfiles', 'FAST.fst');
+FAST_InputFileName = fullfile(pwd,'inputfilesNTM', 'FAST.fst');
 TMax = 660;
 load('OutList')
 
