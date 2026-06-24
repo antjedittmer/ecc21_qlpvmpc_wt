@@ -20,7 +20,7 @@ writeToExcel = 0;
 % simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta'; 
 outDataSimulationMat = 'OutDataWind18NTW.mat';
 loadData = 1;
-onlyPlotCPCtimeseries = 1;
+onlyPlotCPCtimeseries = 0;
 
 % Set path to data output directory
 workDir = fileparts(mfilename('fullpath'));
@@ -173,11 +173,13 @@ axPlotAllMPC1 = plotOutTable(tableForPlotMPC1{1},tableForPlotMPC1{2},tableForPlo
    testCaseStrMPC,testCaseCell,[],figDirConstr);
 
 for idx = 1:length(axPlotAllMPC)
-    limPI = get(axPlotAll(idx),'YLim');
-    limMPC = get(axPlotAllMPC1(idx),'YLim');
-    newLim =[min(limPI(1),limMPC(1)), max(limPI(2),limMPC(2))];
-    set(axPlotAllMPC1(idx),'YLim',newLim ); 
-    set(axPlotAll(idx),'YLim',newLim ); 
+    if isgraphics(axPlotAll(idx))
+        limPI = get(axPlotAll(idx),'YLim');
+        limMPC = get(axPlotAllMPC1(idx),'YLim');
+        newLim =[min(limPI(1),limMPC(1)), max(limPI(2),limMPC(2))];
+        set(axPlotAllMPC1(idx),'YLim',newLim );
+        set(axPlotAll(idx),'YLim',newLim );
+    end
 end
 print(gcf, fullfile(figDir,['cmpTimeDomain_All5_2deg_s',strFig]), '-dpng');
 
@@ -196,11 +198,13 @@ axPlotAllIPC1 = plotOutTable(tableForPlotIPC{1},tableForPlotIPC{2},tableForPlotI
    testCaseStrMPC,testCaseCell);
 
 for idx = 1:length(axPlotAllMPC)
-    limPI = get(axPlotAll(idx),'YLim');
-    limMPC = get(axPlotAllMPC(idx),'YLim');
-    newLim =[min(limPI(1),limMPC(1)), max(limPI(2),limMPC(2))];
-    set(axPlotAllIPC1(idx),'YLim',newLim ); 
-    set(axPlotAll(idx),'YLim',newLim ); 
+    if isgraphics(axPlotAll(idx))
+        limPI = get(axPlotAll(idx),'YLim');
+        limMPC = limPI; %get(axPlotAllMPC(idx),'YLim'); ToDo: Why is this not working
+        newLim =[min(limPI(1),limMPC(1)), max(limPI(2),limMPC(2))];
+        set(axPlotAllIPC1(idx),'YLim',newLim );
+        set(axPlotAll(idx),'YLim',newLim );
+    end
 end
 
 
@@ -258,10 +262,10 @@ aTestCell{4-donotuse1Barplot} = currentOutTableTestCell{3};
 aTestCell{5-donotuse1Barplot} = currentOutTableTestCell{end};
 if donotuse1Barplot == 1
     summaryTickLabel = {'PI, limit 4 deg/s', 'PI, limit 13 deg/s',...
-    'MPC, limit 4 deg/s','MPC, limit 13 deg/s'};
+        'MPC, limit 4 deg/s','MPC, limit 13 deg/s'};
 else
-summaryTickLabel = {'PI, limit 4 deg/s', 'PI, limit 13 deg/s','MPC, 4 deg s',...
-    'MPC, limit 8 deg/s','MPC, limit 13 deg/s'};
+    summaryTickLabel = {'PI, limit 4 deg/s', 'PI, limit 13 deg/s','MPC, 4 deg s',...
+        'MPC, limit 8 deg/s','MPC, limit 13 deg/s'};
 end
 calculateEvalCriteria(aTestCell,summaryTickLabel,noTitle)
 figStr = 'PI4_13MPC4_13';
@@ -354,4 +358,9 @@ x = load('OutTableTest_rate13_IPC.mat');
 load('OutTableTest_rate08_PI.mat','OutTableTest_rate08_PI');
 load('OutTableTest_rate01_MPC.mat','OutTableTest_rate01_MPC');
 load('OutTableTest_rate13_MPC.mat','OutTableTest_rate13_MPC');
+
+aTest = [currentOutTablePICell(8),tableForPlotMPC];
+aCellforTest = [{'PI, limit 8 deg/s'}     {'MPC, 4 deg s'}    {'MPC, limit 8 deg/s'}    {'MPC, limit 13 deg/s'}];
+
+
 
