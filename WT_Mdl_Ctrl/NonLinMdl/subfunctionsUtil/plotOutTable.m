@@ -4,8 +4,8 @@ function axPlotAll = plotOutTable(OutTable,OutTableTest1,OutTableTest2,testCaseS
 %% Set parameters and missing inputs
 % yAxCell = {'Wind V [m/s]', 'GenTq T_g [kNm]', 'Pitch \beta [°]', 'RotSpd \omega_r [rpm]',...
 %     'GenPwr P_g [MW]','Twr_{FA} y_t [m/s^2]'};
-yAxCell = {'Wind V (m/s)', 'GenTq T_g (kNm)', 'Pitch \beta (°)', 'RotSpd \omega_r (rpm)',...
-    'GenPwr P_g (MW)','Twr_{FA} (m/s^2)'};
+yAxCell = {'Wind (m/s)', 'GenTq (kNm)', 'Pitch (°)', 'RotSpd (rpm)',...
+    'GenPwr (MW)','TwrAcc_{FA} (m/s^2)'};
 
 if nargin < 5 || isempty(testCaseCell)
     testCaseCell = {'Mdl1: Rot+Twr ', 'Mdl2: Rot,Twr,Bld+Act ','FAST'};
@@ -55,50 +55,75 @@ time = OutTable.Time(idxTime);
 idxTime = time > 15;
 time = time(idxTime);
 
+% Check if generator torque has meaningful variation
+plotGenTq = std(OutTableTest2.GenTq(idxTime)/10^3) > 1 || ...
+            std(OutTable.GenTq(idxTime))            > 1 || ...
+            std(OutTableTest1.GenTq(idxTime)/10^3)  > 1;
+
+% Determine number of subplots
+nPlots = 5 + plotGenTq;
 
 figure(figNo2)
-axPlotAll(1) = subplot(6,1,1);
-plot(time,vectAmpWind(idxTime),time,OutTableTest1.Wind(idxTime),'--'); 
+t = tiledlayout(nPlots, 1, 'TileSpacing', 'compact', 'Padding', 'compact');
+
+% --- Wind speed
+axPlotAll(1) = nexttile;
+plot(time, vectAmpWind(idxTime), time, OutTableTest1.Wind(idxTime), '--');
 axis tight; grid on;
-ylabel(yAxCell{1}); %'wind [m/s]')
+ylabel(yAxCell{1});
 title(titleStr);
-  
-axPlotAll(4) = subplot(6,1,4);
-plot(time,OutTableTest2.RotSpeed(idxTime), time,OutTable.RotSpeed(idxTime),time,OutTableTest1.RotSpeed(idxTime),'k--');
-axis tight; grid on;
-ylabel(yAxCell{4}); %'RotSpd \omega_r [rpm]')
 
-axPlotAll(2) = subplot(6,1,2);
-plot(time,OutTableTest2.GenTq(idxTime)/10^3,time,OutTable.GenTq(idxTime),time,OutTableTest1.GenTq(idxTime)/10^3,'k--');
-axis tight;
-posAxis = axis;
-axis([posAxis(1:2), min(43,posAxis(3)), 44]);
-ylabel(yAxCell{3}); %'T_g [kNm]')
-grid on; % axis tight;
-%grid on;
-ylabel(yAxCell{2}); %'GenTq T_g [Nm]') 
+% --- Generator torque (conditional)
+if plotGenTq
+    axPlotAll(2) = nexttile;
+    plot(time, OutTableTest2.GenTq(idxTime)/10^3, ...
+         time, OutTable.GenTq(idxTime), ...
+         time, OutTableTest1.GenTq(idxTime)/10^3, 'k--');
+    axis tight;
+    posAxis = axis;
+    axis([posAxis(1:2), min(43, posAxis(3)), 44]);
+    grid on;
+    ylabel(yAxCell{2});
+end
 
-axPlotAll(3) = subplot(6,1,3);
-plot(time,OutTableTest2.BlPitch1(idxTime),time,OutTable.BlPitch1(idxTime),time,OutTableTest1.BlPitch1(idxTime),'k--'); 
+% --- Blade pitch
+axPlotAll(3) = nexttile;
+plot(time, OutTableTest2.BlPitch1(idxTime), ...
+     time, OutTable.BlPitch1(idxTime), ...
+     time, OutTableTest1.BlPitch1(idxTime), 'k--');
 axis tight; grid on;
-ylabel(yAxCell{3}); %'Pitch \beta [°]')
+ylabel(yAxCell{3});
 
-axPlotAll(5) = subplot(6,1,5);
-plot(time,OutTableTest2.NcIMUTAxs(idxTime),time,OutTable.NcIMUTAxs(idxTime),time,OutTableTest1.NcIMUTAxs(idxTime),'k--');
+% --- Rotor speed
+axPlotAll(4) = nexttile;
+plot(time, OutTableTest2.RotSpeed(idxTime), ...
+     time, OutTable.RotSpeed(idxTime), ...
+     time, OutTableTest1.RotSpeed(idxTime), 'k--');
 axis tight; grid on;
-ylabel(yAxCell{6}); %'Twr_{FA} y_t[m/s^2]')
+ylabel(yAxCell{4});
 
-axPlotAll(6) = subplot(6,1,6);
-plot(time,OutTableTest2.GenPwr(idxTime)/1000,time,OutTable.GenPwr(idxTime)/1000,time,OutTableTest1.GenPwr(idxTime)/1000,'k--');
+% --- Tower fore-aft acceleration
+axPlotAll(5) = nexttile;
+plot(time, OutTableTest2.NcIMUTAxs(idxTime), ...
+     time, OutTable.NcIMUTAxs(idxTime), ...
+     time, OutTableTest1.NcIMUTAxs(idxTime), 'k--');
 axis tight; grid on;
-ylabel(yAxCell{5}); %'GenPwr P_g [MW]')
-%xlabel('time [s]')
-xlabel('Time (s)')
-linkaxes(axPlotAll,'x');
+ylabel(yAxCell{6});
+
+% --- Generator power
+axPlotAll(6) = nexttile;
+plot(time, OutTableTest2.GenPwr(idxTime)/1000, ...
+     time, OutTable.GenPwr(idxTime)/1000, ...
+     time, OutTableTest1.GenPwr(idxTime)/1000, 'k--');
+axis tight; grid on;
+ylabel(yAxCell{5});
+xlabel('Time (s)');
+
+linkaxes(axPlotAll(isgraphics(axPlotAll, 'axes')), 'x');
 
 set(gcf,'Name',['cmpTimeDomain_All',strFig])
 posDefault = [520   378   560   420]; %get(gcf, 'position');
-set(gcf, 'position', [posDefault(1:3),posDefault(4)*2]);
+set(gcf, 'position', [posDefault(1:3),posDefault(4)*1.7]);
 % set(groot,'defaultLineLineWidth',defaultLineWidth);
 
 set(findall(gcf,'-property','FontSize'),'FontSize',11.5)
@@ -115,39 +140,37 @@ time    = OutTable.Time;
 idxTime = time > 15;
 
 % ---- Extract signals (matching unit conversions used in plotOutTable) ----
-% Delta Pitch (difference between consecutive samples)
-% ---- Sample time ----
 dt = mean(diff(OutTable.Time(idxTime)));   % [s]
 
 % ---- Delta Pitch: pitch rate in °/s ----
-dPitch_1   = diff(OutTable.BlPitch1(idxTime))   / dt;   % [°/s]
-dPitch_2   = diff(OutTableTest2.BlPitch1(idxTime)) / dt; % [°/s]
-dPitch_Ref = diff(OutTableTest1.BlPitch1(idxTime)) / dt; % [°/s]
+dPitch_1   = diff(OutTable.BlPitch1(idxTime))     / dt;
+dPitch_2   = diff(OutTableTest2.BlPitch1(idxTime)) / dt;
+dPitch_Ref = diff(OutTableTest1.BlPitch1(idxTime)) / dt;
 
-rotSpd_1   = OutTable.RotSpeed(idxTime)* 60/(2*pi);
+rotSpd_1   = OutTable.RotSpeed(idxTime)     * 60/(2*pi);
 rotSpd_2   = OutTableTest2.RotSpeed(idxTime)* 60/(2*pi);
 rotSpd_Ref = OutTableTest1.RotSpeed(idxTime)* 60/(2*pi);
 
-twrFA_1    = OutTable.NcIMUTAxs(idxTime)* 60/(2*pi);
-twrFA_2    = OutTableTest2.NcIMUTAxs(idxTime)* 60/(2*pi);
-twrFA_Ref  = OutTableTest1.NcIMUTAxs(idxTime)* 60/(2*pi);
+twrFA_1    = OutTable.NcIMUTAxs(idxTime);
+twrFA_2    = OutTableTest2.NcIMUTAxs(idxTime);
+twrFA_Ref  = OutTableTest1.NcIMUTAxs(idxTime);
 
 genPwr_1   = OutTable.GenPwr(idxTime);
 genPwr_2   = OutTableTest2.GenPwr(idxTime);
 genPwr_Ref = OutTableTest1.GenPwr(idxTime);
 
-% ---- Signal labels and data (criteria x models) ----
-criteriaNames = {'\Delta Pitch (°)', 'RotSpeed (rpm)', 'TwrFA (m/s²)', 'GenPwr (kW)'};
-modelNames    = testCaseCell;   % e.g. {'Mdl1', 'Mdl2', 'FAST'}
+% ---- Signal labels and data: order matches desired table output ----
+criteriaNames = {'TwrFA (m/s²)', 'GenPwr (kW)', 'RotSpeed (rpm)', 'Pitch rate (°/s)'};
+modelNames    = testCaseCell;
 
 data = {
-    dPitch_1,   dPitch_2,   dPitch_Ref;
-    rotSpd_1,   rotSpd_2,   rotSpd_Ref;
     twrFA_1,    twrFA_2,    twrFA_Ref;
-    genPwr_1,   genPwr_2,   genPwr_Ref
+    genPwr_1,   genPwr_2,   genPwr_Ref;
+    rotSpd_1,   rotSpd_2,   rotSpd_Ref;
+    dPitch_1,   dPitch_2,   dPitch_Ref;
 };
 
-% ---- Compute variance and std dev matrices (criteria x models) ----
+% ---- Compute variance and std dev matrices ----
 nCriteria = numel(criteriaNames);
 nModels   = numel(modelNames);
 
@@ -161,7 +184,7 @@ for c = 1:nCriteria
     end
 end
 
-% ---- Build tables (rows = criteria, columns = models) ----
+% ---- Build tables ----
 col1 = modelNames{1};
 col2 = modelNames{2};
 col3 = modelNames{3};
@@ -176,8 +199,7 @@ stdDevTable = table( ...
     stdMat(:,1), stdMat(:,2), stdMat(:,3), ...
     'VariableNames', {'Criterion', col1, col2, col3});
 
-% ---- Swap column names for both tables (Ref=Test1=col4 is actually col2 and vice versa) ----
-% Swap variable names
+% ---- Swap columns (Ref=Test1 is col3, swap to col1 position) ----
 tmpNames = varianceTable.Properties.VariableNames;
 tmpNames([2,4]) = tmpNames([4,2]);
 varianceTable.Properties.VariableNames = tmpNames;
@@ -186,29 +208,17 @@ tmpNames = stdDevTable.Properties.VariableNames;
 tmpNames([2,4]) = tmpNames([4,2]);
 stdDevTable.Properties.VariableNames = tmpNames;
 
-%% Reorder columns: low (4), standard (8), high (13)
-desiredOrder = tmpNames([1,2,4,3]);
+disp('=== Variance ===');       disp(varianceTable);
+disp('=== Standard Deviation ==='); disp(stdDevTable);
 
-varianceTable = varianceTable(:, desiredOrder);
-stdDevTable   = stdDevTable(:, desiredOrder);
-
-disp('=== Variance ===');
-disp(varianceTable);
-disp('=== Standard Deviation ===');
-disp(stdDevTable);
-
-
-%% Write results to LaTeX table
-fid = fopen(fullfile(figDir, 'statsTable.tex'), 'w');
-
+% ---- Write LaTeX ----
+fid = fopen(fullfile(figDir, ['statsTable',strFig,'.tex']), 'w');
 writeLatexTable(fid, varianceTable, ...
     'Variance of key signals for different pitch rate constraints', ...
     'tab:variance');
-
 writeLatexTable(fid, stdDevTable, ...
     'Standard deviation of key signals for different pitch rate constraints', ...
     'tab:stddev');
-
 fclose(fid);
 fprintf('LaTeX tables written to %s\n', fullfile(figDir, 'statsTable.tex'));
 end
@@ -222,14 +232,18 @@ function writeLatexTable(fid, tbl, caption, label)
     fprintf(fid, '\\label{%s}\n', label);
     fprintf(fid, '\\begin{tabular}{lrrr}\n');
     fprintf(fid, '\\toprule\n');
-    % Header row
     fprintf(fid, '%s & %s & %s & %s \\\\\n', ...
         colNames{1}, colNames{2}, colNames{3}, colNames{4});
     fprintf(fid, '\\midrule\n');
-    % Data rows
-    criteria = {'\Delta\beta\ (°/s)', '\omega_r\ (rpm)', '\ddot{y}_t\ (m/s^2)', 'P_g\ (kW)'};
+    % Row labels matching new order: TwrFA, GenPwr, RotSpeed, Pitch rate
+    criteria = {
+        'Tower fore-aft acc.\ (m/s$^2$)', ...
+        'Generated power (kW)', ...
+        'Rotor speed (rpm)', ...
+        'Blade pitch rate (\textdegree/s)'
+    };
     for r = 1:height(tbl)
-        fprintf(fid, '$%s$ & %.4f & %.4f & %.4f \\\\\n', ...
+        fprintf(fid, '%s & %.2f & %.2f & %.2f \\\\\n', ...
             criteria{r}, tbl{r,2}, tbl{r,3}, tbl{r,4});
     end
     fprintf(fid, '\\bottomrule\n');

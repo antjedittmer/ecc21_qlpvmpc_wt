@@ -89,7 +89,6 @@ x = [1,1,1];
 % x = [1.2745    0.6876];
 %x =  [2.1336    0.8631   100];
 
-
 % Turbine constants
 % Turbine constants
 wecs.N = 3;% Number of blades, Table 1-1
@@ -130,7 +129,7 @@ wecs.Ks = 867637000; %Nm/rad Stiffness of the transmission
 % 2*zeta*wn = B
 wecs.Bs = 6215000;  %Nm/rad/sec %Damping of the transmission
 wecs.Rr = 63; % m length rotor radius
-wecs.rb = 0.5*wecs.Rr*multRb; %*0.75; % m aerodynamic center on blade radius
+wecs.rb = wecs.Rr*multRb; %*0.75; % m aerodynamic center on blade radius
 wecs.etag = 0.944; %Drivetrain.Generator.Efficiency: 0.944;
 
 %% Lagrange's Model matrices

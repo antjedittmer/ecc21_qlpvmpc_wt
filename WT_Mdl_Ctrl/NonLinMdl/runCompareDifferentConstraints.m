@@ -10,7 +10,7 @@ workDir = pwd;
 mainDir = fileparts(workDir);
 
 % Set path to figure directory
-figDir = fullfile(mainDir,'figDirConstr1');
+figDir = fullfile(mainDir,'figDirConstr');
 if ~isfolder(figDir)
     mkdir(figDir)
 end
@@ -20,7 +20,7 @@ writeToExcel = 0;
 % simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta'; 
 outDataSimulationMat = 'OutDataWind18NTW.mat';
 loadData = 1;
-onlyPlotCPCtimeseries = 0;
+onlyPlotCPCtimeseries = 1;
 
 % Set path to data output directory
 workDir = fileparts(mfilename('fullpath'));
@@ -37,7 +37,7 @@ controlObj = getEntry(dDataSectObj,'Control');
 controlValue = getValue(controlObj);
 
 %% Set vector which pitch rate constraints to be test
-maxRateVector = [4,8,13] %1:13;
+maxRateVector = 1:13;
 
 %% MPC Loop over pitch rate constraint vector 
 nRate = length(maxRateVector);
@@ -77,8 +77,8 @@ tableForPlotMPC{3} = currentOutTableTestCell{end};
 
 % input plotOutTable:OutTable,OutTableTest1,OutTableTest2,testCaseStr, testCaseCell, figNo2,figDir,strFig)
 figDir = 'figDir';
-testCaseStrMPC =  'qLMPC Rate Constraints [deg/s]';
-testCaseCell = {'standard (8) ','high (13) ', 'low (4) '};
+testCaseStrMPC =  'qLMPC Rate Constraints (°/s)';
+testCaseCell = {'standard (8)  ','high (13) ', 'low (4) '};
 axPlotAllMPC = plotOutTable(tableForPlotMPC{1},tableForPlotMPC{2},tableForPlotMPC{3},...
    testCaseStrMPC,testCaseCell,[],figDir);
 
@@ -124,18 +124,23 @@ end
 % Plot qLmpc result
 OutTable4 = currentOutTablePICell{maxRateVector == 4};
 OutTable4.Time = OutTable.Time(1:height(OutTable4));
-testCaseStr =  'PI CPC Rate Constraints [deg/s]';
+testCaseStr =  'PI Rate Constraints (°/s)';
 figNo2 = 2;
 strFig = 'testConstrPI';
 axPlotAll = plotOutTable(OutTable4,currentOutTablePICell{maxRateVector == 8},currentOutTablePICell{end},...
    testCaseStr,testCaseCell,figNo2,figDir,strFig);
 
+% Set the axis for all axes
+% xPlotAllMPC = axPlotAllMPC(isgraphics(axPlotAll, 'axes'));
+% axPlotAll= axPlotAll(isgraphics(axPlotAll, 'axes'));
 for idx = 1:length(axPlotAllMPC)
-    limPI = get(axPlotAll(idx),'YLim');
-    limMPC = get(axPlotAllMPC(idx),'YLim');
-    newLim =[min(limPI(1),limMPC(1)), max(limPI(2),limMPC(2))];
-    set(axPlotAllMPC(idx),'YLim',newLim ); 
-    set(axPlotAll(idx),'YLim',newLim ); 
+    if isgraphics(axPlotAll(idx))
+        limPI = get(axPlotAll(idx),'YLim');
+        limMPC = get(axPlotAllMPC(idx),'YLim');
+        newLim =[min(limPI(1),limMPC(1)), max(limPI(2),limMPC(2))];
+        set(axPlotAllMPC(idx),'YLim',newLim );
+        set(axPlotAll(idx),'YLim',newLim );
+    end
 end
 
 figDirConstr = 'figDirConstr1';
@@ -215,8 +220,8 @@ stdTowerPI = mean(abs(matrixTwrPI'));
 stdTowerQLMPC = mean(abs(matrixTwrQLMPC'));
 
 figure(3); 
-vec4to13 = 3:13;
-vec2to13 = 3:13;
+vec4to13 = 1:3; 3:13;
+vec2to13 = 1:3; %3:13;
 subplot(2,2,1);
 plot(maxRateVector(vec4to13),stdDiffPitchPI(vec4to13),'*-',...
     maxRateVector(vec2to13),stdDiffPitchQLMPC(vec2to13),'o-');

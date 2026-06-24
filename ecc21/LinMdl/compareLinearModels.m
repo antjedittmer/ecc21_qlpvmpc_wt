@@ -262,15 +262,16 @@ for index =  speedVec
 
     C5aero =  [B1_3(5,1) * [-dFtdV, -dFtdV*wecs.rb, 0, dFtdomega 0]; ... % yFAdot
         B1_3(6,1) * [-dFtdV, -dFtdV*wecs.rb, 0, dFtdomega 0]; ... % deltaDot
-        B1_3(7,2) *[-dTrdV, -dTrdV*wecs.rb,0,dTrdomega,0];... % xSWdot
-        B1_3(8,2) *[-dTrdV, -dTrdV*wecs.rb,0,dTrdomega,0];... % omega_r
+        B1_3(7,2) * [-dTrdV, -dTrdV*wecs.rb, 0, dTrdomega,0];... % xSWdot
+        B1_3(8,2) * [-dTrdV, -dTrdV*wecs.rb, 0, dTrdomega,0];... % omega_r
         zeros(1,5)];  % omega_gr
-    QTildaTg = [0;0; B1_3(7,3);B11; -B11 ]; %B1_3(9,3);
+   
+    % B1_3 has the order: F_T, T_r, T_g
+    QTildaTg =  [0;0; B1_3(7,3); 0; B1_3(9,3)]; 
     QTildaBeta = [B1_3(5,1) *dFtdbeta; B1_3(6,1)*dFtdbeta; B1_3(7,2) * dTrdbeta;...
         B1_3(8,2)*dTrdbeta;0];
     QTildaV = [B1_3(5,1) * dFtdV; B1_3(6,1) * dFtdV; B1_3(7,2) * dTrdV;...
         B1_3(8,2)*dTrdV;0];
-
 
     A9DoF = zeros(size(A1) + 2); % 9 states + 2 ctrl input
     A9DoF(1:4,:) = [A1(1:4,:) ,zeros(4,2)]; % states 1 - 4: y_FA,delta,x_sw, Theta_s
@@ -281,60 +282,11 @@ for index =  speedVec
     A9DoF(10,10) =  -1/kappa;
     A9DoF(11,11) =  -1/tau;
 
-
     B9DoF = zeros(size(A1,1) + 2,3); % 3 inputs -> 9 states + 2 ctrl input
     B9DoF(5:9,3) = QTildaV;
     B9DoF(10,1) = 1/kappa;
     B9DoF(11,2) = 1/tau;
-
-    %     A9DoForig = [A1(1:4,:) ,zeros(4,2); % states 1 - 4: y_FA,delta,x_sw, Theta_s
-    %         ...
-    %         [A1(5,1:4), ... % state 5: xdot_FA (from  states 1 - 4: y_FA,delta,x_sw, Theta_s)
-    %         A1(5,5) - B1(5,1)*dFtdV,... % state 5-> 5: xdot_FA <- xdot_FA
-    %         A1(5,6) - B1(5,1)*dFtdV*wecs.rb, ...% state 6-> 5: xdot_FA <- delta
-    %         A1(5,7), ... % state 7 > 5: xdot_FA <- xdot_sw
-    %         A1(5,8) + B1(5,1)*dFtdomega, ... % state 8 > 5: xdot_FA <- omega_r
-    %         A1(5,9), ...  % state 9 > 5: xdot_FA <- xdot_sw % state 10, 11 > 5: xdot_FA <- Tg, beta
-    %         0 , B1(5,1)*dFtdbeta];
-    %         ...
-    %         [A1(6,1:4), ...% state 6: delta (from  states 1 - 4: y_FA,delta,x_sw, Theta_s)
-    %         A1(6,5) - B1(6,1)*dFtdV,... % state 5> 6: delta<- xdot_FA
-    %         A1(6,6) - B1(6,1)*dFtdV*wecs.rb,... % state 5> 6: delta<- xdot_FA
-    %         A1(6,7), ... % delta<- xdot_FA
-    %         A1(6,8) + B1(6,1)*dFtdomega, ... % state 5> 6: delta<- xdot_FA
-    %         A1(6,9), ... % state 5> 6: delta<- xdot_FA
-    %         0 ,B1(6,1)*dFtdbeta];
-    %         ...
-    %         [A1(7,1:4), ... % state 7: x_sw (from  states 1 - 4: y_FA,delta,x_sw, Theta_s)
-    %         A1(7,5) - ksw * B1(7,2)*dTrdV,...
-    %         A1(7,6) - ksw * B1(7,2)*dTrdV*wecs.rb,...
-    %         A1(7,7), ...
-    %         A1(7,8) + ksw * B1(7,2)*dTrdomega, ...
-    %         A1(7,9),...
-    %         B31, ksw * B1(7,2)*dTrdbeta]; %  B31 = wecs.Ng/wecs.mtb *3/(2*wecs.H); Tg -> x_sw
-    %         ...
-    %         [A1(8,1:4), ... % state 8: omega_r (from  states 1 - 4: y_FA,delta,x_sw, Theta_s)
-    %         A1(8,5) - B1(8,3)*dTrdV,...
-    %         A1(8,6) - B1(8,3)*dTrdV*wecs.rb, ....
-    %         A1(8,7), ...
-    %         A1(8,8) + B1(8,3)*dTrdomega, ...
-    %         A1(8,9), ...
-    %         B11, B1(8,3)*dTrdbeta]; %  B11 = - wecs.Ng/wecs.Jr; Tg -> omega_r (instead of B1(8,1))
-    %         ...
-    %         [A1(9,1:6), A1(9,7) , A1(9,8:9) , -B11 ,0]; %B1(9,4)
-    %         zeros(1,9),  -1/kappa, 0;...
-    %         zeros(1,10),  -1/tau];
-    %
     A7DoF = A9DoF(1:9,1:9);
-    %
-    %     B9DoF = [zeros(4,3);... % states 1 - 4: y_FA,delta,x_sw, Theta_s
-    %         zeros(1,2),B1(5,1)*dFtdV;... % state 5: ydot_FA
-    %         zeros(1,2),B1(6,1)*dFtdV;...% state 6: xdot_FA
-    %         B31,0,B1(7,2)*ksw *dTrdV;...% state 7: xdot_SW
-    %         B11,0,B1(8,3)*dTrdV;... state 8: omega_r
-    %         zeros(1,3);... state 9: omega_gr
-    %         1/kappa, 0,0;...
-    %         0,1/tau,0];
 
     B7DoF = B9DoF(1:9,:);
     B7DoF(:,1) = A9DoF(1:9,8+2); % Torque Tg as input

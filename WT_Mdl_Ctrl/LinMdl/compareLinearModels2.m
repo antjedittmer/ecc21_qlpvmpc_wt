@@ -264,19 +264,11 @@ for index =  speedVec
         B1_3(7,2) * [-dTrdV, -dTrdV*wecs.rb, 0, dTrdomega,0];... % xSWdot
         B1_3(8,2) * [-dTrdV, -dTrdV*wecs.rb, 0, dTrdomega,0];... % omega_r
         zeros(1,5)];  % omega_gr
-    % B11a = -1/wecs.JrL * wecs.Ng; %1/(wecs.Jg*wecs.Ng);
-    % QTildaTg = [0;0; B1_3(7,3); B11a; -B11a]; %B1_3(9,3);
-    % QTildaBeta = [B1_3(5,1) *dFtdbeta; B1_3(6,1)*dFtdbeta; B1_3(7,2) * dTrdbeta;...
-    %     B1_3(8,2)*dTrdbeta;0];
-    % QTildaV = [B1_3(5,1) * dFtdV; B1_3(6,1) * dFtdV; B1_3(7,2) * dTrdV;...
-    %     B1_3(8,2)*dTrdV;0];
-
+   
     % B1_3 has the order: F_T, T_r, T_g
-     
-    QTildaTg =  [0;0; B1_3(7,3); 0; B1_3(9,3)]; %B1_3(9,3);[0;0; B1_3(7,3); B11a; -B11a]; %B1_3(9,3);
+    QTildaTg =  [0;0; B1_3(7,3); 0; B1_3(9,3)]; 
     QTildaBeta = [B1_3(5,1) *dFtdbeta; B1_3(6,1)*dFtdbeta; B1_3(7,2) * dTrdbeta;...
         B1_3(8,2)*dTrdbeta;0];
-
     QTildaV = [B1_3(5,1) * dFtdV; B1_3(6,1) * dFtdV; B1_3(7,2) * dTrdV;...
         B1_3(8,2)*dTrdV;0];
 

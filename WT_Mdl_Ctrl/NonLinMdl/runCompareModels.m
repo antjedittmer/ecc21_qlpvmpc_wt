@@ -15,7 +15,7 @@ function normStruct = runCompareModels(strWindType,loadData,figNo1,yAxCell,figDi
 
 % Two testcases: step sweep 4 to 25 ms and normal dist. 18 m/s mean
 if ~nargin || isempty(strWindType) 
-   strWindType = 'Sweep'; % 4,11,18,
+   strWindType = 'EOG'; 'Sweep'; % 4,11,18,
 end
 
 if nargin < 2 || isempty(loadData) 
@@ -78,7 +78,7 @@ elseif isa(strWindType,'double')  % wind with average 18 m/s
     testCaseStr = sprintf('Wind, mean %02d m/s',strWindType);
 else
      % EOG16mpers
-      outDataSimulationMat = 'EOG16mpers.mat'; %'OutDataStep.mat'; %
+    outDataSimulationMat = 'EOG16mpers.mat'; %'OutDataStep.mat'; %
     strFig = 'EOG';
     testCaseStr = 'EOG16mpers';
 end
