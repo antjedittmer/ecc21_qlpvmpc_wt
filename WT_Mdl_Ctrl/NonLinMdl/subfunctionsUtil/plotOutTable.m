@@ -107,3 +107,132 @@ set(findall(gcf,'-property','LineWidth'),'LineWidth',0.75)
 % 
 print(fullfile(figDir,['cmpTimeDomain_All',strFig]), '-dpng');
 print(fullfile(figDir,['cmpTimeDomain_All',strFig]), '-depsc');
+
+
+%% Calculate variance and standard deviation for key signals
+% Use the same time index as in plotOutTable (time > 15s)
+time    = OutTable.Time;
+idxTime = time > 15;
+
+% ---- Extract signals (matching unit conversions used in plotOutTable) ----
+% Delta Pitch (difference between consecutive samples)
+% ---- Sample time ----
+dt = mean(diff(OutTable.Time(idxTime)));   % [s]
+
+% ---- Delta Pitch: pitch rate in °/s ----
+dPitch_1   = diff(OutTable.BlPitch1(idxTime))   / dt;   % [°/s]
+dPitch_2   = diff(OutTableTest2.BlPitch1(idxTime)) / dt; % [°/s]
+dPitch_Ref = diff(OutTableTest1.BlPitch1(idxTime)) / dt; % [°/s]
+
+rotSpd_1   = OutTable.RotSpeed(idxTime)* 60/(2*pi);
+rotSpd_2   = OutTableTest2.RotSpeed(idxTime)* 60/(2*pi);
+rotSpd_Ref = OutTableTest1.RotSpeed(idxTime)* 60/(2*pi);
+
+twrFA_1    = OutTable.NcIMUTAxs(idxTime)* 60/(2*pi);
+twrFA_2    = OutTableTest2.NcIMUTAxs(idxTime)* 60/(2*pi);
+twrFA_Ref  = OutTableTest1.NcIMUTAxs(idxTime)* 60/(2*pi);
+
+genPwr_1   = OutTable.GenPwr(idxTime);
+genPwr_2   = OutTableTest2.GenPwr(idxTime);
+genPwr_Ref = OutTableTest1.GenPwr(idxTime);
+
+% ---- Signal labels and data (criteria x models) ----
+criteriaNames = {'\Delta Pitch (°)', 'RotSpeed (rpm)', 'TwrFA (m/s²)', 'GenPwr (kW)'};
+modelNames    = testCaseCell;   % e.g. {'Mdl1', 'Mdl2', 'FAST'}
+
+data = {
+    dPitch_1,   dPitch_2,   dPitch_Ref;
+    rotSpd_1,   rotSpd_2,   rotSpd_Ref;
+    twrFA_1,    twrFA_2,    twrFA_Ref;
+    genPwr_1,   genPwr_2,   genPwr_Ref
+};
+
+% ---- Compute variance and std dev matrices (criteria x models) ----
+nCriteria = numel(criteriaNames);
+nModels   = numel(modelNames);
+
+varMat = zeros(nCriteria, nModels);
+stdMat = zeros(nCriteria, nModels);
+
+for c = 1:nCriteria
+    for m = 1:nModels
+        varMat(c,m) = var(data{c,m});
+        stdMat(c,m) = std(data{c,m});
+    end
+end
+
+% ---- Build tables (rows = criteria, columns = models) ----
+col1 = modelNames{1};
+col2 = modelNames{2};
+col3 = modelNames{3};
+
+varianceTable = table( ...
+    criteriaNames(:), ...
+    varMat(:,1), varMat(:,2), varMat(:,3), ...
+    'VariableNames', {'Criterion', col1, col2, col3});
+
+stdDevTable = table( ...
+    criteriaNames(:), ...
+    stdMat(:,1), stdMat(:,2), stdMat(:,3), ...
+    'VariableNames', {'Criterion', col1, col2, col3});
+
+% ---- Swap column names for both tables (Ref=Test1=col4 is actually col2 and vice versa) ----
+% Swap variable names
+tmpNames = varianceTable.Properties.VariableNames;
+tmpNames([2,4]) = tmpNames([4,2]);
+varianceTable.Properties.VariableNames = tmpNames;
+
+tmpNames = stdDevTable.Properties.VariableNames;
+tmpNames([2,4]) = tmpNames([4,2]);
+stdDevTable.Properties.VariableNames = tmpNames;
+
+%% Reorder columns: low (4), standard (8), high (13)
+desiredOrder = tmpNames([1,2,4,3]);
+
+varianceTable = varianceTable(:, desiredOrder);
+stdDevTable   = stdDevTable(:, desiredOrder);
+
+disp('=== Variance ===');
+disp(varianceTable);
+disp('=== Standard Deviation ===');
+disp(stdDevTable);
+
+
+%% Write results to LaTeX table
+fid = fopen(fullfile(figDir, 'statsTable.tex'), 'w');
+
+writeLatexTable(fid, varianceTable, ...
+    'Variance of key signals for different pitch rate constraints', ...
+    'tab:variance');
+
+writeLatexTable(fid, stdDevTable, ...
+    'Standard deviation of key signals for different pitch rate constraints', ...
+    'tab:stddev');
+
+fclose(fid);
+fprintf('LaTeX tables written to %s\n', fullfile(figDir, 'statsTable.tex'));
+end
+
+% Helper to write one table
+function writeLatexTable(fid, tbl, caption, label)
+    colNames = tbl.Properties.VariableNames;
+    fprintf(fid, '\\begin{table}[htbp]\n');
+    fprintf(fid, '\\centering\n');
+    fprintf(fid, '\\caption{%s}\n', caption);
+    fprintf(fid, '\\label{%s}\n', label);
+    fprintf(fid, '\\begin{tabular}{lrrr}\n');
+    fprintf(fid, '\\toprule\n');
+    % Header row
+    fprintf(fid, '%s & %s & %s & %s \\\\\n', ...
+        colNames{1}, colNames{2}, colNames{3}, colNames{4});
+    fprintf(fid, '\\midrule\n');
+    % Data rows
+    criteria = {'\Delta\beta\ (°/s)', '\omega_r\ (rpm)', '\ddot{y}_t\ (m/s^2)', 'P_g\ (kW)'};
+    for r = 1:height(tbl)
+        fprintf(fid, '$%s$ & %.4f & %.4f & %.4f \\\\\n', ...
+            criteria{r}, tbl{r,2}, tbl{r,3}, tbl{r,4});
+    end
+    fprintf(fid, '\\bottomrule\n');
+    fprintf(fid, '\\end{tabular}\n');
+    fprintf(fid, '\\end{table}\n\n');
+end
