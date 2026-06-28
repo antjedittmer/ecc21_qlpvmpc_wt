@@ -31,7 +31,7 @@ end
 % Assign data from FAST to variables
 
 %% Handle different variable names
-idxTime = 1: min([height(OutTable), height(OutTableTest1),height(OutTableTest2)]);
+idxTime =1: min([height(OutTable), height(OutTableTest1),height(OutTableTest2)]);
 OutTable = OutTable(idxTime,:);
 OutTable.BldPitch1 = OutTable.BlPitch1;
 OutTable.Torque = OutTable.GenTq;
@@ -52,7 +52,7 @@ titleStr = [testCaseStr,': ',testCaseCell{1},'{\color[rgb]{',num2str(cl(1,:)),'}
 
 % Create output plot time reference
 time = OutTable.Time(idxTime);
-idxTime = time > 15;
+idxTime = time > 20;
 time = time(idxTime);
 
 % Check if generator torque has meaningful variation

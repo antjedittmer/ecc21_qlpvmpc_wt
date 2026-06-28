@@ -17,7 +17,7 @@ function [currentOutTableTest, tictoc_LPVMPC,GenPwrRef] = getSimulationOutputTab
 % set default variablenames
 if nargin < 5 || isempty(varnames)
     varnames = {'Wind', 'RotSpeed', 'GenPwr', 'GenTq', 'BlPitch1', ...
-    'NcIMUTAxs', 'NcIMUTAys'}; %%'Tower FA acc', 'Tower SS acc'};
+    'NcIMUTAxs', 'NcIMUTAys','zeta_dotdot'}; %%'Tower FA acc', 'Tower SS acc'};
 end
 
 if nargin < 6
@@ -45,7 +45,10 @@ else
     open_system(simMdlname1);
     out1 = sim(simMdlname1,'SrcWorkspace',WS);
 
-    varnamesPlus = [varnames,'zeta'];
+     varnamesPlus = varnames;
+    if ~contains(varnames,'zeta_dotdot')
+    varnamesPlus = [varnames,'zeta_dotdot'];
+    end
     varnames =  varnamesPlus(1: size(out1.OutDataTest,2));
 
     currentOutTableTest = array2table(out1.OutDataTest,'VariableNames',varnames);
