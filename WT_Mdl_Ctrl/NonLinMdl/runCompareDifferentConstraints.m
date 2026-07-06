@@ -2,7 +2,9 @@ clc; clear; close all; bdclose all;
 restoredefaultpath;
 
 initWorkspace;
-load(fullfile(dataInPath,'OutDataWind18NTW.mat'),'OutTable');
+
+matFileIn = 'OutDataWind18NTM.mat'; %'OutDataWind18NTW.mat'
+load(fullfile(dataInPath,matFileIn),'OutTable');
 % dirMainProjects = fileparts(fileparts(fileparts(fileparts(fileparts(dataInPath)))));
 % dirIPCtest = fullfile(dirMainProjects,'FASTTool','dataOut4');
 % tmp = load(fullfile(dirIPCtest,'OutTable_IPC1_MaxRate4_Kp0dot00.mat'));
@@ -26,7 +28,7 @@ end
 %% Set path and parameter names
 writeToExcel = 0;
 % simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta'; 
-outDataSimulationMat = 'OutDataWind16NTW.mat';
+outDataSimulationMat = 'OutDataWind18NTM.mat'; %matFileIn;
 loadData = 1;
 onlyPlotCPCtimeseries = 0;
 
@@ -318,6 +320,18 @@ if strcmp(outDataSimulationMat,'OutDataWind16NTW.mat')
 else
     save('matSubPlotBar_4to13.mat', 'K_matrix','strK','summaryTickLabel','printTitle');
 end
+
+aNewTestCell{1} = aTestCell{1};
+summaryTickLabelNew{1} = summaryTickLabel{1};
+for idx = 1: length(currentOutTableTestCell)
+aNewTestCell{idx+1} = currentOutTableTestCell{idx};
+summaryTickLabelNew{idx+1} = sprintf('MPC, limit %d°/s',idx)
+end
+[K_matrix_all,strK1] = calculateEvalCriteria(aNewTestCell,summaryTickLabelNew,noTitle);
+
+figure; plot(K_matrix_all(6:end,3),K_matrix_all(6:end,5))
+
+figure; plot(K_matrix(3:end,3),K_matrix(3:end,5),'*-')
 
 
 %[K_matrix,strk] = calculateEvalCriteria(aTestCell(3:5),summaryTickLabel(3:5),noTitle);
