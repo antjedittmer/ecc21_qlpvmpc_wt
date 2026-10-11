@@ -34,7 +34,7 @@ if nargin <5 || isempty(figDirStr)
 end
 
 if nargin < 6
-    simMdlname = 'test_SimulinkMdl2_qLPVMPCbeta.slx'; %  'test_FAST_qLPVMPC.slx';% 
+    simMdlname = 'test_FAST_qLPVMPC.slx';% 
 end
 %% Set path to directories
 

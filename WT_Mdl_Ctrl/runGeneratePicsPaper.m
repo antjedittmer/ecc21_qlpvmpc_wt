@@ -19,7 +19,7 @@ compareLinearModels;
 updateDDMdl1(0.75);
 
 %Load data if available from previous simulation.
-loadData = 0;
+loadData = 1;
 
 % Run Simulink models in closed loop w baseline controller( Torque controller
 % k-omega-squared, Pitch controller: Gainscheduled Pi)
@@ -32,5 +32,5 @@ runCompareModels(18,loadData,figNo); %'NTW18'
 figNo1 = 7;
 runCompareCtrl('Sweep',loadData,figNo1);
 figNo1 =8;
-runCompareCtrl('NTW18',loadData,figNo1);
+runCompareCtrl(18,loadData,figNo1);
 

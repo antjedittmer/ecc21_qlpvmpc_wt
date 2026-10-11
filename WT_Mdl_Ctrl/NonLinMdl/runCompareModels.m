@@ -73,7 +73,7 @@ if strcmp(strWindType,'Sweep') == 1 % sweep from 4 to 25 in steps
     strFig = '';
     testCaseStr = 'Wind Sweep';
 elseif isa(strWindType,'double')  % wind with average 18 m/s
-    outDataSimulationMat = sprintf('OutDataWind%02dNTW.mat',strWindType);
+    outDataSimulationMat = sprintf('OutDataWind%02dNTM.mat',strWindType);
     strFig = sprintf('NTW%02d',strWindType); %'NTW18';
     testCaseStr = sprintf('Wind, mean %02d m/s',strWindType);
 else
